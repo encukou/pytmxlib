@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE map SYSTEM "http://mapeditor.org/dtd/1.0/map.dtd">
+<map version="1.0" orientation="orthogonal" width="64" height="64" tilewidth="24" tileheight="24">
+ <properties>
+  <property name="test" value="value"/>
+ </properties>
+ <tileset name="Sewers" firstgid="1" tilewidth="24" tileheight="24">
+  <image source="sewer_tileset.png" trans="ff00ff"/>
+  <tile id="0">
+   <properties>
+    <property name="obstacle" value="1"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="Layer 0" width="64" height="64">
+  <properties>
+   <property name="test2" value="value2"/>
+  </properties>
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAC/+3POQoCQRRF0cbMERww6sQWA3X/+/MJ9aFwA0JxggP1PlRw52ma5s4tdrGPQyzdrtv9589Ivv2XWMW19deu2+j969jEtvXXLqP3H+MU59Zfu4zc/4xX8+jevffA/QAAAAAAAAAAAAAAAAAA8E8fmA6U+gBAAAA=
+  </data>
+ </layer>
+ <layer name="Layer 1" width="64" height="64">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAC/+3PMQ0AMAwEsUeVpSp/WsWQoUMUWzoAl/RUdvPv379///79z3ea3QAAAAAAAAAAAAAAAADAfw8aDlM+AEAAAA==
+  </data>
+ </layer>
+</map>
