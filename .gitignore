@@ -1,0 +1,4 @@
+/*.tmx
+*.pyc
+/.coverage
+/*.egg-info/

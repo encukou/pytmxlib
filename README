@@ -1,0 +1,169 @@
+A library for handling TMX tile maps, such as those made by the Tiled editor
+
+This library is designed to support automatic modification of tile maps, such
+as tiling, automapping, cutting and joining, etc.
+It does not aim to display or render the maps.
+
+
+For the Tiled editor, see http://www.mapeditor.org/
+
+For a Python map loader (with which you can render maps in a game), see
+    http://code.google.com/p/pytmxloader/.
+
+
+Installation:
+$ python setup.py install
+
+Test suite:
+$ python setup.py test
+
+Usage
+=====
+
+First, import `tmxlib`:
+
+    >>> import tmxlib
+
+Loading and saving
+------------------
+
+Loading a map from a file is quite easy:
+
+    >>> tmxlib.Map.open('desert.tmx')
+    <tmxlib.Map object at ...>
+
+You can also load from a string:
+
+    >>> string = open('desert.tmx').read()
+    >>> map = tmxlib.Map.load(string)
+
+Saving is equally easy:
+
+    >>> map.save('/tmp/saved.tmx')
+    >>> map_as_string = map.dump()
+
+Maps
+----
+
+A map's `orientation` is its fundamental mode. Tiled currently supports
+'orthogonal' and 'isometric' orientations, but tmxlib will not object to any
+other orientation (as it does not need to actually draw maps).
+
+    >>> map.orientation
+    'orthogonal'
+
+You can learn the size of the map, in tiles, via the `size`, `width`, and
+`height` properties:
+
+    >>> map.size
+    (40, 40)
+    >>> map.width
+    40
+
+The `tile_size` specifies the size of each tile in the map.
+
+    >>> map.tile_size
+    (32, 32)
+    >>> map.tile_height
+    32
+
+Finally, `pixel_size` holds the product of the previous two.
+
+    >>> map.pixel_size
+    (1280, 1280)
+    >>> map.pixel_width
+    1280
+
+Each map has a dict of properties, with which you can assign string values
+to string keys.
+
+    >>> map.properties['weather'] = 'sunny'
+    >>> map.properties
+    {'weather': 'sunny'}
+
+Tilesets
+--------
+
+Each map has one or more tilesets, which behave as sequences of tiles.
+
+    >>> map.tilesets
+    [<ImageTileset 'Desert'>]
+    >>> tileset = map.tilesets[0]
+    >>> len(tileset)
+    48
+    >>> tileset[0]
+    <TilesetTile #0 of Desert>
+    >>> tileset[-1]
+    <TilesetTile #47 of Desert>
+
+As a convenience, tilesets may be accessed by name instead of number.
+A name will always refer to the first tileset with such name.
+
+    >>> map.tilesets['Desert']
+    <ImageTileset 'Desert'>
+
+You can also delete tilesets, sing either names or indexes.
+
+    >>> del map.tilesets['Desert']
+    >>> map.tilesets
+    []
+
+    >>> map = tmxlib.Map.open('desert.tmx')
+
+Each tile in a tileset has a `properties` dict, just like a Map.
+
+    >>> tileset[0].properties['obstacle'] = 'yes'
+
+Layers
+------
+
+As with tilesets, each map has layers. These can also be accessed either by
+index or by name. Maps also have properties, like maps and tileset tiles.
+
+    >>> map.layers
+    [<ArrayMapLayer #0: 'Ground'>]
+    >>> map.layers[0]
+    <ArrayMapLayer #0: 'Ground'>
+    >>> map.layers['Ground']
+    <ArrayMapLayer #0: 'Ground'>
+
+A layer is basically a 2D array of map tiles. Index the layer with the x and y
+coordinates to get a MapTile object.
+
+    >>> layer = map.layers[0]
+    >>> layer[0, 0]
+    <MapTile (0, 0) on Ground, gid=30 >
+    >>> layer[6, 7]
+    <MapTile (6, 7) on Ground, gid=40 >
+    >>> layer[6, 7].gid = 30
+    >>> layer[6, 7]
+    <MapTile (6, 7) on Ground, gid=30 >
+
+The MapTile object is a reference to a particular place in the map.
+
+    >>> tile = layer[6, 7]
+    >>> tile.gid
+    30
+
+Map tiles reference tileset tiles. Note that a map tile's `gid` does not
+correspond to a tileset tile's `number`; the two are offset by the tileset's
+`first_gid`.
+
+    >>> tile.tileset
+    <ImageTileset 'Desert'>
+    >>> tile.tileset_tile
+    <TilesetTile #29 of Desert>
+
+Map tiles can also be flipped and rotated.
+(As of this writing, rotation is not implemented in Tiled, but it's planned.)
+
+    >>> tile.flipped_horizontally = True
+    >>> tile
+    <MapTile (6, 7) on Ground, gid=30 H>
+    >>> tile.rotated = True
+    >>> tile
+    <MapTile (6, 7) on Ground, gid=30 HR>
+
+
+
+

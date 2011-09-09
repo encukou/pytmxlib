@@ -1,4 +1,9 @@
 
+"""Library for handling "TMX" tile maps, such as those made by the Tiled editor
+
+For the Tiled map editor http://www.mapeditor.org/
+"""
+
 import array
 import collections
 
@@ -144,6 +149,9 @@ class Tileset(fileio.read_write_base(fileio.read_tileset, fileio.write_tileset))
     @tile_height.setter
     def tile_height(self, value): self.tile_size = self.tile_size[0], value
 
+    def __repr__(self):
+        return '<%s %r>' % (type(self).__name__, self.name)
+
 class ImageTileset(Tileset):
     def __init__(self, name, tile_size, first_gid, margin=0, spacing=0,
             image=None, source=None, base_path=None):
@@ -211,6 +219,9 @@ class ArrayMapLayer(object):
 
     def set_value_at(self, pos, new):
         self.data[self.data_index(pos)] = new
+
+    def __repr__(self):
+        return '<%s #%s: %r>' % (type(self).__name__, self.index, self.name)
 
 
 class MapTile(object):
@@ -280,3 +291,12 @@ class MapTile(object):
             return tileset_tile.properties
         else:
             return {}
+
+    def __repr__(self):
+        flagstring = ''.join(f for (f, v) in zip('HVR', (
+                self.flipped_horizontally,
+                self.flipped_vertically,
+                self.rotated,
+            )) if v)
+        return '<%s %s on %s, gid=%s %s>' % (type(self).__name__, self.pos,
+                self.layer.name, self.gid, flagstring)

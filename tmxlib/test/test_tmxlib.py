@@ -75,13 +75,12 @@ def test_roundtrip_opensave(filename):
 @params(map_filenames)
 def test_roundtrip_readwrite(filename):
     xml = file_contents(get_test_filename(filename))
-    saved = StringIO()
-    map = tmxlib.Map.read(StringIO(xml), base_path=base_path)
+    map = tmxlib.Map.load(xml, base_path=base_path)
     for layer in map.layers:
         # normalize mtime, for Gzip
         layer.mtime = 0
-    map.write(saved)
-    assert_xml_compare(xml, saved.getvalue())
+    dumped = map.dump()
+    assert_xml_compare(xml, dumped)
 
 def test_get_layer_by_name():
     assert desert().layers['Ground'].name == 'Ground'

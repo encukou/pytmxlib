@@ -15,7 +15,9 @@ class PyTest(Command):
         pass
     def run(self):
         import pytest
-        errno = pytest.main('--cov-report term-missing --cov tmxlib'.split())
+        errno = pytest.main('--cov-report term-missing --cov tmxlib '
+            '--doctest-glob=README'
+            .split())
         raise SystemExit(errno)
 
 setup(

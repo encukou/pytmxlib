@@ -21,12 +21,12 @@ def read_write_base(read_func, write_func):
             if not base_path:
                 base_path = os.path.dirname(os.path.abspath(filename))
             with open(filename, 'r') as fileobj:
-                return cls.read(fileobj, base_path)
+                return cls.load(fileobj.read(), base_path)
 
         @classmethod
-        def read(cls, fileobj, base_path=None):
-            tree = etree.parse(fileobj, parser=parser)
-            return cls.from_element(tree.getroot(), base_path)
+        def load(cls, string, base_path=None):
+            tree = etree.XML(string, parser=parser)
+            return cls.from_element(tree, base_path)
 
         @classmethod
         def from_element(cls, element, base_path=None):
@@ -36,10 +36,10 @@ def read_write_base(read_func, write_func):
             if not base_path:
                 base_path = os.path.dirname(os.path.abspath(filename))
             with open(filename, 'w') as fileobj:
-                self.write(fileobj, base_path)
+                fileobj.write(self.dump(base_path))
 
-        def write(self, fileobj, base_path=None):
-            etree.ElementTree(self.to_element(base_path)).write(fileobj,
+        def dump(self, base_path=None):
+            return etree.tostring(self.to_element(base_path),
                     pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
         def to_element(self, base_path=None):
