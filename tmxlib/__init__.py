@@ -90,6 +90,22 @@ class NamedElementList(collections.MutableSequence):
             index = self.get_index(index_or_name) + 1
             self.list.insert(index, self.stored_value(value))
 
+    def move(self, index_or_name, amount):
+        """Move an item by the specified number of indexes
+
+        `amount` can be negative.
+        For example, "move layer down" translates to layers.move(idx, -1)
+
+        The method will clamp out-of range amounts, so, for eample,
+        lst.move(0, -1) will do nothing.
+        """
+        with self.modification_context():
+            index = self.get_index(index_or_name)
+            new_index = index + amount
+            if new_index < 0:
+                new_index = 0
+            self.insert(new_index, self.pop(index))
+
     def __repr__(self):
         return repr([self.retrieved_value(i) for i in self.list])
 

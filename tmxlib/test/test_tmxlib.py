@@ -294,6 +294,19 @@ def test_layer_list():
     with pytest.raises(ValueError):
         map.layers[0] = different_map.layers[0]
 
+    map.layers.move('Foliage', -2)
+    check_names('Foliage Underground Ground')
+    map.layers.move('Ground', -20)
+    check_names('Ground Foliage Underground')
+    map.layers.move('Underground', -1)
+    check_names('Ground Underground Foliage')
+    map.layers.move('Underground', 1)
+    check_names('Ground Foliage Underground')
+    map.layers.move('Ground', 20)
+    check_names('Foliage Underground Ground')
+    map.layers.move('Foliage', 2)
+    check_names('Underground Ground Foliage')
+
 def test_layer_list_empty():
     map = desert()
     ground = map.layers[0]
