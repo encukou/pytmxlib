@@ -203,32 +203,23 @@ class TilesetList(NamedElementList):
 
     def _renumber_map(self, previous_tilesets):
         memo = dict()
-        for layer in self.map.layers:
-            for tile in layer.all_tiles():
-                if tile:
+        for tile in self.map.all_tiles():
+            if tile:
+                try:
+                    tile.gid = memo[tile.gid]
+                except KeyError:
+                    prev_gid = tile.gid
+                    tileset_tile = tile._tileset_tile(previous_tilesets)
                     try:
-                        tile.gid = memo[tile.gid]
-                    except KeyError:
-                        prev_gid = tile.gid
-                        tileset_tile = tile._tileset_tile(previous_tilesets)
-                        try:
-                            tile.gid = tileset_tile.gid(self.map)
-                        except TilesetNotInMapError:
-                            msg = 'Cannot remove %s: map contains its tiles'
-                            raise ValueError(msg % tileset_tile.tileset)
-                        memo[prev_gid] = tile.gid
+                        tile.gid = tileset_tile.gid(self.map)
+                    except TilesetNotInMapError:
+                        msg = 'Cannot remove %s: map contains its tiles'
+                        raise ValueError(msg % tileset_tile.tileset)
+                    memo[prev_gid] = tile.gid
 
-class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
-    def __init__(self, size, tile_size, orientation='orthogonal',
-            base_path=None):
-        self.orientation = orientation
-        self.size=size
-        self.tile_size = tile_size
-        self.tilesets = TilesetList(self)
-        self.layers = LayerList(self)
-        self.properties = {}
-        self.base_path = base_path
-
+class SizeMixin(object):
+    """Provides `width` and `height` properties that get/set a 2D size
+    """
     @property
     def width(self): return self.size[0]
     @width.setter
@@ -238,6 +229,17 @@ class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
     def height(self): return self.size[1]
     @height.setter
     def height(self, value): self.size = self.size[0], value
+
+class Map(fileio.read_write_base(fileio.read_map, fileio.write_map), SizeMixin):
+    def __init__(self, size, tile_size, orientation='orthogonal',
+            base_path=None):
+        self.orientation = orientation
+        self.size=size
+        self.tile_size = tile_size
+        self.tilesets = TilesetList(self)
+        self.layers = LayerList(self)
+        self.properties = {}
+        self.base_path = base_path
 
     @property
     def tile_width(self): return self.tile_size[0]
@@ -280,7 +282,12 @@ class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
             for tile in layer.all_tiles():
                 yield tile
 
-class TilesetTile(object):
+    def check_consistency(self):
+        large_gid = self.tilesets[-1].end_gid
+        for tile in self.all_tiles():
+            assert tile.gid < large_gid
+
+class TilesetTile(SizeMixin):
     def __init__(self, tileset, number):
         self.tileset = tileset
         self.number = number
@@ -291,12 +298,6 @@ class TilesetTile(object):
     @property
     def size(self):
         return self.tileset.tile_size
-
-    @property
-    def width(self): return self.size[0]
-
-    @property
-    def height(self): return self.size[1]
 
     @property
     def properties(self):
@@ -391,22 +392,35 @@ class ImageTileset(Tileset):
 Tileset._image_tileset_class = ImageTileset
 
 
-class Image(fileio.read_write_base(fileio.read_image, fileio.write_image)):
-    def __init__(self, source, trans=None, width=None, height=None):
+class Image(fileio.read_write_base(fileio.read_image, fileio.write_image),
+        SizeMixin):
+    def __init__(self, source, trans=None, size=None):
         self.source = source
         self.trans = trans
-        self.width = width
-        self.height = height
+        self.size = size
         self.loaded = False
 
 
-class ArrayMapLayer(object):
-    def __init__(self, map, name, visible=True, opacity=1, data=None):
+class Layer(object):
+    def __init__(self, map, name, visible=True, opacity=1):
+        super(Layer, self).__init__()
         self.map = map
         self.name = name
         self.visible = visible
         self.opacity = opacity
         self.properties = {}
+
+    @property
+    def index(self):
+        return self.map.layers.index(self)
+
+    def __repr__(self):
+        return '<%s #%s: %r>' % (type(self).__name__, self.index, self.name)
+
+class ArrayMapLayer(Layer):
+    def __init__(self, map, name, visible=True, opacity=1, data=None):
+        super(ArrayMapLayer, self).__init__(map=map, name=name,
+                visible=visible, opacity=opacity)
         data_size = map.width * map.height
         if data is None:
             self.data = array.array('h', [0] * data_size)
@@ -416,6 +430,7 @@ class ArrayMapLayer(object):
             self.data = array.array('h', data)
         self.encoding = 'base64'
         self.compression = 'zlib'
+        self.type = 'tiles'
 
     def data_index(self, pos):
         x, y = pos
@@ -433,25 +448,15 @@ class ArrayMapLayer(object):
             for y in range(self.map.height):
                 yield self[x, y]
 
-    @property
-    def index(self):
-        return self.map.layers.index(self)
-
     def value_at(self, pos):
         return self.data[self.data_index(pos)]
 
     def set_value_at(self, pos, new):
         self.data[self.data_index(pos)] = new
 
-    def __repr__(self):
-        return '<%s #%s: %r>' % (type(self).__name__, self.index, self.name)
-
-
-class MapTile(object):
-    def __init__(self, layer, x, y):
-        self.layer = layer
-        self.pos = x, y
-
+class TileLikeObject(object):
+    """Has an associated layer and value
+    """
     def __nonzero__(self):
         return bool(self.gid)
 
@@ -464,11 +469,6 @@ class MapTile(object):
     @property
     def map(self):
         return self.layer.map
-
-    @property
-    def value(self): return self.layer.value_at(self.pos)
-    @value.setter
-    def value(self, new): return self.layer.set_value_at(self.pos, new)
 
     def mask_property(mask, value_type=int, shift=0):
         def getter(self):
@@ -517,6 +517,25 @@ class MapTile(object):
         else:
             return 0
 
+class MapTile(TileLikeObject):
+    def __init__(self, layer, x, y):
+        self.layer = layer
+        self.pos = x, y
+
+    @property
+    def value(self): return self.layer.value_at(self.pos)
+    @value.setter
+    def value(self, new): return self.layer.set_value_at(self.pos, new)
+
+    def __repr__(self):
+        flagstring = ''.join(f for (f, v) in zip('HVR', (
+                self.flipped_horizontally,
+                self.flipped_vertically,
+                self.rotated,
+            )) if v)
+        return '<%s %s on %s, gid=%s %s>' % (type(self).__name__, self.pos,
+                self.layer.name, self.gid, flagstring)
+
     @property
     def size(self):
         tileset_tile = self.tileset_tile
@@ -533,11 +552,55 @@ class MapTile(object):
         else:
             return {}
 
-    def __repr__(self):
-        flagstring = ''.join(f for (f, v) in zip('HVR', (
-                self.flipped_horizontally,
-                self.flipped_vertically,
-                self.rotated,
-            )) if v)
-        return '<%s %s on %s, gid=%s %s>' % (type(self).__name__, self.pos,
-                self.layer.name, self.gid, flagstring)
+
+class ObjectLayer(Layer, NamedElementList):
+    def __init__(self, map, name, visible=True, opacity=1):
+        super(ObjectLayer, self).__init__(map=map, name=name,
+                visible=visible, opacity=opacity)
+        self.type = 'objects'
+
+    def all_tiles(self):
+        for object in self:
+            if object.gid:
+                yield object
+
+    def stored_value(self, item):
+        if item.layer is not self:
+            raise ValueError('Incompatible object')
+        return item
+
+class MapObject(TileLikeObject, SizeMixin):
+    def __init__(self, layer, pos, size=None, name=None, type=None,
+            value=0):
+        self.layer = layer
+        self.pos = pos
+        self.name = name
+        self.type = type
+        self.value = value
+        if size:
+            self.size = size
+        self.properties = {}
+
+    @property
+    def size(self):
+        if self.gid:
+            return self.tileset_tile.size
+        else:
+            return self._size
+    @size.setter
+    def size(self, value):
+        if self.gid:
+            if value != self.size:
+                raise ValueError("Cannot modify size of tile objects")
+        else:
+            self._size = value
+
+    @property
+    def x(self): return self.pos[0]
+    @x.setter
+    def x(self, value): self.pos = value, self.pos[1]
+
+    @property
+    def y(self): return self.pos[1]
+    @y.setter
+    def y(self, value): self.pos = self.pos[0], value

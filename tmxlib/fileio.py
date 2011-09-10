@@ -70,7 +70,9 @@ def read_map(cls, root, base_path):
             map.tilesets.append(tileset)
             assert tileset.first_gid(map) == tileset._read_first_gid
         elif elem.tag == 'layer':
-            map.layers.append(layer_from_element(elem, map))
+            map.layers.append(tile_layer_from_element(elem, map))
+        elif elem.tag == 'objectgroup':
+            map.layers.append(object_layer_from_element(elem, map))
         else:
             assert False, 'Unknown tag %s' % elem.tag
     return map
@@ -175,8 +177,8 @@ def read_image(cls, elem, base_path):
     image = cls(
             source=elem.attrib.pop('source'),
             trans=trans,
-            width=int(elem.attrib.pop('width', 0)),
-            height=int(elem.attrib.pop('height', 0)),
+            size=(int(elem.attrib.pop('width', 0)),
+                    int(elem.attrib.pop('height', 0))),
         )
     assert not elem.attrib, (
         'Unexpected image attributes: %s' % elem.attrib)
@@ -192,7 +194,7 @@ def write_image(image, base_path):
         element.attrib['trans'] = to_rgb(image.trans)
     return element
 
-def layer_from_element(elem, map):
+def tile_layer_from_element(elem, map):
     layer = tmxlib.ArrayMapLayer(map, elem.attrib.pop('name'),
             opacity=float(elem.attrib.pop('opacity', 1)),
             visible=bool(int(elem.attrib.pop('visible', 1))))
@@ -200,7 +202,7 @@ def layer_from_element(elem, map):
             int(elem.attrib.pop('height')))
     assert layer_size == map.size
     assert not elem.attrib, (
-        'Unexpected layer attributes: %s' % elem.attrib)
+        'Unexpected tile layer attributes: %s' % elem.attrib)
     data_set = False
     for subelem in elem:
         if subelem.tag == 'properties':
@@ -238,10 +240,18 @@ def layer_from_element(elem, map):
             data_set = True
         else:
             assert False, 'Unknown tag %s' % subelem.tag
-    assert layer.data
+    assert data_set
     return layer
 
 def layer_to_element(layer):
+    if layer.type == 'objects':
+        return object_layer_to_element(layer)
+    elif layer.type == 'tiles':
+        return tile_layer_to_element(layer)
+    else:
+        raise ValueError(layer.type)
+
+def tile_layer_to_element(layer):
     element = etree.Element('layer', attrib=dict(
             name=layer.name,
             width=str(layer.map.width),
@@ -288,6 +298,70 @@ def layer_to_element(layer):
     element.append(data_elem)
     return element
 
+def object_layer_from_element(elem, map):
+    layer = tmxlib.ObjectLayer(map, elem.attrib.pop('name'),
+            opacity=float(elem.attrib.pop('opacity', 1)),
+            visible=bool(int(elem.attrib.pop('visible', 1))))
+    layer_size = (int(elem.attrib.pop('width')),
+            int(elem.attrib.pop('height')))
+    assert layer_size == map.size
+    assert not elem.attrib, (
+        'Unexpected object layer attributes: %s' % elem.attrib)
+    for subelem in elem:
+        if subelem.tag == 'properties':
+            layer.properties.update(read_properties(subelem))
+        elif subelem.tag == 'object':
+            kwargs = dict(
+                    pos=(
+                            int(subelem.attrib.pop('x')),
+                            int(subelem.attrib.pop('y'))),
+                    layer=layer,
+                )
+            def put(attr_type, attr_name, arg_name):
+                attr = subelem.attrib.pop(attr_name, None)
+                if attr is not None:
+                    kwargs[arg_name] = attr_type(attr)
+            put(int, 'gid', 'value')
+            put(unicode, 'name', 'name')
+            put(unicode, 'type', 'type')
+            width = subelem.attrib.pop('width', None)
+            height = subelem.attrib.pop('height', None)
+            if width is not None or height is not None:
+                kwargs['size'] = int(width), int(height)
+            assert not subelem.attrib, (
+                'Unexpected object attributes: %s' % subelem.attrib)
+            layer.append(tmxlib.MapObject(**kwargs))
+    return layer
+
+def object_layer_to_element(layer):
+    element = etree.Element('objectgroup', attrib=dict(
+            name=layer.name,
+            width=str(layer.map.width),
+            height=str(layer.map.height),
+        ))
+    if not layer.visible:
+        element.attrib['visible'] = '0'
+    if layer.opacity != 1:
+        element.attrib['opacity'] = str(layer.opacity)
+
+    append_properties(element, layer.properties)
+
+    for object in layer:
+        attrib = dict(x=str(object.x), y=str(object.y))
+        if object.value:
+            attrib['gid'] = str(object.value)
+        if object.name:
+            attrib['name'] = str(object.name)
+        if object.type:
+            attrib['type'] = str(object.type)
+        if object.size != (0, 0) and not (object.tileset_tile and
+                object.tileset_tile.size == object.size):
+            attrib['width'] = str(object.width)
+            attrib['height'] = str(object.height)
+        obj_element = etree.Element('object', attrib=attrib)
+        element.append(obj_element)
+
+    return element
 
 def read_properties(elem):
     assert elem.tag == 'properties'

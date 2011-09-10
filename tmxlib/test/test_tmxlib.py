@@ -65,6 +65,7 @@ def test_roundtrip_opensave(filename):
         # normalize mtime, for Gzip
         layer.mtime = 0
     temporary_file = tempfile.NamedTemporaryFile(delete=False)
+    map.check_consistency()
     try:
         temporary_file.close()
         map.save(temporary_file.name)
@@ -238,6 +239,7 @@ def test_empty_tile():
     layer = map.layers[0] = tmxlib.ArrayMapLayer(map, 'Empty')
     tile = layer[0, 0]
     assert tile.value == 0
+    assert tile.number == 0
     assert tile.size == (0, 0)
     assert tile.properties == {}
 
@@ -385,3 +387,24 @@ def test_multiple_tilesets():
     del map.tilesets['Walls2']
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
+
+def test_objects():
+    map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
+
+    objects = map.layers['Objects']
+
+    sign = objects['Sign']
+    assert sign.size == (32, 32)
+    sign.size = 32, 32
+    with pytest.raises(ValueError):
+        sign.size = 1, 1
+
+    hole = objects['Hole A']
+    assert hole.size == (53, 85)
+    hole.size = 1, 1
+    assert hole.width == 1
+
+    assert hole.pos == (hole.x, hole.y) == (438, 246)
+    hole.x = 10
+    hole.y = 10
+    assert hole.pos == (10, 10)
