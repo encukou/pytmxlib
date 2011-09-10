@@ -16,7 +16,7 @@ class PyTest(Command):
     def run(self):
         import pytest
         errno = pytest.main('--cov-report term-missing --cov tmxlib '
-            '--doctest-glob=README'
+            '--doctest-glob=README.md'
             .split())
         raise SystemExit(errno)
 
