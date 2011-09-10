@@ -230,7 +230,7 @@ class SizeMixin(object):
     @height.setter
     def height(self, value): self.size = self.size[0], value
 
-class Map(fileio.read_write_base(fileio.read_map, fileio.write_map), SizeMixin):
+class Map(fileio.read_write_base('map'), SizeMixin):
     def __init__(self, size, tile_size, orientation='orthogonal',
             base_path=None):
         self.orientation = orientation
@@ -312,7 +312,7 @@ class TilesetTile(SizeMixin):
     def __repr__(self):
         return '<TilesetTile #%s of %s>' % (self.number, self.tileset.name)
 
-class Tileset(fileio.read_write_base(fileio.read_tileset, fileio.write_tileset)):
+class Tileset(fileio.read_write_base('tileset')):
     def __init__(self, name, tile_size, source=None):
         self.name = name
         self.tile_size = tile_size
@@ -392,8 +392,7 @@ class ImageTileset(Tileset):
 Tileset._image_tileset_class = ImageTileset
 
 
-class Image(fileio.read_write_base(fileio.read_image, fileio.write_image),
-        SizeMixin):
+class Image(fileio.read_write_base('image'), SizeMixin):
     def __init__(self, source, trans=None, size=None):
         self.source = source
         self.trans = trans
