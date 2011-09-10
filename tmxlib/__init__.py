@@ -278,9 +278,18 @@ class Map(fileio.read_write_base('map'), SizeMixin):
             self.layers.append(new_layer)
 
     def all_tiles(self):
+        """Yield all tiles in the map, including tile objects
+        """
         for layer in self.layers:
             for tile in layer.all_tiles():
                 yield tile
+
+    def all_objects(self):
+        """Yield all objects in the map
+        """
+        for layer in self.layers:
+            for obj in layer.all_objects():
+                yield obj
 
     def check_consistency(self):
         large_gid = self.tilesets[-1].end_gid
@@ -524,6 +533,9 @@ class ArrayMapLayer(Layer):
             for y in range(self.map.height):
                 yield self[x, y]
 
+    def all_objects(self):
+        return []
+
     def value_at(self, pos):
         return self.data[self.data_index(pos)]
 
@@ -665,9 +677,13 @@ class ObjectLayer(Layer, NamedElementList):
         self.type = 'objects'
 
     def all_tiles(self):
-        for object in self:
-            if object.gid:
-                yield object
+        for obj in self:
+            if obj.gid:
+                yield obj
+
+    def all_objects(self):
+        for obj in self:
+            yield obj
 
     def stored_value(self, item):
         if item.layer is not self:

@@ -429,6 +429,10 @@ def test_objects():
     hole.y = 10
     assert hole.pos == (10, 10)
 
+    # This map has all objects in one layer only
+    all_map_objects = list(map.all_objects())
+    assert all_map_objects == list(objects) == list(objects.all_objects())
+
 @params([
         dict(image_backend=None),
         dict(image_backend='png'),
