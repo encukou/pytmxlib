@@ -31,6 +31,7 @@ setup(
             'pytest',
             'pytest-cov',
             'formencode',
+            'pypng',
         ],
     packages=find_packages(),
     cmdclass={'test': PyTest},

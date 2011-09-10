@@ -7,6 +7,7 @@ import array
 import struct
 import binascii
 import StringIO
+import functools
 
 from lxml import etree
 
@@ -34,13 +35,49 @@ def read_write_base(obj_type):
 
     return ReadWriteBase
 
+def load_method(func):
+    """Helper to set the loaded object's `serializer` and `base_path`
+    """
+    @functools.wraps(func)
+    def loader(self, *args, **kwargs):
+        obj = func(self, *args, **kwargs)
+        obj.serializer = self
+        try:
+            obj.base_path = kwargs['base_path']
+        except KeyError:
+            pass
+        return obj
+    return loader
+
 class TMXSerializer(object):
+    def __init__(self, image_backend=None):
+        import tmxlib
+        self.map_class = tmxlib.Map
+        self.tileset_class = tmxlib.ImageTileset
+        self.tile_layer_class = tmxlib.ArrayMapLayer
+        self.object_layer_class = tmxlib.ObjectLayer
+        self.object_class = tmxlib.MapObject
+
+        if image_backend is None:
+            self.image_class = tmxlib.Image
+        elif image_backend == 'png':
+            from tmxlib import image_png
+            self.image_class = image_png.PngImage
+        else:
+            image_backend.load_image  # image backends must have this method
+            self.image_class = image_backend
+
+    def load_file(self, filename, base_path=None):
+        if base_path:
+            filename = os.path.join(base_path, filename)
+        with open(filename, 'r') as fileobj:
+            return fileobj.read()
+
     def open(self, cls, obj_type, filename, base_path=None):
         if not base_path:
             base_path = os.path.dirname(os.path.abspath(filename))
-        with open(filename, 'r') as fileobj:
-            return self.load(cls, obj_type, fileobj.read(),
-                    base_path=base_path)
+        return self.load(cls, obj_type, self.load_file(filename, base_path),
+                base_path=base_path)
 
     def load(self, cls, obj_type, string, base_path=None):
         tree = etree.XML(string, parser=parser)
@@ -67,6 +104,7 @@ class TMXSerializer(object):
         write_func = getattr(self, obj_type + '_to_element')
         return write_func(obj, base_path=base_path, **kwargs)
 
+    @load_method
     def map_from_element(self, cls, root, base_path):
         assert root.tag == 'map'
         assert root.attrib.pop('version') == '1.0', 'Bad TMX file version'
@@ -117,6 +155,7 @@ class TMXSerializer(object):
             elem.append(self.layer_to_element(layer))
         return elem
 
+    @load_method
     def tileset_from_element(self, cls, elem, base_path):
         source = elem.attrib.pop('source', None)
         if source:
@@ -142,6 +181,7 @@ class TMXSerializer(object):
                     int(elem.attrib.pop('tileheight'))),
                 margin=int(elem.attrib.pop('margin', 0)),
                 spacing=int(elem.attrib.pop('spacing', 0)),
+                image=None,
             )
         tileset._read_first_gid = int(elem.attrib.pop('firstgid', 0))
         assert not elem.attrib, (
@@ -161,6 +201,7 @@ class TMXSerializer(object):
                         assert False, 'Unknown tag %s' % subelem.tag
             else:
                 assert False, 'Unknown tag %s' % subelem.tag
+        assert tileset.image
         return tileset
 
     def tileset_to_element(self, tileset, base_path, first_gid=None):
@@ -195,16 +236,19 @@ class TMXSerializer(object):
                     self.append_properties(tile_elem, props)
             return element
 
+    @load_method
     def image_from_element(self, cls, elem, base_path):
+        kwargs = dict()
         trans = elem.attrib.pop('trans', None)
         if trans:
-            trans = self.from_rgb(trans)
+            kwargs['trans'] = self.from_rgb(trans)
+        width = elem.attrib.pop('width', None)
+        height = elem.attrib.pop('height', None)
+        if width is not None:
+            kwargs['size'] = int(width), int(height)
         image = cls(
                 source=elem.attrib.pop('source'),
-                trans=trans,
-                size=(int(elem.attrib.pop('width', 0)),
-                        int(elem.attrib.pop('height', 0))),
-            )
+                **kwargs)
         assert not elem.attrib, (
             'Unexpected image attributes: %s' % elem.attrib)
         return image
@@ -219,6 +263,7 @@ class TMXSerializer(object):
             element.attrib['trans'] = self.to_rgb(image.trans)
         return element
 
+    @load_method
     def tile_layer_from_element(self, cls, elem, map):
         layer = cls(map, elem.attrib.pop('name'),
                 opacity=float(elem.attrib.pop('opacity', 1)),
@@ -323,6 +368,7 @@ class TMXSerializer(object):
         element.append(data_elem)
         return element
 
+    @load_method
     def object_layer_from_element(self, cls, elem, map):
         layer = cls(map, elem.attrib.pop('name'),
                 opacity=float(elem.attrib.pop('opacity', 1)),
@@ -426,16 +472,6 @@ class TMXSerializer(object):
         print rgb
         return ''.join(hex(p)[2:].ljust(2, '0') for p in rgb)
 
-class DefaultTMXSerializer(TMXSerializer):
-    def __init__(self):
-        import tmxlib
-        self.map_class = tmxlib.Map
-        self.tileset_class = tmxlib.ImageTileset
-        self.image_class = tmxlib.Image
-        self.tile_layer_class = tmxlib.ArrayMapLayer
-        self.object_layer_class = tmxlib.ObjectLayer
-        self.object_class = tmxlib.MapObject
-
 def serializer_getdefault(serializer=None, object=None):
     """Returns an appropriate serializer
 
@@ -451,7 +487,7 @@ def serializer_getdefault(serializer=None, object=None):
             try:
                 return serializer_getdefault.serializer
             except AttributeError:
-                serializer_getdefault.serializer = DefaultTMXSerializer()
+                serializer_getdefault.serializer = TMXSerializer()
                 return serializer_getdefault.serializer
     else:
         return serializer

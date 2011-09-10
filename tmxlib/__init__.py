@@ -312,7 +312,16 @@ class TilesetTile(SizeMixin):
     def __repr__(self):
         return '<TilesetTile #%s of %s>' % (self.number, self.tileset.name)
 
+    @property
+    def image(self):
+        return self.tileset.tile_image(self.number)
+
+    def get_pixel(self, x, y):
+        return self.image.get_pixel(x, y)
+
 class Tileset(fileio.read_write_base('tileset')):
+    column_count = None
+
     def __init__(self, name, tile_size, source=None):
         self.name = name
         self.tile_size = tile_size
@@ -322,10 +331,10 @@ class Tileset(fileio.read_write_base('tileset')):
         if n >= 0:
             return TilesetTile(self, n)
         else:
-            return TilesetTile(self, self.num_tiles + n)
+            return TilesetTile(self, len(self) + n)
 
     def __len__(self):
-        return self.num_tiles
+        raise NotImplementedError('Tileset.num_tiles')
 
     def __iter__(self):
         for i in range(len(self)):
@@ -349,11 +358,7 @@ class Tileset(fileio.read_write_base('tileset')):
         """
         return self.first_gid(map) + len(self)
 
-    @property
-    def num_tiles(self):
-        raise NotImplementedError('Tileset.num_tiles')
-
-    def tile_image(self, index):
+    def tile_image(self, number):
         raise NotImplementedError('Tileset.tile_image')
 
     @property
@@ -370,8 +375,8 @@ class Tileset(fileio.read_write_base('tileset')):
         return '<%s %r>' % (type(self).__name__, self.name)
 
 class ImageTileset(Tileset):
-    def __init__(self, name, tile_size, margin=0, spacing=0,
-            image=None, source=None, base_path=None):
+    def __init__(self, name, tile_size, image, margin=0, spacing=0,
+            source=None, base_path=None):
         super(ImageTileset, self).__init__(name, tile_size, source)
         self.image = image
         self.tile_properties = collections.defaultdict(dict)
@@ -379,26 +384,96 @@ class ImageTileset(Tileset):
         self.spacing = spacing
         self.base_path = base_path
 
-    @property
-    def num_tiles(self):
+    def __len__(self):
+        return self.column_count * self.row_count
+
+    def _count(self, axis):
         return (
-                (self.image.width - 2 * self.margin + self.spacing) /
-                (self.tile_width + self.spacing)
-            ) * (
-                (self.image.height - 2 * self.margin + self.spacing) /
-                (self.tile_height + self.spacing)
+                (self.image.size[axis] - 2 * self.margin + self.spacing) /
+                (self.tile_size[axis] + self.spacing)
             )
+
+    @property
+    def column_count(self):
+        return self._count(0)
+
+    @property
+    def row_count(self):
+        return self._count(1)
+
+    def tile_image(self, number):
+        y, x = divmod(number, self.column_count)
+        left = self.margin + x * (self.tile_width + self.spacing)
+        top = self.margin + y * (self.tile_height + self.spacing)
+        return ImageRegion(self.image, left, top, self.tile_size)
 
 Tileset._image_tileset_class = ImageTileset
 
+class ImageBase(SizeMixin):
+    def __getitem__(self, pos):
+        x, y = pos
+        return self.get_pixel(x, y)
 
-class Image(fileio.read_write_base('image'), SizeMixin):
-    def __init__(self, source, trans=None, size=None):
+    def __setitem__(self, pos, value):
+        x, y = pos
+        r, g, b, a = value
+        return self.set_pixel(x, y, value)
+
+class Image(ImageBase, fileio.read_write_base('image')):
+    def __init__(self, data=None, trans=None, size=None, source=None):
         self.source = source
         self.trans = trans
-        self.size = size
-        self.loaded = False
+        self._data = data
+        self.source = source
+        self._size = size
 
+    @property
+    def size(self):
+        if self._size:
+            return self._size
+        else:
+            self.load_image()  # Not available without an image backend!
+            return self.size
+    @size.setter
+    def size(self, new):
+        self._size = new
+
+    @property
+    def data(self):
+        if self._data:
+            return self._data
+        else:
+            self._data = self.serializer.load_file(self.source,
+                    base_path=self.base_path)
+            return self._data
+
+    def load_image():
+        """Load the image from self.data, and set self.size
+        """
+        raise TypeError('Image data not available')
+
+    def get_pixel(self, x, y):
+        raise TypeError('Image data not available')
+
+    def set_pixel(self, x, y, value):
+        raise TypeError('Image data not available')
+
+class ImageRegion(ImageBase):
+    def __init__(self, image, x, y, size):
+        self.image = image
+        self.x = x
+        self.y = y
+        self.size = size
+
+    def get_pixel(self, x, y):
+        assert 0 <= x < self.width
+        assert 0 <= y < self.height
+        return self.image.get_pixel(x + self.x, y + self.y)
+
+    def set_pixel(self, x, y, value):
+        assert 0 <= x < self.width
+        assert 0 <= y < self.height
+        self.image.set_pixel(x + self.x, y + self.y, value)
 
 class Layer(object):
     def __init__(self, map, name, visible=True, opacity=1):
@@ -436,6 +511,8 @@ class ArrayMapLayer(Layer):
         return x + y * self.map.width
 
     def __setitem__(self, pos, value):
+        if isinstance(value, TilesetTile):
+            value = value.gid(self.map)
         self.data[self.data_index(pos)] = int(value)
 
     def __getitem__(self, pos):
@@ -453,11 +530,19 @@ class ArrayMapLayer(Layer):
     def set_value_at(self, pos, new):
         self.data[self.data_index(pos)] = new
 
-class TileLikeObject(object):
+class TileLikeObject(SizeMixin):
     """Has an associated layer and value
     """
     def __nonzero__(self):
         return bool(self.gid)
+
+    @property
+    def value(self): return self._value
+    @value.setter
+    def value(self, new):
+        if isinstance(new, TilesetTile):
+            new = new.gid(self.map)
+        self._value = new
 
     @property
     def x(self): return self.pos[0]
@@ -516,15 +601,36 @@ class TileLikeObject(object):
         else:
             return 0
 
+    @property
+    def image(self):
+        tileset_tile = self.tileset_tile
+        if tileset_tile:
+            return self.tileset_tile.image
+
+    def get_pixel(self, x, y):
+        tileset_tile = self.tileset_tile
+        if tileset_tile:
+            if self.rotated:
+                # invert axes + horizontal flip = rotate 90deg clockwise
+                x, y = y, x
+                x = self.width - x - 1
+            if self.flipped_vertically:
+                x = self.width - x - 1
+            if self.flipped_horizontally:
+                y = self.height - y - 1
+            return tileset_tile.get_pixel(x, y)
+        else:
+            return 0, 0, 0, 0
+
 class MapTile(TileLikeObject):
     def __init__(self, layer, x, y):
         self.layer = layer
         self.pos = x, y
 
     @property
-    def value(self): return self.layer.value_at(self.pos)
-    @value.setter
-    def value(self, new): return self.layer.set_value_at(self.pos, new)
+    def _value(self): return self.layer.value_at(self.pos)
+    @_value.setter
+    def _value(self, new): return self.layer.set_value_at(self.pos, new)
 
     def __repr__(self):
         flagstring = ''.join(f for (f, v) in zip('HVR', (

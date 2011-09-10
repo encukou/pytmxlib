@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset name="perspective_walls" tilewidth="64" tileheight="64">
- <image source="perspective_walls.png" width="256" height="256"/>
+ <image source="perspective_walls.png"/>
  <tile id="13">
   <properties>
    <property name="door" value="true"/>

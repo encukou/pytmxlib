@@ -16,7 +16,7 @@
    eJztwQENAAAAwqD3T20PBxQAAAAAAMCXARkAAAE=
   </data>
  </layer>
- <objectgroup name="Invisible layer" width="40" height="40" visible="0" opacity="0.66"/>
+ <objectgroup name="Invisible object layer" width="40" height="40" visible="0" opacity="0.66"/>
  <layer name="Building" width="40" height="40">
   <data encoding="base64" compression="zlib">
    eJzt0jsKgDAQBNC9koIfsPD+t4piYQqD2Lgp3oNppppiIvo3HRkeMmeOqowf+7/VO/ZGn6n3fWtcfzttcf9vSVsEAAAAAMCbAsfKBEg=

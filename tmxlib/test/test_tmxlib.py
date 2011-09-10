@@ -1,7 +1,10 @@
 
+from __future__ import division
+
 import os
 import tempfile
 from StringIO import StringIO
+import contextlib
 
 from lxml import etree
 from formencode.doctest_xml_compare import xml_compare
@@ -15,6 +18,12 @@ def params(funcarglist):
         function.funcarglist = funcarglist
         return function
     return wrapper
+
+def assert_color_tuple_eq(value, expected):
+    assert len(value) == len(expected)
+    for a, b in zip(value, expected):
+        if abs(a - b) >= (1 / 256):
+            assert value == expected
 
 def pytest_generate_tests(metafunc):
     for funcargs in getattr(metafunc.function, 'funcarglist', ()):
@@ -59,8 +68,9 @@ def assert_xml_compare(a, b):
 # actual test code
 @params(map_filenames)
 def test_roundtrip_opensave(filename):
+    serializer = tmxlib.fileio.TMXSerializer(image_backend='png')
     filename = get_test_filename(filename)
-    map = tmxlib.Map.open(filename)
+    map = tmxlib.Map.open(filename, serializer=serializer)
     for layer in map.layers:
         # normalize mtime, for Gzip
         layer.mtime = 0
@@ -76,8 +86,9 @@ def test_roundtrip_opensave(filename):
 
 @params(map_filenames)
 def test_roundtrip_readwrite(filename):
+    serializer = tmxlib.fileio.TMXSerializer(image_backend='png')
     xml = file_contents(get_test_filename(filename))
-    map = tmxlib.Map.load(xml, base_path=base_path)
+    map = tmxlib.Map.load(xml, base_path=base_path, serializer=serializer)
     for layer in map.layers:
         # normalize mtime, for Gzip
         layer.mtime = 0
@@ -154,6 +165,7 @@ def test_tileset():
     assert len(tileset) == len(list(tileset))
     assert list(tileset)[0] == tileset[0]
     assert list(tileset)[0] != tileset[-1]
+
 
     assert tileset.tile_width == tileset.tile_height == 32
     tileset.tile_width, tileset.tile_height = 2, 3
@@ -234,6 +246,12 @@ def test_map_tile():
 
     assert map.layers[0][1, 2].value == 0x6003
 
+    map.layers[0][1, 2] = map.tilesets[0][0]
+    assert map.layers[0][1, 2].gid == 1
+
+    map.layers[0][1, 2] = 0
+    assert not map.layers[0][1, 2]
+
 def test_empty_tile():
     map = desert()
     layer = map.layers[0] = tmxlib.ArrayMapLayer(map, 'Empty')
@@ -245,8 +263,10 @@ def test_empty_tile():
 
 
 def test_properties():
-    map = tmxlib.Map.open(get_test_filename('perspective_walls.tmx'))
-    print map
+    map = tmxlib.Map.open(get_test_filename('tilebmp-test.tmx'))
+
+    assert map.properties['test'] == 'value'
+    assert map.tilesets['Sewers'][0].properties['obstacle'] == '1'
 
 
 def test_layer_list():
@@ -408,3 +428,73 @@ def test_objects():
     hole.x = 10
     hole.y = 10
     assert hole.pos == (10, 10)
+
+@params([
+        dict(image_backend=None),
+        dict(image_backend='png'),
+    ])
+def test_get_pixel(image_backend):
+    serializer = tmxlib.fileio.TMXSerializer(image_backend=image_backend)
+    map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'),
+            serializer=serializer)
+
+    pixel_value = 255 / 255, 208 / 255, 148 / 255, 1
+
+    if image_backend is None:
+        def context():
+            return pytest.raises(TypeError)
+    else:
+        @contextlib.contextmanager
+        def context():
+            yield
+
+    with context():
+        assert map.layers['Ground'][0, 0].get_pixel(0, 0) == pixel_value
+    with context():
+        assert map.tilesets['Desert'][0].get_pixel(0, 0) == pixel_value
+
+    with context():
+        assert map.layers['Ground'][0, 0].image[0, 0] == pixel_value
+    with context():
+        assert map.tilesets['Desert'][0].image[0, 0] == pixel_value
+
+    assert map.tilesets[0].image.data
+
+    with context():
+        expected = 0.5, 0.6, 0.7, 0
+        map.tilesets['Desert'][0].image[0, 0] = expected
+        value = map.tilesets['Desert'][0].image[0, 0]
+        assert len(value) == len(expected)
+        for a, b in zip(value, expected):
+            assert abs(a - b) < (1 / 256)
+
+    empty_tile = map.layers['Building'][0, 0]
+    assert not empty_tile
+    assert empty_tile.get_pixel(0, 0) == (0, 0, 0, 0)
+
+    tile = map.layers['Ground'][0, 0]
+
+    tile.value = map.tilesets['Desert'][9]
+    with context():
+        assert_color_tuple_eq(tile.get_pixel(0, 0),
+                (98 / 255, 88 / 255, 56 / 255, 1))
+
+    tile.value = map.tilesets['Desert'][9]
+    tile.flipped_horizontally = True
+    with context():
+        assert_color_tuple_eq(tile.get_pixel(0, 0),
+                (209 / 255, 189 / 255, 158 / 255, 1))
+
+    tile.value = map.tilesets['Desert'][9]
+    tile.flipped_vertically = True
+    with context():
+        assert_color_tuple_eq(tile.get_pixel(0, 0),
+                (98 / 255, 88 / 255, 56 / 255, 1))
+
+    tile.value = map.tilesets['Desert'][9]
+    tile.flipped_horizontally = True
+    tile.rotated = True
+    with context():
+        assert_color_tuple_eq(tile.get_pixel(0, 0),
+                (162 / 255, 152 / 255, 98 / 255, 1))
+

@@ -202,3 +202,30 @@ Map tiles are true in a boolean context iff they're not empty (i.e. their
 `gid` is not 0).
 
 
+Pixels
+======
+
+The library has some experimental basic support for getting tile pixels. To
+enable it, you need to select a custom serializer with an image backend when
+you load a map.
+These backends will generally come with additional dependencies.
+
+Currently supported is the `'png'` backend, which uses the pure-python
+(read: very slow) `png` module.
+
+    >>> serializer = tmxlib.fileio.TMXSerializer(image_backend='png')
+    >>> map = tmxlib.Map.open('desert.tmx', serializer=serializer)
+    >>> map.tilesets['Desert'][0].get_pixel(0, 0)
+    (1.0, 0.8156862..., 0.5803921..., 1.0)
+    >>> map.layers['Ground'][0, 0].get_pixel(0, 0)
+    (1.0, 0.8156862..., 0.5803921..., 1.0)
+
+A custom class may also be given as the image backend. 'png' is just a shortcut
+for tmxlib.image_png import PngImage, so the following serializer would do the
+same as the above one:
+
+    >>> from tmxlib.image_png import PngImage
+    >>> serializer = tmxlib.fileio.TMXSerializer(image_backend=PngImage)
+
+See image_png.py to see how to make another backend (patches welcome, pull
+requests welcomer!).
