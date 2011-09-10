@@ -7,8 +7,11 @@ For the Tiled map editor http://www.mapeditor.org/
 import array
 import collections
 import contextlib
+import itertools
 
 from tmxlib import fileio
+
+class TilesetNotInMapError(ValueError): pass
 
 class NamedElementList(collections.MutableSequence):
     """A list that supports indexing by element name, as a convenience, etc
@@ -133,8 +136,8 @@ class NamedElementList(collections.MutableSequence):
     def modification_context(self):
         """Context in which all modifications take place.
 
-        The default implementation nullifies the modifications list if an
-        exception occurs.
+        The default implementation nullifies the modifications if an exception
+        is raised.
         """
         previous = list(self.list)
         try:
@@ -164,7 +167,56 @@ class TilesetList(NamedElementList):
     """
     def __init__(self, map, lst=None):
         self.map = map
+        self._being_modified = False
         super(TilesetList, self).__init__(lst)
+
+    @contextlib.contextmanager
+    def modification_context(self):
+        """Context manager that "wraps" modifications to the tileset list
+
+        While this manager is active, the map's tiles are invalid and should
+        not be touched.
+        After all modification_contexts exit, tiles are renumbered to match the
+        new tileset list.
+
+        Multiple operations on the tileset list can be wrapped in a
+        modification_context for efficiency. Note that if a used tileset is
+        removed, an exception will be raised whenever the outermost
+        modification_context exits.
+        """
+        if self._being_modified:
+            # Ignore inner context
+            yield
+        else:
+            self._being_modified = True
+            try:
+                with super(TilesetList, self).modification_context():
+                    previous_tilesets = list(self.list)
+                    yield
+                    # skip renumbering if tilesets were appended, or unchanged
+                    if previous_tilesets != self.list[:len(previous_tilesets)]:
+                        self._renumber_map(previous_tilesets)
+                    if self.map.tilesets[-1].end_gid(self.map) > 0x0FFF:
+                        raise ValueError('Too many tiles to be represented')
+            finally:
+                self._being_modified = False
+
+    def _renumber_map(self, previous_tilesets):
+        memo = dict()
+        for layer in self.map.layers:
+            for tile in layer.all_tiles():
+                if tile:
+                    try:
+                        tile.gid = memo[tile.gid]
+                    except KeyError:
+                        prev_gid = tile.gid
+                        tileset_tile = tile._tileset_tile(previous_tilesets)
+                        try:
+                            tile.gid = tileset_tile.gid(self.map)
+                        except TilesetNotInMapError:
+                            msg = 'Cannot remove %s: map contains its tiles'
+                            raise ValueError(msg % tileset_tile.tileset)
+                        memo[prev_gid] = tile.gid
 
 class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
     def __init__(self, size, tile_size, orientation='orthogonal',
@@ -223,14 +275,18 @@ class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
         else:
             self.layers.append(new_layer)
 
+    def all_tiles(self):
+        for layer in self.layers:
+            for tile in layer.all_tiles():
+                yield tile
+
 class TilesetTile(object):
     def __init__(self, tileset, number):
         self.tileset = tileset
         self.number = number
 
-    @property
-    def gid(self):
-        return self.tileset.first_gid + self.number
+    def gid(self, map):
+        return self.tileset.first_gid(map) + self.number
 
     @property
     def size(self):
@@ -256,10 +312,9 @@ class TilesetTile(object):
         return '<TilesetTile #%s of %s>' % (self.number, self.tileset.name)
 
 class Tileset(fileio.read_write_base(fileio.read_tileset, fileio.write_tileset)):
-    def __init__(self, name, tile_size, first_gid, source=None):
+    def __init__(self, name, tile_size, source=None):
         self.name = name
         self.tile_size = tile_size
-        self.first_gid = first_gid
         self.source = source
 
     def __getitem__(self, n):
@@ -274,6 +329,24 @@ class Tileset(fileio.read_write_base(fileio.read_tileset, fileio.write_tileset))
     def __iter__(self):
         for i in range(len(self)):
             yield self[i]
+
+    def first_gid(self, map):
+        """Return the first gid used by this tileset in the given map
+        """
+        num = 1
+        for tileset in map.tilesets:
+            if tileset is self:
+                return num
+            else:
+                num += len(tileset)
+        error = TilesetNotInMapError('Tileset not in map')
+        error.tileset = self
+        raise error
+
+    def end_gid(self, map):
+        """Return the first gid after this tileset in the given map
+        """
+        return self.first_gid(map) + len(self)
 
     @property
     def num_tiles(self):
@@ -296,9 +369,9 @@ class Tileset(fileio.read_write_base(fileio.read_tileset, fileio.write_tileset))
         return '<%s %r>' % (type(self).__name__, self.name)
 
 class ImageTileset(Tileset):
-    def __init__(self, name, tile_size, first_gid, margin=0, spacing=0,
+    def __init__(self, name, tile_size, margin=0, spacing=0,
             image=None, source=None, base_path=None):
-        super(ImageTileset, self).__init__(name, tile_size, first_gid, source)
+        super(ImageTileset, self).__init__(name, tile_size, source)
         self.image = image
         self.tile_properties = collections.defaultdict(dict)
         self.margin = margin
@@ -355,6 +428,11 @@ class ArrayMapLayer(object):
         x, y = pos
         return MapTile(self, x, y)
 
+    def all_tiles(self):
+        for x in range(self.map.width):
+            for y in range(self.map.height):
+                yield self[x, y]
+
     @property
     def index(self):
         return self.map.layers.index(self)
@@ -373,6 +451,9 @@ class MapTile(object):
     def __init__(self, layer, x, y):
         self.layer = layer
         self.pos = x, y
+
+    def __nonzero__(self):
+        return bool(self.gid)
 
     @property
     def x(self): return self.pos[0]
@@ -402,24 +483,39 @@ class MapTile(object):
     flipped_vertically = mask_property(0x4000, bool, 14)
     rotated = mask_property(0x2000, bool, 13)
 
-    @property
-    def tileset(self):
-        best = None
-        gid = self.gid
-        for tileset in self.map.tilesets:
-            if tileset.first_gid <= gid:
-                if not best or best < tileset.first_gid:
-                    best = tileset.first_gid
-                    best_tileset = tileset
-        if best:
-            return best_tileset
+    def _tileset_tile(self, tilesets):
+        if self.gid == 0:
+            return None
+        number = self.gid - 1
+        for tileset in tilesets:
+            num_tiles = len(tileset)
+            if number < num_tiles:
+                return tileset[number]
+            else:
+                number -= num_tiles
+        else:
+            # This error will, unfortunately, probably come way too late
+            raise ValueError('Invalid tile GID: %s', self.gid)
 
     @property
     def tileset_tile(self):
-        tileset = self.tileset
-        if tileset:
-            id = self.gid - self.tileset.first_gid
-            return tileset[id]
+        return self._tileset_tile(self.map.tilesets)
+
+    @property
+    def tileset(self):
+        tileset_tile = self.tileset_tile
+        if tileset_tile:
+            return tileset_tile.tileset
+        else:
+            return None
+
+    @property
+    def number(self):
+        tileset_tile = self.tileset_tile
+        if tileset_tile:
+            return self.tileset_tile.number
+        else:
+            return 0
 
     @property
     def size(self):

@@ -42,8 +42,8 @@ def read_write_base(read_func, write_func):
             return etree.tostring(self.to_element(base_path),
                     pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
-        def to_element(self, base_path=None):
-            return write_func(self, base_path)
+        def to_element(self, base_path=None, **kwargs):
+            return write_func(self, base_path, **kwargs)
 
     return ReadWriteBase
 
@@ -67,8 +67,8 @@ def read_map(cls, root, base_path):
             map.properties.update(read_properties(elem))
         elif elem.tag == 'tileset':
             tileset = tmxlib.Tileset.from_element(elem, base_path)
-            assert tileset.first_gid
             map.tilesets.append(tileset)
+            assert tileset.first_gid(map) == tileset._read_first_gid
         elif elem.tag == 'layer':
             map.layers.append(layer_from_element(elem, map))
         else:
@@ -86,7 +86,8 @@ def write_map(map, base_path):
         ))
     append_properties(elem, map.properties)
     for tileset in map.tilesets:
-        elem.append(tileset.to_element(base_path))
+        elem.append(tileset.to_element(base_path,
+                first_gid=tileset.first_gid(map)))
     for layer in map.layers:
         elem.append(layer_to_element(layer))
     return elem
@@ -107,16 +108,16 @@ def read_tileset(cls, elem, base_path):
         assert not elem.attrib, (
                 'Unexpected tileset attributes: %s' % elem.attrib)
         tileset = cls.open(real_source)
-        tileset.first_gid = first_gid
+        tileset._read_first_gid = first_gid
         tileset.source = source
         return tileset
     tileset = cls._image_tileset_class(name=elem.attrib.pop('name'),
             tile_size=(int(elem.attrib.pop('tilewidth')),
                 int(elem.attrib.pop('tileheight'))),
-            first_gid=int(elem.attrib.pop('firstgid', 0)),
             margin=int(elem.attrib.pop('margin', 0)),
             spacing=int(elem.attrib.pop('spacing', 0)),
         )
+    tileset._read_first_gid = int(elem.attrib.pop('firstgid', 0))
     assert not elem.attrib, (
             'Unexpected tileset attributes: %s' % elem.attrib)
     for subelem in elem:
@@ -135,19 +136,23 @@ def read_tileset(cls, elem, base_path):
             assert False, 'Unknown tag %s' % subelem.tag
     return tileset
 
-def write_tileset(tileset, base_path):
+def write_tileset(tileset, base_path, first_gid=None):
     if tileset.source is not None:
-        return etree.Element('tileset', attrib=dict(
-                firstgid=str(tileset.first_gid),
+        attrib = dict(
                 source=tileset.source,
-            ))
+            )
+        if first_gid:
+            attrib['firstgid'] = str(first_gid)
+        return etree.Element('tileset', attrib=attrib)
     else:
-        element = etree.Element('tileset', attrib=dict(
-                firstgid=str(tileset.first_gid),
+        attrib = dict(
                 name=tileset.name,
                 tileheight=str(tileset.tile_height),
                 tilewidth=str(tileset.tile_width),
-            ))
+            )
+        if first_gid:
+            attrib['firstgid'] = str(first_gid)
+        element = etree.Element('tileset', attrib=attrib)
         if tileset.spacing:
             element.attrib['spacing'] = str(tileset.spacing)
         if tileset.margin:

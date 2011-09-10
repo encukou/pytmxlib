@@ -38,6 +38,7 @@ map_filenames = [
         dict(filename='sewers.tmx'),
         dict(filename='tilebmp-test.tmx'),
         dict(filename='desert_nocompress.tmx'),
+        dict(filename='desert_and_walls.tmx'),
     ]
 
 def assert_xml_compare(a, b):
@@ -161,10 +162,10 @@ def test_tileset():
 def test_tileset_tiles():
     map = desert()
     assert map.tilesets[0][0].number == 0
-    assert map.tilesets[0][0].gid == 1
+    assert map.tilesets[0][0].gid(map) == 1
 
     assert map.tilesets[0][1].number == 1
-    assert map.tilesets[0][1].gid == 2
+    assert map.tilesets[0][1].gid(map) == 2
 
     assert map.tilesets[0][-1].number == len(map.tilesets[0]) - 1
 
@@ -335,3 +336,52 @@ def test_layer_list_empty():
     del map.layers[:]
     map.layers.insert(-1, ground)
     check_names('Ground')
+
+def test_multiple_tilesets():
+    map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
+    def check_names(names_string):
+        names = names_string.split()
+        assert [l.name for l in map.tilesets] == names
+    check_names('Desert Walls')
+
+    walls = map.tilesets[1]
+    walls2 = tmxlib.ImageTileset('Walls2', tile_size=(20, 20),
+        image=map.tilesets[0].image)
+    map.tilesets.append(walls2)
+    check_names('Desert Walls Walls2')
+
+    with pytest.raises(ValueError):
+        # Too many tiles to be represented in 2 bytes (along with their flags)
+        map.tilesets.append(tmxlib.ImageTileset('Walls2', tile_size=(1, 1),
+            image=map.tilesets[0].image))
+
+    assert walls2.first_gid(map) == walls.first_gid(map) + len(walls) == 65
+    assert any(t.tileset is walls for t in map.all_tiles())
+    assert not any(t.tileset is walls2 for t in map.all_tiles())
+
+    building = map.layers['Building']
+    tile = building[1, 1]
+    assert tile.tileset is walls
+    assert tile.gid == walls.first_gid(map) + tile.number
+    assert walls.first_gid(map) < building[1, 1].gid < walls2.first_gid(map)
+
+    map.tilesets.move('Walls2', -1)
+    check_names('Desert Walls2 Walls')
+    print tile.gid, walls.first_gid(map)
+    print tile.tileset_tile
+    assert tile.tileset is walls
+    assert tile.gid == walls.first_gid(map) + tile.number
+    assert walls2.first_gid(map) < walls.first_gid(map) < building[1, 1].gid
+
+    assert any(t.tileset is walls for t in map.all_tiles())
+    assert not any(t.tileset is walls2 for t in map.all_tiles())
+
+    map.tilesets.move('Walls2', 1)
+    assert tile.tileset is walls
+    assert tile.gid == walls.first_gid(map) + tile.number
+    assert walls.first_gid(map) < building[1, 1].gid < walls2.first_gid(map)
+
+    map.tilesets.move('Walls2', -1)
+    del map.tilesets['Walls2']
+    assert tile.tileset is walls
+    assert tile.gid == walls.first_gid(map) + tile.number

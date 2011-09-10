@@ -102,17 +102,37 @@ A name will always refer to the first tileset with such name.
     >>> map.tilesets['Desert']
     <ImageTileset 'Desert'>
 
-You can also delete tilesets, sing either names or indexes.
+You can also delete tilesets, using either names or indexes. However, note that
+to delete a tileset, the map may not cntain any of its tiles.
 
     >>> del map.tilesets['Desert']
-    >>> map.tilesets
-    []
-
-    >>> map = tmxlib.Map.open('desert.tmx')
+    Traceback (most recent call last):
+      ...
+    ValueError: Cannot remove <ImageTileset 'Desert'>: map contains its tiles
 
 Each tile in a tileset has a `properties` dict, just like a Map.
 
     >>> tileset[0].properties['obstacle'] = 'yes'
+
+Tilesets are not tied to maps, which means that several maps can share the same
+tileset object.
+
+In map data, tiles are referenced by the `gid`, which is the sum of the
+first_gid and the number of the tile.
+
+    >>> tile = tileset[10]
+    >>> tile.gid(map)
+    11
+
+Each tileset within a map has a `first_gid`, the gid of its first object.
+The first_gid is always `number of tiles in all preceding tilesets + 1`.
+(It is written to the TMX file to help loaders, but should not be changed.)
+
+    >>> tileset.first_gid(map)
+    1
+
+When modifying the list of tilesets, the first_gid can change, in which case
+all affected tiles in the map will be renumbered.
 
 Layers
 ------
@@ -178,6 +198,7 @@ Map tiles can also be flipped and rotated.
     >>> tile
     <MapTile (6, 7) on Ground, gid=30 HR>
 
-
+Map tiles are true in a boolean context iff they're not empty (i.e. their
+`gid` is not 0).
 
 
