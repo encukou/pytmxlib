@@ -126,7 +126,8 @@ first_gid and the number of the tile.
 
 Each tileset within a map has a `first_gid`, the gid of its first object.
 The first_gid is always `number of tiles in all preceding tilesets + 1`.
-(It is written to the TMX file to help loaders, but should not be changed.)
+(It is written to the TMX file to help loaders, but should not be changed
+there.)
 
     >>> tileset.first_gid(map)
     1
@@ -147,7 +148,7 @@ index or by name. Maps also have properties, like maps and tileset tiles.
     >>> map.layers['Ground']
     <ArrayMapLayer #0: 'Ground'>
 
-Creating layers directly can be a hassle, so Map provides an add_layer method
+Creating layers directly can be a hassle, so Map provides an `add_layer` method
 that creates a compatible empty layer.
 
     >>> map.add_layer('Sky')
@@ -221,11 +222,13 @@ Currently supported is the `'png'` backend, which uses the pure-python
     (1.0, 0.8156862..., 0.5803921..., 1.0)
 
 A custom class may also be given as the image backend. 'png' is just a shortcut
-for tmxlib.image_png import PngImage, so the following serializer would do the
+for tmxlib.image_png.PngImage, so the following serializer would do the
 same as the above one:
 
     >>> from tmxlib.image_png import PngImage
     >>> serializer = tmxlib.fileio.TMXSerializer(image_backend=PngImage)
+    >>> map.tilesets['Desert'][0].get_pixel(0, 0)
+    (1.0, 0.8156862..., 0.5803921..., 1.0)
 
 See image_png.py to see how to make another backend (patches welcome, pull
 requests welcomer!).
