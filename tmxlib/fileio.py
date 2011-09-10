@@ -190,18 +190,18 @@ def write_image(image, base_path):
 def layer_from_element(elem, map):
     layer = tmxlib.ArrayMapLayer(map, elem.attrib.pop('name'),
             opacity=float(elem.attrib.pop('opacity', 1)),
-            visible=bool(int(elem.attrib.pop('visible', 1))),
-            data=False)
+            visible=bool(int(elem.attrib.pop('visible', 1))))
     layer_size = (int(elem.attrib.pop('width')),
             int(elem.attrib.pop('height')))
     assert layer_size == map.size
     assert not elem.attrib, (
         'Unexpected layer attributes: %s' % elem.attrib)
+    data_set = False
     for subelem in elem:
         if subelem.tag == 'properties':
             layer.properties.update(read_properties(subelem))
         elif subelem.tag == 'data':
-            assert layer.data is False
+            assert data_set is False
             data = subelem.text
             encoding = subelem.attrib.pop('encoding')
             if encoding == 'base64':
@@ -230,6 +230,7 @@ def layer_from_element(elem, map):
                         (ord(d) << 24)) for
                     a, b, c, d in
                     zip(*(data[x::4] for x in range(4)))])
+            data_set = True
         else:
             assert False, 'Unknown tag %s' % subelem.tag
     assert layer.data

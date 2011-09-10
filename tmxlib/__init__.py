@@ -191,10 +191,12 @@ class ArrayMapLayer(object):
         self.visible = visible
         self.opacity = opacity
         self.properties = {}
+        data_size = map.width * map.height
         if data is None:
-            self.data = array.array('l')
-            self.data.extend([0] * (map.width * map.height))
+            self.data = array.array('l', [0] * data_size)
         else:
+            if len(data) != data_size:
+                raise ValueError('Invalid layer data size')
             self.data = data
         self.encoding = 'base64'
         self.compression = 'zlib'
