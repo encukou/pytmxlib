@@ -103,7 +103,7 @@ A name will always refer to the first tileset with such name.
     <ImageTileset 'Desert'>
 
 You can also delete tilesets, using either names or indexes. However, note that
-to delete a tileset, the map may not cntain any of its tiles.
+to delete a tileset, the map may not contain any of its tiles.
 
     >>> del map.tilesets['Desert']
     Traceback (most recent call last):
