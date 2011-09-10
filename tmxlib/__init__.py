@@ -6,47 +6,158 @@ For the Tiled map editor http://www.mapeditor.org/
 
 import array
 import collections
+import contextlib
 
 from tmxlib import fileio
 
-class NamedElementList(list):
-    """A list that also supports indexing by element name, as a convenience
+class NamedElementList(collections.MutableSequence):
+    """A list that supports indexing by element name, as a convenience, etc
 
     `lst[some_name]` means the first element where `element.name == some_name`
+
+    There are hooks for subclasses: stored_value, retrieved_value, and
+    modification_context
     """
-    def _index(self, index_or_name):
+    def __init__(self, lst=None):
+        if lst is None:
+            self.list = []
+        else:
+            self.list = [self.stored_value(item) for item in lst]
+
+    def get_index(self, index_or_name):
+        """Get the list index corresponding to a __getattr__ (etc.) argument
+
+        Raises KeyError if a name is not found.
+        """
         if isinstance(index_or_name, basestring):
             for i, element in enumerate(self):
-                if element.name == index_or_name:
+                if self.retrieved_value(element).name == index_or_name:
                     return i
             else:
                 raise KeyError(index_or_name)
         else:
             return index_or_name
 
-    def __getitem__(self, item):
-        return super(NamedElementList, self).__getitem__(self._index(item))
+    def __len__(self):
+        return len(self.list)
 
-    def __setitem__(self, item, value):
-        return super(NamedElementList, self).__setitem__(self._index(item),
-                value)
-
-    def __delitem__(self, item):
-        return super(NamedElementList, self).__delitem__(self._index(item))
+    def __iter__(self):
+        return iter(self.list)
 
     def __contains__(self, item_or_name):
         if isinstance(item_or_name, basestring):
-            return any(i for i in self if i.name == item_or_name)
+            return any(i for i in self.list if
+                    self.retrieved_value(i).name == item_or_name)
         else:
-            return super(NamedElementList, self).__contains__(item_or_name)
+            return self.stored_value(item_or_name) in self.list
+
+    def __setitem__(self, index_or_name, value):
+        with self.modification_context():
+            if isinstance(index_or_name, slice):
+                self.list[index_or_name] = (self.stored_value(i)
+                        for i in value)
+            else:
+                stored = self.stored_value(value)
+                self.list[self.get_index(index_or_name)] = stored
+
+    def __getitem__(self, index_or_name):
+        if isinstance(index_or_name, slice):
+            return [self.retrieved_value(item) for item in
+                    self.list[index_or_name]]
+        else:
+            index = self.get_index(index_or_name)
+            return self.retrieved_value(self.list[index])
+
+    def __delitem__(self, index_or_name):
+        with self.modification_context():
+            if isinstance(index_or_name, slice):
+                del self.list[index_or_name]
+            else:
+                del self.list[self.get_index(index_or_name)]
+
+    def insert(self, index_or_name, value):
+        index = self.get_index(index_or_name)
+        with self.modification_context():
+            self.list.insert(index, self.stored_value(value))
+
+    def insert_after(self, index_or_name, value):
+        """Insert the new value after the position specified by index_or_name
+
+        For numerical indexes, the same as insert(index + 1, value).
+        Useful when indexing by strings.
+        """
+        with self.modification_context():
+            index = self.get_index(index_or_name) + 1
+            self.list.insert(index, self.stored_value(value))
+
+    def __repr__(self):
+        return repr([self.retrieved_value(i) for i in self.list])
+
+    def stored_value(self, item):
+        """Called when an item is being inserted into the list.
+
+        Return the object that will actually be stored.
+
+        Raise an exception to prevent incompatible items.
+
+        This method must undo any modifications that retrieved_value does.
+        """
+        return item
+
+    def retrieved_value(self, item):
+        """Called when an item is being retrieved from the list.
+
+        Return the object that will actually be retrieved.
+
+        This method must undo any modifications that stored_value does.
+        """
+        return item
+
+    @contextlib.contextmanager
+    def modification_context(self):
+        """Context in which all modifications take place.
+
+        The default implementation nullifies the modifications list if an
+        exception occurs.
+        """
+        previous = list(self.list)
+        try:
+            yield
+        except:
+            self.list = previous
+            raise
+
+class LayerList(NamedElementList):
+    """A list of layers.
+
+    Allows indexing by name, and can only contain layers of a single map.
+    """
+    def __init__(self, map, lst=None):
+        self.map = map
+        super(LayerList, self).__init__(lst)
+
+    def stored_value(self, layer):
+        if layer.map != self.map:
+            raise ValueError('Incompatible layer')
+        return layer
+
+class TilesetList(NamedElementList):
+    """A list of tilesets.
+
+    Allows indexing by name
+    """
+    def __init__(self, map, lst=None):
+        self.map = map
+        super(TilesetList, self).__init__(lst)
 
 class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
-    def __init__(self, size, tile_size, orientation='orthogonal', base_path=None):
+    def __init__(self, size, tile_size, orientation='orthogonal',
+            base_path=None):
         self.orientation = orientation
         self.size=size
         self.tile_size = tile_size
-        self.tilesets = NamedElementList()
-        self.layers = NamedElementList()
+        self.tilesets = TilesetList(self)
+        self.layers = LayerList(self)
         self.properties = {}
         self.base_path = base_path
 
@@ -79,6 +190,22 @@ class Map(fileio.read_write_base(fileio.read_map, fileio.write_map)):
     @property
     def pixel_height(self): return self.height * self.tile_height
 
+    def add_layer(self, name, before=None, after=None):
+        """Add an empty layer with the given name to the map.
+
+        By default, the new layer is added at the end of the layer list.
+        A different position may be specified with either of the `before` or
+        `after` arguments.
+        """
+        new_layer = ArrayMapLayer(self, name)
+        if after is not None:
+            if before is not None:
+                raise ValueError("Can't specify both before and after")
+            self.layers.insert_after(after, new_layer)
+        elif before is not None:
+            self.layers.insert(before, new_layer)
+        else:
+            self.layers.append(new_layer)
 
 class TilesetTile(object):
     def __init__(self, tileset, number):
@@ -193,11 +320,11 @@ class ArrayMapLayer(object):
         self.properties = {}
         data_size = map.width * map.height
         if data is None:
-            self.data = array.array('l', [0] * data_size)
+            self.data = array.array('h', [0] * data_size)
         else:
             if len(data) != data_size:
                 raise ValueError('Invalid layer data size')
-            self.data = data
+            self.data = array.array('h', data)
         self.encoding = 'base64'
         self.compression = 'zlib'
 

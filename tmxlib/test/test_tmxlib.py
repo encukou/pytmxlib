@@ -114,6 +114,15 @@ def test_layers_contains_layer():
     assert map.layers[0] in map.layers
     assert tmxlib.ArrayMapLayer(map, 'Ground') not in map.layers
 
+def test_explicit_layer_creation():
+    map = desert()
+    data = [0] * (map.width * map.height)
+    data[5] = 1
+    layer = tmxlib.ArrayMapLayer(map, 'New layer', data=data)
+    assert list(layer.data) == data
+    with pytest.raises(ValueError):
+        tmxlib.ArrayMapLayer(map, 'New layer', data=[1, 2, 3])
+
 def test_size_get_set():
     map = desert()
     assert (map.width, map.height) == map.size == (40, 40)
@@ -235,3 +244,81 @@ def test_empty_tile():
 def test_properties():
     map = tmxlib.Map.open(get_test_filename('perspective_walls.tmx'))
     print map
+
+
+def test_layer_list():
+    map = desert()
+    different_map = desert()
+    def check_names(names_string):
+        names = names_string.split()
+        assert [l.name for l in map.layers] == names
+    map.add_layer('Sky')
+    map.add_layer('Underground', before='Ground')
+    map.add_layer('Foliage', after='Ground')
+
+    check_names('Underground Ground Foliage Sky')
+    assert [l.name for l in map.layers[2:]] == 'Foliage Sky'.split()
+    assert [l.name for l in map.layers[:2]] == 'Underground Ground'.split()
+    assert [l.name for l in map.layers[::2]] == 'Underground Foliage'.split()
+    assert [l.name for l in map.layers[1::2]] == 'Ground Sky'.split()
+    assert [l.name for l in map.layers[:2:2]] == 'Underground'.split()
+    assert [l.name for l in map.layers[1:3]] == 'Ground Foliage'.split()
+
+    assert [l.name for l in map.layers[-2:]] == 'Foliage Sky'.split()
+    assert [l.name for l in map.layers[:-2]] == 'Underground Ground'.split()
+    assert [l.name for l in map.layers[::-2]] == 'Sky Ground'.split()
+    assert [l.name for l in map.layers[-2::-2]] == 'Foliage Underground'.split()
+    assert [l.name for l in map.layers[:-2:-2]] == 'Sky'.split()
+    assert [l.name for l in map.layers[-3:-1]] == 'Ground Foliage'.split()
+
+    ground = map.layers[1]
+    assert ground.name == 'Ground'
+
+    del map.layers[1::2]
+    check_names('Underground Foliage')
+    two_layers = list(map.layers)
+
+    del map.layers[1]
+    check_names('Underground')
+
+    map.layers[0] = ground
+    check_names('Ground')
+
+    map.layers[1:] = two_layers
+    check_names('Ground Underground Foliage')
+
+    del map.layers[:1]
+    map.layers[1:1] = [ground]
+    check_names('Underground Ground Foliage')
+
+    with pytest.raises(ValueError):
+        map.layers[0] = different_map.layers[0]
+
+def test_layer_list_empty():
+    map = desert()
+    ground = map.layers[0]
+    def check_names(names_string):
+        names = names_string.split()
+        assert [l.name for l in map.layers] == names
+
+    del map.layers[:]
+    check_names('')
+
+    map.add_layer('Sky')
+    check_names('Sky')
+
+    del map.layers[:]
+    map.layers.append(ground)
+    check_names('Ground')
+
+    del map.layers[:]
+    map.layers.insert(0, ground)
+    check_names('Ground')
+
+    del map.layers[:]
+    map.layers.insert(1, ground)
+    check_names('Ground')
+
+    del map.layers[:]
+    map.layers.insert(-1, ground)
+    check_names('Ground')
