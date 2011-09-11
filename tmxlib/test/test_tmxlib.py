@@ -534,3 +534,11 @@ def test_get_pixel(image_backend):
         assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
         assert_color_tuple_eq(tile.get_pixel(-1, -1),  top_right)
 
+def test_shared_tilesets():
+    serializer = tmxlib.fileio.TMXSerializer(image_backend='png')
+    map1 = tmxlib.Map.open(get_test_filename('perspective_walls.tmx'),
+            serializer=serializer)
+    map2 = tmxlib.Map.open(get_test_filename('perspective_walls.tmx'),
+            serializer=serializer)
+
+    assert map1.tilesets[0] is map2.tilesets[0]

@@ -8,6 +8,7 @@ import struct
 import binascii
 import StringIO
 import functools
+from weakref import WeakValueDictionary
 
 from lxml import etree
 
@@ -16,9 +17,9 @@ parser = etree.XMLParser(remove_comments=True)
 def read_write_base(obj_type):
     class ReadWriteBase(object):
         @classmethod
-        def open(cls, filename, serializer=None, base_path=None):
+        def open(cls, filename, serializer=None, base_path=None, shared=False):
             serializer = serializer_getdefault(serializer)
-            return serializer.open(cls, obj_type, filename, base_path)
+            return serializer.open(cls, obj_type, filename, base_path, shared)
 
         @classmethod
         def load(cls, string, serializer=None, base_path=None):
@@ -67,15 +68,25 @@ class TMXSerializer(object):
             image_backend.load_image  # image backends must have this method
             self.image_class = image_backend
 
+        self._shared_objects = WeakValueDictionary()
+
     def load_file(self, filename, base_path=None):
         if base_path:
             filename = os.path.join(base_path, filename)
         with open(filename, 'r') as fileobj:
             return fileobj.read()
 
-    def open(self, cls, obj_type, filename, base_path=None):
+    def open(self, cls, obj_type, filename, base_path=None, shared=False):
         if not base_path:
             base_path = os.path.dirname(os.path.abspath(filename))
+        if shared:
+            filename = os.path.normpath(os.path.join(base_path, filename))
+            try:
+                return self._shared_objects[obj_type, filename]
+            except KeyError:
+                self._shared_objects[obj_type, filename] = obj = self.open(
+                        cls, obj_type, filename)
+                return obj
         return self.load(cls, obj_type, self.load_file(filename, base_path),
                 base_path=base_path)
 
@@ -171,7 +182,7 @@ class TMXSerializer(object):
             first_gid = int(elem.attrib.pop('firstgid'))
             assert not elem.attrib, (
                     'Unexpected tileset attributes: %s' % elem.attrib)
-            tileset = self.tileset_class.open(real_source, serializer=self)
+            tileset = self.open(cls, 'tileset', real_source, shared=True)
             tileset._read_first_gid = first_gid
             tileset.source = source
             return tileset
