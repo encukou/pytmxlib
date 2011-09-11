@@ -252,6 +252,16 @@ def test_map_tile():
     map.layers[0][1, 2] = 0
     assert not map.layers[0][1, 2]
 
+def test_map_tiles():
+    map = desert()
+    assert len(list(map.get_tiles(0, 0))) == 1
+
+    map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
+    tile_list = list(map.get_tiles(0, 0))
+    assert len(tile_list) == 3
+    assert tile_list[0] == map.layers[0][0, 0]
+    assert tile_list[1] == map.layers[1][0, 0]
+
 def test_empty_tile():
     map = desert()
     layer = map.layers[0] = tmxlib.ArrayMapLayer(map, 'Empty')

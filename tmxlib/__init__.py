@@ -291,6 +291,13 @@ class Map(fileio.read_write_base('map'), SizeMixin):
             for obj in layer.all_objects():
                 yield obj
 
+    def get_tiles(self, x, y):
+        """Yield tiles from all tile-layers at the given position
+        """
+        for layer in self.layers:
+            if layer.type == 'tiles':
+                yield layer[x, y]
+
     def check_consistency(self):
         large_gid = self.tilesets[-1].end_gid
         for tile in self.all_tiles():
@@ -690,6 +697,12 @@ class MapTile(TileLikeObject):
             return tileset_tile.properties
         else:
             return {}
+
+    def __eq__(self, other):
+        return self.layer == other.layer and self.pos == other.pos
+
+    def __ne__(self, other):
+        return not self == other
 
 
 class ObjectLayer(Layer, NamedElementList):
