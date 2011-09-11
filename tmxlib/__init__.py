@@ -327,7 +327,8 @@ class TilesetTile(SizeMixin):
         return not (self == other)
 
     def __repr__(self):
-        return '<TilesetTile #%s of %s>' % (self.number, self.tileset.name)
+        return '<TilesetTile #%s of %s at 0x%x>' % (self.number,
+                self.tileset.name, id(self))
 
     @property
     def image(self):
@@ -390,7 +391,7 @@ class Tileset(fileio.read_write_base('tileset')):
     def tile_height(self, value): self.tile_size = self.tile_size[0], value
 
     def __repr__(self):
-        return '<%s %r>' % (type(self).__name__, self.name)
+        return '<%s %r at 0x%x>' % (type(self).__name__, self.name, id(self))
 
 class ImageTileset(Tileset):
     def __init__(self, name, tile_size, image, margin=0, spacing=0,
@@ -511,7 +512,8 @@ class Layer(object):
         return self.map.layers.index(self)
 
     def __repr__(self):
-        return '<%s #%s: %r>' % (type(self).__name__, self.index, self.name)
+        return '<%s #%s: %r at 0x%x>' % (type(self).__name__, self.index,
+                self.name, id(self))
 
 class ArrayMapLayer(Layer):
     def __init__(self, map, name, visible=True, opacity=1, data=None):
@@ -677,8 +679,8 @@ class MapTile(TileLikeObject):
                 self.flipped_vertically,
                 self.rotated,
             )) if v)
-        return '<%s %s on %s, gid=%s %s>' % (type(self).__name__, self.pos,
-                self.layer.name, self.gid, flagstring)
+        return '<%s %s on %s, gid=%s %s at 0x%x>' % (type(self).__name__,
+                self.pos, self.layer.name, self.gid, flagstring, id(self))
 
     @property
     def size(self):

@@ -87,20 +87,20 @@ Tilesets
 Each map has one or more tilesets, which behave as sequences of tiles.
 
     >>> map.tilesets
-    [<ImageTileset 'Desert'>]
+    [<ImageTileset 'Desert' at ...>]
     >>> tileset = map.tilesets[0]
     >>> len(tileset)
     48
     >>> tileset[0]
-    <TilesetTile #0 of Desert>
+    <TilesetTile #0 of Desert at ...>
     >>> tileset[-1]
-    <TilesetTile #47 of Desert>
+    <TilesetTile #47 of Desert at ...>
 
 As a convenience, tilesets may be accessed by name instead of number.
 A name will always refer to the first tileset with such name.
 
     >>> map.tilesets['Desert']
-    <ImageTileset 'Desert'>
+    <ImageTileset 'Desert' at ...>
 
 You can also delete tilesets, using either names or indexes. However, note that
 to delete a tileset, the map may not contain any of its tiles.
@@ -108,7 +108,7 @@ to delete a tileset, the map may not contain any of its tiles.
     >>> del map.tilesets['Desert']
     Traceback (most recent call last):
       ...
-    ValueError: Cannot remove <ImageTileset 'Desert'>: map contains its tiles
+    ValueError: Cannot remove <ImageTileset 'Desert' at ...>: map contains its tiles
 
 Each tile in a tileset has a `properties` dict, just like a Map.
 
@@ -142,21 +142,21 @@ As with tilesets, each map has layers. These can also be accessed either by
 index or by name. Maps also have properties, like maps and tileset tiles.
 
     >>> map.layers
-    [<ArrayMapLayer #0: 'Ground'>]
+    [<ArrayMapLayer #0: 'Ground' at ...>]
     >>> map.layers[0]
-    <ArrayMapLayer #0: 'Ground'>
+    <ArrayMapLayer #0: 'Ground' at ...>
     >>> map.layers['Ground']
-    <ArrayMapLayer #0: 'Ground'>
+    <ArrayMapLayer #0: 'Ground' at ...>
 
 Creating layers directly can be a hassle, so Map provides an `add_layer` method
 that creates a compatible empty layer.
 
     >>> map.add_layer('Sky')
-    <ArrayMapLayer #1: 'Sky'>
+    <ArrayMapLayer #1: 'Sky' at ...>
     >>> map.add_layer('Underground', before='Ground')
-    <ArrayMapLayer #0: 'Underground'>
+    <ArrayMapLayer #0: 'Underground' at ...>
     >>> map.layers
-    [<ArrayMapLayer #0: 'Underground'>, <ArrayMapLayer #1: 'Ground'>, <ArrayMapLayer #2: 'Sky'>]
+    [<ArrayMapLayer #0: 'Underground' at ...>, <ArrayMapLayer #1: 'Ground' at ...>, <ArrayMapLayer #2: 'Sky' at ...>]
 
 Map tiles
 ---------
@@ -166,9 +166,9 @@ coordinates to get a MapTile object.
 
     >>> layer = map.layers['Ground']
     >>> layer[0, 0]
-    <MapTile (0, 0) on Ground, gid=30 >
+    <MapTile (0, 0) on Ground, gid=30  at ...>
     >>> layer[6, 7]
-    <MapTile (6, 7) on Ground, gid=40 >
+    <MapTile (6, 7) on Ground, gid=40  at ...>
 
 The MapTile object is a reference to a particular place in the map. This means
 that changing the MapTile object will update the map.
@@ -185,19 +185,19 @@ correspond to a tileset tile's `number`; the two are offset by the tileset's
 `first_gid`.
 
     >>> tile.tileset
-    <ImageTileset 'Desert'>
+    <ImageTileset 'Desert' at ...>
     >>> tile.tileset_tile
-    <TilesetTile #29 of Desert>
+    <TilesetTile #29 of Desert at ...>
 
 Map tiles can also be flipped and rotated.
 (As of this writing, rotation is not implemented in Tiled, but it's planned.)
 
     >>> tile.flipped_horizontally = True
     >>> tile
-    <MapTile (6, 7) on Ground, gid=30 H>
+    <MapTile (6, 7) on Ground, gid=30 H at ...>
     >>> tile.rotated = True
     >>> tile
-    <MapTile (6, 7) on Ground, gid=30 HR>
+    <MapTile (6, 7) on Ground, gid=30 HR at ...>
 
 Map tiles are true in a boolean context iff they're not empty (i.e. their
 `gid` is not 0).
