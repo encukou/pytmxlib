@@ -466,7 +466,7 @@ class Image(ImageBase, fileio.read_write_base('image')):
                     base_path=self.base_path)
             return self._data
 
-    def load_image():
+    def load_image(self):
         """Load the image from self.data, and set self.size
         """
         raise TypeError('Image data not available')
@@ -516,6 +516,13 @@ class Layer(object):
                 self.name, id(self))
 
 class ArrayMapLayer(Layer):
+    """A tile layer
+
+    Acts as a 2D array of MapTile's, indexed by (x, y).
+    Assignment is possible either via numeric values, or by assigning
+    a TilesetTile. In the latter case, if the tileset is not on the map yet,
+    it is added.
+    """
     def __init__(self, map, name, visible=True, opacity=1, data=None):
         super(ArrayMapLayer, self).__init__(map=map, name=name,
                 visible=visible, opacity=opacity)
@@ -536,7 +543,12 @@ class ArrayMapLayer(Layer):
 
     def __setitem__(self, pos, value):
         if isinstance(value, TilesetTile):
-            value = value.gid(self.map)
+            try:
+                value = value.gid(self.map)
+            except TilesetNotInMapError:
+                # Add the tileset
+                self.map.tilesets.append(value.tileset)
+                value = value.gid(self.map)
         self.data[self.data_index(pos)] = int(value)
 
     def __getitem__(self, pos):

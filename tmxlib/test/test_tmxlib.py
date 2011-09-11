@@ -542,3 +542,15 @@ def test_shared_tilesets():
             serializer=serializer)
 
     assert map1.tilesets[0] is map2.tilesets[0]
+
+def test_autoadd_tileset():
+    serializer = tmxlib.fileio.TMXSerializer(image_backend='png')
+    map = desert()
+    tileset = tmxlib.ImageTileset.open(
+            get_test_filename('perspective_walls.tsx'), serializer=serializer)
+
+    assert tileset not in map.tilesets
+
+    map.layers[0][0, 0] = tileset[0]
+
+    assert tileset in map.tilesets
