@@ -152,9 +152,9 @@ Creating layers directly can be a hassle, so Map provides an `add_layer` method
 that creates a compatible empty layer.
 
     >>> map.add_layer('Sky')
-    >>> map.layers
-    [<ArrayMapLayer #0: 'Ground'>, <ArrayMapLayer #1: 'Sky'>]
+    <ArrayMapLayer #1: 'Sky'>
     >>> map.add_layer('Underground', before='Ground')
+    <ArrayMapLayer #0: 'Underground'>
     >>> map.layers
     [<ArrayMapLayer #0: 'Underground'>, <ArrayMapLayer #1: 'Ground'>, <ArrayMapLayer #2: 'Sky'>]
 

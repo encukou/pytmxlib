@@ -276,6 +276,7 @@ class Map(fileio.read_write_base('map'), SizeMixin):
             self.layers.insert(before, new_layer)
         else:
             self.layers.append(new_layer)
+        return new_layer
 
     def all_tiles(self):
         """Yield all tiles in the map, including tile objects
