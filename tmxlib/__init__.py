@@ -475,11 +475,15 @@ class ImageRegion(ImageBase):
         self.size = size
 
     def get_pixel(self, x, y):
+        if x < 0: x += self.width
+        if y < 0: y += self.height
         assert 0 <= x < self.width
         assert 0 <= y < self.height
         return self.image.get_pixel(x + self.x, y + self.y)
 
     def set_pixel(self, x, y, value):
+        if x < 0: x += self.width
+        if y < 0: y += self.height
         assert 0 <= x < self.width
         assert 0 <= y < self.height
         self.image.set_pixel(x + self.x, y + self.y, value)
@@ -619,18 +623,32 @@ class TileLikeObject(SizeMixin):
         if tileset_tile:
             return self.tileset_tile.image
 
+    def tile_to_image_coordinates(self, x, y):
+        """Transform map-tile pixel oordinates to tileset-tile pixel coords.
+        """
+        if self.rotated:
+            # rotate 90deg clockwise = invert axes + horizontal flip
+            # so: first invert axes, then check for negative indices,
+            #  and flip after that
+            x, y = y, x
+        if y < 0:
+            y = self.height + y
+        if x < 0:
+            x = self.width + x
+        if self.rotated:
+            # here's the horizontal flip
+            x = self.width - x - 1
+        if self.flipped_vertically:
+            x = self.width - x - 1
+        if self.flipped_horizontally:
+            y = self.height - y - 1
+        return x, y
+
     def get_pixel(self, x, y):
         tileset_tile = self.tileset_tile
         if tileset_tile:
-            if self.rotated:
-                # invert axes + horizontal flip = rotate 90deg clockwise
-                x, y = y, x
-                x = self.width - x - 1
-            if self.flipped_vertically:
-                x = self.width - x - 1
-            if self.flipped_horizontally:
-                y = self.height - y - 1
-            return tileset_tile.get_pixel(x, y)
+            tile_coords = self.tile_to_image_coordinates(x, y)
+            return tileset_tile.get_pixel(*tile_coords)
         else:
             return 0, 0, 0, 0
 
@@ -657,7 +675,10 @@ class MapTile(TileLikeObject):
     def size(self):
         tileset_tile = self.tileset_tile
         if tileset_tile:
-            return tileset_tile.size
+            if self.rotated:
+                return tileset_tile.height, tileset_tile.width
+            else:
+                return tileset_tile.size
         else:
             return 0, 0
 

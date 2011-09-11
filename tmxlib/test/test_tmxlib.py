@@ -478,27 +478,49 @@ def test_get_pixel(image_backend):
 
     tile = map.layers['Ground'][0, 0]
 
+    top_left = 98 / 255, 88 / 255, 56 / 255, 1
+    top_right = 98 / 255, 88 / 255, 56 / 255, 1
+    bottom_left = 209 / 255, 189 / 255, 158 / 255, 1
+    bottom_right = 162 / 255, 152 / 255, 98 / 255, 1
+
     tile.value = map.tilesets['Desert'][9]
     with context():
-        assert_color_tuple_eq(tile.get_pixel(0, 0),
-                (98 / 255, 88 / 255, 56 / 255, 1))
+        assert_color_tuple_eq(tile.get_pixel(0, 0), top_left)
+        assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_left)
+        assert_color_tuple_eq(tile.get_pixel(-1, 0), top_right)
+        assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_right)
 
     tile.value = map.tilesets['Desert'][9]
     tile.flipped_horizontally = True
     with context():
-        assert_color_tuple_eq(tile.get_pixel(0, 0),
-                (209 / 255, 189 / 255, 158 / 255, 1))
+        assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
+        assert_color_tuple_eq(tile.get_pixel(0, -1), top_left)
+        assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_right)
+        assert_color_tuple_eq(tile.get_pixel(-1, -1), top_right)
 
     tile.value = map.tilesets['Desert'][9]
     tile.flipped_vertically = True
     with context():
-        assert_color_tuple_eq(tile.get_pixel(0, 0),
-                (98 / 255, 88 / 255, 56 / 255, 1))
+        assert_color_tuple_eq(tile.get_pixel(0, 0), top_right)
+        assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_right)
+        assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
+        assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_left)
+
+    tile.value = map.tilesets['Desert'][9]
+    tile.rotated = True
+    with context():
+        assert_color_tuple_eq(tile.get_pixel(0, 0), top_right)
+        assert_color_tuple_eq(tile.get_pixel(0, -1), top_left)
+        assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_right)
+        assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_left)
 
     tile.value = map.tilesets['Desert'][9]
     tile.flipped_horizontally = True
+    tile.flipped_vertically = True
     tile.rotated = True
     with context():
-        assert_color_tuple_eq(tile.get_pixel(0, 0),
-                (162 / 255, 152 / 255, 98 / 255, 1))
+        assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
+        assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_right)
+        assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
+        assert_color_tuple_eq(tile.get_pixel(-1, -1),  top_right)
 

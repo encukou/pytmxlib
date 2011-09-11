@@ -31,9 +31,13 @@ class PngImage(tmxlib.Image):
             return self._image_data
 
     def get_pixel(self, x, y):
+        if x < 0: x += self.width
+        if y < 0: y += self.height
         return tuple(v / 255 for v in self.image_data[y][x * 4 : (x+1) * 4])
 
     def set_pixel(self, x, y, value):
+        if x < 0: x += self.width
+        if y < 0: y += self.height
         value = (round(v * 255) for v in value)
         self.image_data[y][x * 4 : (x+1) * 4] = value
         self.dirty = True
