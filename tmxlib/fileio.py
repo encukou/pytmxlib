@@ -199,6 +199,8 @@ class TMXSerializer(object):
                         props.update(self.read_properties(subsubelem))
                     else:
                         assert False, 'Unknown tag %s' % subelem.tag
+            elif subelem.tag == 'properties':
+                tileset.properties.update(self.read_properties(subelem))
             else:
                 assert False, 'Unknown tag %s' % subelem.tag
         assert tileset.image
@@ -234,6 +236,7 @@ class TMXSerializer(object):
                             attrib=dict(id=str(tile_no)))
                     element.append(tile_elem)
                     self.append_properties(tile_elem, props)
+            self.append_properties(element, tileset.properties)
             return element
 
     @load_method

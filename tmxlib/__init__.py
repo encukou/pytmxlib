@@ -335,6 +335,7 @@ class Tileset(fileio.read_write_base('tileset')):
         self.name = name
         self.tile_size = tile_size
         self.source = source
+        self.properties = {}
 
     def __getitem__(self, n):
         if n >= 0:
