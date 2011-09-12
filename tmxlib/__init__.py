@@ -22,6 +22,7 @@ class NamedElementList(collections.MutableSequence):
     modification_context
     """
     def __init__(self, lst=None):
+        """Initialize this list from an iterable"""
         if lst is None:
             self.list = []
         else:
@@ -42,12 +43,18 @@ class NamedElementList(collections.MutableSequence):
             return index_or_name
 
     def __len__(self):
+        """Return the length of this list"""
         return len(self.list)
 
     def __iter__(self):
+        """Return an iterator for this list"""
         return iter(self.list)
 
     def __contains__(self, item_or_name):
+        """ `item_or_name` in `self`
+
+        NamedElementLists can be queried either by name or by item.
+        """
         if isinstance(item_or_name, basestring):
             return any(i for i in self.list if
                     self.retrieved_value(i).name == item_or_name)
@@ -55,6 +62,8 @@ class NamedElementList(collections.MutableSequence):
             return self.stored_value(item_or_name) in self.list
 
     def __setitem__(self, index_or_name, value):
+        """Same as list, except non-slice indices may be names instead of ints.
+        """
         with self.modification_context():
             if isinstance(index_or_name, slice):
                 self.list[index_or_name] = (self.stored_value(i)
@@ -64,6 +73,8 @@ class NamedElementList(collections.MutableSequence):
                 self.list[self.get_index(index_or_name)] = stored
 
     def __getitem__(self, index_or_name):
+        """Same as list, except non-slice indices may be names instead of ints.
+        """
         if isinstance(index_or_name, slice):
             return [self.retrieved_value(item) for item in
                     self.list[index_or_name]]
@@ -72,6 +83,8 @@ class NamedElementList(collections.MutableSequence):
             return self.retrieved_value(self.list[index])
 
     def __delitem__(self, index_or_name):
+        """Same as list, except non-slice indices may be names instead of ints.
+        """
         with self.modification_context():
             if isinstance(index_or_name, slice):
                 del self.list[index_or_name]
@@ -79,6 +92,8 @@ class NamedElementList(collections.MutableSequence):
                 del self.list[self.get_index(index_or_name)]
 
     def insert(self, index_or_name, value):
+        """Same as list, except indices may be names instead of ints.
+        """
         index = self.get_index(index_or_name)
         with self.modification_context():
             self.list.insert(index, self.stored_value(value))
@@ -117,7 +132,7 @@ class NamedElementList(collections.MutableSequence):
 
         Return the object that will actually be stored.
 
-        Raise an exception to prevent incompatible items.
+        To prevent incompatible items, subclasses may raise an exception here.
 
         This method must undo any modifications that retrieved_value does.
         """
@@ -138,6 +153,9 @@ class NamedElementList(collections.MutableSequence):
 
         The default implementation nullifies the modifications if an exception
         is raised.
+
+        Note that the manager may nest, in which case the outermost one should
+        be treated as an atomic operation.
         """
         previous = list(self.list)
         try:
@@ -156,6 +174,8 @@ class LayerList(NamedElementList):
         super(LayerList, self).__init__(lst)
 
     def stored_value(self, layer):
+        """Prevent layers that aren't from this map.
+        """
         if layer.map != self.map:
             raise ValueError('Incompatible layer')
         return layer
@@ -177,12 +197,11 @@ class TilesetList(NamedElementList):
         While this manager is active, the map's tiles are invalid and should
         not be touched.
         After all modification_contexts exit, tiles are renumbered to match the
-        new tileset list.
+        new tileset list. This means that multiple operations on the tileset
+        list can be wrapped in a modification_context for efficiency.
 
-        Multiple operations on the tileset list can be wrapped in a
-        modification_context for efficiency. Note that if a used tileset is
-        removed, an exception will be raised whenever the outermost
-        modification_context exits.
+        If a used tileset is removed, an exception will be raised whenever the
+        outermost modification_context exits.
         """
         if self._being_modified:
             # Ignore inner context
@@ -202,6 +221,13 @@ class TilesetList(NamedElementList):
                 self._being_modified = False
 
     def _renumber_map(self, previous_tilesets):
+        """Renumber tiles in the map after tilesets are changed
+
+        This reassigns the GIDs of tiles to match the new situation.
+
+        If an used tilesed was removed, raise a ValueError. (Note that this
+        method by itself won't restore the previous state.)
+        """
         memo = dict()
         for tile in self.map.all_tiles():
             if tile:
@@ -219,18 +245,48 @@ class TilesetList(NamedElementList):
 
 class SizeMixin(object):
     """Provides `width` and `height` properties that get/set a 2D size
+
+    Subclasses will need a `size` property, a pair of values.
+
+    Note: setting width or height will set size to a new tuple.
     """
     @property
-    def width(self): return self.size[0]
+    def width(self):
+        """Width of this object, i.e. self.size[0]
+        """
+        return self.size[0]
     @width.setter
     def width(self, value): self.size = value, self.size[1]
 
     @property
-    def height(self): return self.size[1]
+    def height(self):
+        """Height of this object, i.e. self.size[1]
+        """
+        return self.size[1]
     @height.setter
     def height(self, value): self.size = self.size[0], value
 
 class Map(fileio.read_write_base('map'), SizeMixin):
+    """A tile map. tmxlib's core class
+
+    init arguments, which bocame attributes:
+    `size`: a (height, width) pair specifying the size of the map, in tiles
+    `tile_size`: a pair specifying the size of one tile, in pixels
+    `orientation`: a pair specifying the size of one tile, in pixels
+
+    Other attributes:
+    `tilesets`: A TilesetList of tilesets this map uses
+    `layers`: A LayerList of layers this map uses
+    `properties`: A dict of properties, with string (or unicode) keys & values
+    `pixel_size`: The size of the map, in pixels. Not settable directly: use
+        `size` and `tile_size` for that.
+
+    Each "size" property has corresponding "width" and "height" properties.
+    """
+    # XXX: Fully implement, test, and document base_path:
+    #   This should be used for saving, so that relative paths work as
+    #   correctly as they can.
+    #   And it's not just here...
     def __init__(self, size, tile_size, orientation='orthogonal',
             base_path=None):
         self.orientation = orientation
@@ -242,30 +298,40 @@ class Map(fileio.read_write_base('map'), SizeMixin):
         self.base_path = base_path
 
     @property
-    def tile_width(self): return self.tile_size[0]
+    def tile_width(self):
+        """Width of a tile in this map."""
+        return self.tile_size[0]
     @tile_width.setter
     def tile_width(self, value): self.tile_size = value, self.tile_size[1]
 
     @property
-    def tile_height(self): return self.tile_size[1]
+    def tile_height(self):
+        """Height of a tile in this map."""
+        return self.tile_size[1]
     @tile_height.setter
     def tile_height(self, value): self.tile_size = self.tile_size[0], value
 
     @property
-    def pixel_size(self): return self.pixel_width, self.pixel_height
+    def pixel_size(self):
+        """Size of this map, in pixels."""
+        return self.pixel_width, self.pixel_height
 
     @property
-    def pixel_width(self): return self.width * self.tile_width
+    def pixel_width(self):
+        """Width of this map, in pixels."""
+        return self.width * self.tile_width
 
     @property
-    def pixel_height(self): return self.height * self.tile_height
+    def pixel_height(self):
+        """Height of this map, in pixels."""
+        return self.height * self.tile_height
 
     def add_layer(self, name, before=None, after=None):
         """Add an empty layer with the given name to the map.
 
         By default, the new layer is added at the end of the layer list.
         A different position may be specified with either of the `before` or
-        `after` arguments.
+        `after` arguments, which may be integer indices or names.
         """
         new_layer = ArrayMapLayer(self, name)
         if after is not None:
@@ -300,24 +366,44 @@ class Map(fileio.read_write_base('map'), SizeMixin):
                 yield layer[x, y]
 
     def check_consistency(self):
+        """Check that this map is okay.
+
+        Most checks are done when reading a map, but if more are required,
+        call this method after reading.
+        This will do a more expensive check than what's practical from within
+        readers.
+        """
         large_gid = self.tilesets[-1].end_gid
         for tile in self.all_tiles():
             assert tile.gid < large_gid
 
 class TilesetTile(SizeMixin):
+    """Reference to a tile within a tileset
+
+    init arguents, which become attributes:
+    `tileset`, the tileset this tile belongs to
+    `number`, the number of the tile
+    """
     def __init__(self, tileset, number):
         self.tileset = tileset
         self.number = number
 
     def gid(self, map):
+        """Return the GID of this tile for a given map
+
+        The GID is a map-specific identifier unique for any tileset-tile
+        the map uses.
+        """
         return self.tileset.first_gid(map) + self.number
 
     @property
     def size(self):
+        """Size of this tile, in piels"""
         return self.tileset.tile_size
 
     @property
     def properties(self):
+        """Properties of this tile"""
         return self.tileset.tile_properties[self.number]
 
     def __eq__(self, other):
@@ -332,12 +418,51 @@ class TilesetTile(SizeMixin):
 
     @property
     def image(self):
+        """Image this tile uses.
+
+        Most often this will be a region of the tileset's image.
+        """
         return self.tileset.tile_image(self.number)
 
     def get_pixel(self, x, y):
+        """Get a pixel at the specified location.
+
+        Pixels are returned as RGBA 4-tuples.
+        """
         return self.image.get_pixel(x, y)
 
 class Tileset(fileio.read_write_base('tileset')):
+    """A tileset: bank of tiles a map can use.
+
+    There are two kinds of tilesets: external and internal.
+    Internal tilesets are specific to a map, and their contents are saved
+    inside the map file.
+    External tilesets are saved to their own file, so they may be shared
+    between several maps.
+    (Of course, any tileset can be shared between maps at the Python level;
+    this distinction only applies to what happens on disk.)
+    External tilesets have the file path in their `source` attribute;
+    internal ones have `source` set to None.
+
+    tmxlib will try to ensure that each external tileset gets only loaded once,
+    an the resulting Python objects are shared. (This will only work if all
+    the tilesets are loaded with the same Serializer.)
+
+    init arguments, which become attributes:
+    `name`: Name of the tileset
+    `tile_size`: A (width, height) pair giving the size of a tile in this
+        tileset. In cases where a tileset can have unequally sized tiles,
+        the tile size is not defined. This means that this property should not
+        be used unless working with a specific subclass that defines tile_size
+        better.
+    `source`: For external tilesets, the file name for this tileset. None for
+        internal ones.
+
+    Other attributes:
+    `properties`: A property dict with string (or unicode) keys and values.
+        Note that the official TMX format does not support tileset properties,
+        so editors like Tiled will remove these. (XXX: bug #77 in Tiled)
+    """
     column_count = None
 
     def __init__(self, name, tile_size, source=None):
@@ -347,20 +472,30 @@ class Tileset(fileio.read_write_base('tileset')):
         self.properties = {}
 
     def __getitem__(self, n):
+        """Get tileset tile with the given number.
+
+        Supports negative indices by wrapping around, as one would expect.
+        """
         if n >= 0:
             return TilesetTile(self, n)
         else:
             return TilesetTile(self, len(self) + n)
 
     def __len__(self):
-        raise NotImplementedError('Tileset.num_tiles')
+        """Return the number of tiles in this tileset.
+        """
+        raise NotImplementedError('Tileset.__len__ is abstract')
 
     def __iter__(self):
+        """Iterate through tiles in this tileset.
+        """
         for i in range(len(self)):
             yield self[i]
 
     def first_gid(self, map):
         """Return the first gid used by this tileset in the given map
+
+        Do not override this method.
         """
         num = 1
         for tileset in map.tilesets:
@@ -378,15 +513,25 @@ class Tileset(fileio.read_write_base('tileset')):
         return self.first_gid(map) + len(self)
 
     def tile_image(self, number):
+        """Return the image used by the given tile.
+
+        Usually this will be a region of a larger image.
+        """
         raise NotImplementedError('Tileset.tile_image')
 
     @property
-    def tile_width(self): return self.tile_size[0]
+    def tile_width(self):
+        """Width of a tile in this tileset. See `size` in the class docstring.
+        """
+        return self.tile_size[0]
     @tile_width.setter
     def tile_width(self, value): self.tile_size = value, self.tile_size[1]
 
     @property
-    def tile_height(self): return self.tile_size[1]
+    def tile_height(self):
+        """Height of a tile in this tileset. See `size` in the class docstring.
+        """
+        return self.tile_size[1]
     @tile_height.setter
     def tile_height(self, value): self.tile_size = self.tile_size[0], value
 
@@ -394,6 +539,17 @@ class Tileset(fileio.read_write_base('tileset')):
         return '<%s %r at 0x%x>' % (type(self).__name__, self.name, id(self))
 
 class ImageTileset(Tileset):
+    """A tileset whose tiles form a rectangular grid on a single image.
+
+    The default tileset type in Tiled.
+
+    init arguments, which become attributes:
+    `name`, `tile_size`, `source`: as in Tileset
+    `image`: the Image this tileset is based on
+    `margin`: size of a border around the image that does not contain tiles,
+        in piels
+    `spacing`: space between adjacent tiles, in pixels
+    """
     def __init__(self, name, tile_size, image, margin=0, spacing=0,
             source=None, base_path=None):
         super(ImageTileset, self).__init__(name, tile_size, source)
@@ -414,31 +570,50 @@ class ImageTileset(Tileset):
 
     @property
     def column_count(self):
+        """Number of columns in the tileset"""
         return self._count(0)
 
     @property
     def row_count(self):
+        """Number of rows in the tileset"""
         return self._count(1)
 
     def tile_image(self, number):
+        """Return the image used by the given tile"""
         y, x = divmod(number, self.column_count)
         left = self.margin + x * (self.tile_width + self.spacing)
         top = self.margin + y * (self.tile_height + self.spacing)
-        return ImageRegion(self.image, left, top, self.tile_size)
-
-Tileset._image_tileset_class = ImageTileset
+        return ImageRegion(self.image, (left, top), self.tile_size)
 
 class ImageBase(SizeMixin):
+    """Provide __getitem__ and __setitem__ for images"""
     def __getitem__(self, pos):
+        """Get the pixel at the specified (x, y) position"""
         x, y = pos
         return self.get_pixel(x, y)
 
     def __setitem__(self, pos, value):
+        """Set the pixel at the specified (x, y) position"""
         x, y = pos
         r, g, b, a = value
         return self.set_pixel(x, y, value)
 
 class Image(ImageBase, fileio.read_write_base('image')):
+    """An image. Conceptually, an 2D array of pixels.
+
+    init arguments that become attributes:
+    `data`: The image data, as they've been read from disk
+    `trans`: A color key used for transparency (currently not implemented)
+    `size`: Size of the image. If given, the image doesn't have to be decoded
+        to get this information, speeding up operations that don't require
+        pixel access.
+        If it does not equal the actual image size, an exception will be raised
+        as soon as the image is decoded.
+    `source`: The file name of this image, if it is to be saved separately from
+        maps/tilesets that use it.
+    """
+    # XXX: Make `trans` actually work
+    # XXX: Make modifying and saving images work
     def __init__(self, data=None, trans=None, size=None, source=None):
         self.source = source
         self.trans = trans
@@ -448,17 +623,18 @@ class Image(ImageBase, fileio.read_write_base('image')):
 
     @property
     def size(self):
+        """Size of the image, in pixels.
+        """
         if self._size:
             return self._size
         else:
-            self.load_image()  # Not available without an image backend!
+            self.load_image()  # XXX: Not available without an image backend!
             return self.size
-    @size.setter
-    def size(self, new):
-        self._size = new
 
     @property
     def data(self):
+        """Data of this image, as read from disk.
+        """
         if self._data:
             return self._data
         else:
@@ -467,24 +643,40 @@ class Image(ImageBase, fileio.read_write_base('image')):
             return self._data
 
     def load_image(self):
-        """Load the image from self.data, and set self.size
+        """Load the image from self.data, and set self._size
+
+        If self._size is already set, assert that it equals
         """
         raise TypeError('Image data not available')
 
     def get_pixel(self, x, y):
+        """Get the color of the pixel at position (x, y) as a RGBA 4-tuple.
+
+        Supports negative indices by wrapping around in the obvious way.
+        """
         raise TypeError('Image data not available')
 
     def set_pixel(self, x, y, value):
+        """Set the color of the pixel at position (x, y) to a RGBA 4-tuple
+
+        Supports negative indices by wrapping around in the obvious way.
+        """
         raise TypeError('Image data not available')
 
 class ImageRegion(ImageBase):
-    def __init__(self, image, x, y, size):
+    """A rectangular region of a larger image
+    """
+    def __init__(self, image, top_left, size):
         self.image = image
-        self.x = x
-        self.y = y
+        self.x = top_left[0]
+        self.y = top_left[1]
         self.size = size
 
     def get_pixel(self, x, y):
+        """Get the color of the pixel at position (x, y) as a RGBA 4-tuple.
+
+        Supports negative indices by wrapping around in the obvious way.
+        """
         if x < 0: x += self.width
         if y < 0: y += self.height
         assert 0 <= x < self.width
@@ -492,6 +684,10 @@ class ImageRegion(ImageBase):
         return self.image.get_pixel(x + self.x, y + self.y)
 
     def set_pixel(self, x, y, value):
+        """Set the color of the pixel at position (x, y) to a RGBA 4-tuple
+
+        Supports negative indices by wrapping around in the obvious way.
+        """
         if x < 0: x += self.width
         if y < 0: y += self.height
         assert 0 <= x < self.width
@@ -499,6 +695,23 @@ class ImageRegion(ImageBase):
         self.image.set_pixel(x + self.x, y + self.y, value)
 
 class Layer(object):
+    """A base map layer
+
+    The TMX format supports tile layers and object layers.
+
+    init agruments, which become attributes:
+    `map`: The map this layer belongs to. Unlike tilesets, layers are tied to a
+        particular map and cannot be shared.
+    `name`: Name of the layer
+    `visible`: A boolean setting whether the layer is visible at all. (Actual
+        visibility also depends on `opacity`)
+    `opacity`: Floating-point value for the visibility of the layer. (Actual
+        visibility also depends on `visible`)
+
+    Other attributes:
+    `properties`: Dict of properties with string (or unicode) keys and values
+    `type`: 'tiles' if this is a tile layer, 'objects' if it's an object layer
+    """
     def __init__(self, map, name, visible=True, opacity=1):
         super(Layer, self).__init__()
         self.map = map
@@ -509,11 +722,22 @@ class Layer(object):
 
     @property
     def index(self):
+        """Index of this layer in the layer list"""
         return self.map.layers.index(self)
 
     def __repr__(self):
         return '<%s #%s: %r at 0x%x>' % (type(self).__name__, self.index,
                 self.name, id(self))
+
+    def all_tiles(self):
+        """Iterate tiles in this layer, including empty tiles and tile objects.
+        """
+        raise NotImplementedError('Layer.all_tiles is virtual')
+
+    def all_objects(self):
+        """Iterate through all objects in this layer
+        """
+        raise NotImplementedError('Layer.all_objects is virtual')
 
 class ArrayMapLayer(Layer):
     """A tile layer
@@ -522,6 +746,13 @@ class ArrayMapLayer(Layer):
     Assignment is possible either via numeric values, or by assigning
     a TilesetTile. In the latter case, if the tileset is not on the map yet,
     it is added.
+
+    See Layer documentation for most init arguments.
+    Other init agruments, which become attributes:
+    `data`: List (or array) containing the GIDs (integer values) stored in the
+        layer, as one long list in row-major order.
+        This is converted to a short-int array (16 bits per number).
+        See TileLikeObject for what this number means.
     """
     def __init__(self, map, name, visible=True, opacity=1, data=None):
         super(ArrayMapLayer, self).__init__(map=map, name=name,
@@ -538,10 +769,24 @@ class ArrayMapLayer(Layer):
         self.type = 'tiles'
 
     def data_index(self, pos):
+        """Get an index for the data array from (x, y) coordinates
+        """
         x, y = pos
+        if x < 0:
+            x += self.map.width
+        if y < 0:
+            y += self.map.height
         return x + y * self.map.width
 
     def __setitem__(self, pos, value):
+        """Set the tile at the given position
+
+        The set value can be either an raw integer value, or a TilesetTile.
+        In the latter case, any tileset not in the map yet will be added
+        to it.
+
+        Supports negative indices by wrapping in the obvious way.
+        """
         if isinstance(value, TilesetTile):
             try:
                 value = value.gid(self.map)
@@ -549,64 +794,135 @@ class ArrayMapLayer(Layer):
                 # Add the tileset
                 self.map.tilesets.append(value.tileset)
                 value = value.gid(self.map)
+        elif value < 0 or (value & 0x0FFF) >= self.map.tilesets[-1].end_gid:
+            raise ValueError('GID not in map!')
         self.data[self.data_index(pos)] = int(value)
 
     def __getitem__(self, pos):
-        x, y = pos
-        return MapTile(self, x, y)
+        """Get a MapTile representing the tile at the given position.
+
+        Supports negative indices by wrapping in the obvious way.
+        """
+        return MapTile(self, pos)
 
     def all_tiles(self):
+        """Iterate through all tiles in this layer, including empty ones.
+        """
         for x in range(self.map.width):
             for y in range(self.map.height):
                 yield self[x, y]
 
     def all_objects(self):
-        return []
+        """Iterate through objects in this layer (i.e. return empty iterable)
+        """
+        return ()
 
     def value_at(self, pos):
+        """Return the value at the given position
+
+        See MapTile for an explanation of the value.
+        """
         return self.data[self.data_index(pos)]
 
     def set_value_at(self, pos, new):
+        """Sets the raw value at the given position
+
+        See MapTile for an explanation of the value.
+        """
         self.data[self.data_index(pos)] = new
 
 class TileLikeObject(SizeMixin):
-    """Has an associated layer and value
+    """Base tile-like object: regular tile or tile object.
+
+    Has an associated layer and value, and can be flipped, etc.
+
+    Calling all subclasses! Use the `_value` attribute for your own purposes.
+    The `value` allows setting itself to TilesetTiles, has checks, etc.
     """
     def __nonzero__(self):
+        """This object is "true" iff there's a tile associated with it.
+
+        Empty, "false" tiles have a GID of zero.
+        """
         return bool(self.gid)
 
     @property
-    def value(self): return self._value
+    def value(self):
+        """Numeric value of a tile, representing the image and transformations.
+
+        See the TMX format for a hopefully more detailed specification.
+        The upper bits of this number are used for flags:
+        - 0x8000: tile is flipped horizontally.
+        - 0x4000: tile is flipped vertically.
+        - 0x2000: tile is rotated 90 degrees clockwise.
+            DO NOT USE yet if interoperability is required!
+            (XXX: Not implemented in Tiled; see Tiled issues #19, #65, #73 for
+            various conflicting ideas as to what to this bit should mean.)
+        - 0x1000: tmxlib reserves this bit for now, just because 0x0FFF is a
+            nice round number.
+
+        The rest of the value is zero if the layer is empty at the
+        corresponding spot (or an object has no associated tile image), or it
+        holds the GID of the tileset-tile. The GID can be computed as 1 + X + Y
+        where X is the number of tiles in all tilesets preceding the tile's,
+        and Y is the number of the tile within its tileset.
+
+        The individual parts of value are reflected in individual properties:
+        - flipped_horizontally (0x8000)
+        - flipped_vertically (0x4000)
+        - rotated (0x2000)
+        - gid (0x0FFF)
+        """
+        return self._value
     @value.setter
     def value(self, new):
         if isinstance(new, TilesetTile):
             new = new.gid(self.map)
+        elif new < 0 or (new & 0x0FFF) >= self.map.tilesets[-1].end_gid:
+            raise ValueError('GID not in map!')
         self._value = new
 
-    @property
-    def x(self): return self.pos[0]
-
-    @property
-    def y(self): return self.pos[1]
-
-    @property
-    def map(self):
-        return self.layer.map
-
     def mask_property(mask, value_type=int, shift=0):
+        """Helper for defining mask properties"""
         def getter(self):
             return value_type(self.value & mask)
         def setter(self, new):
             self.value = ((value_type(new) << shift) & mask) | (
                     self.value & ~mask)
-        return property(getter, setter)
+        return property(getter, setter, doc="See the value property")
 
     gid = mask_property(0x0FFF)
     flipped_horizontally = mask_property(0x8000, bool, 15)
     flipped_vertically = mask_property(0x4000, bool, 14)
     rotated = mask_property(0x2000, bool, 13)
 
+    @property
+    def x(self):
+        """The X position of this tile"""
+        # XXX: Currently in tile coordinates for tiles, and pixel coords for
+        #  objects. Do something with this!
+        return self.pos[0]
+    @x.setter
+    def x(self, value): self.pos = value, self.pos[1]
+
+    @property
+    def y(self):
+        """The Y position of this tile"""
+        # XXX: Currently in tile coordinates for tiles, and pixel coords for
+        #  objects. Do something with this!
+        return self.pos[1]
+    @y.setter
+    def y(self, value): self.pos = self.pos[0], value
+
+    @property
+    def map(self):
+        """The map associated with this tile"""
+        return self.layer.map
+
     def _tileset_tile(self, tilesets):
+        # Get the referenced tileset tile given a list of tilesets
+        # Used tileset_tile, and also in TilesetList's renumbering code, where
+        # the value doesn't match the map's new list of tilesets yet.
         if self.gid == 0:
             return None
         number = self.gid - 1
@@ -622,10 +938,12 @@ class TileLikeObject(SizeMixin):
 
     @property
     def tileset_tile(self):
+        """Get the referenced tileset tile"""
         return self._tileset_tile(self.map.tilesets)
 
     @property
     def tileset(self):
+        """Get the referenced tileset"""
         tileset_tile = self.tileset_tile
         if tileset_tile:
             return tileset_tile.tileset
@@ -634,6 +952,7 @@ class TileLikeObject(SizeMixin):
 
     @property
     def number(self):
+        """Get the number of the referenced tileset tile"""
         tileset_tile = self.tileset_tile
         if tileset_tile:
             return self.tileset_tile.number
@@ -642,12 +961,20 @@ class TileLikeObject(SizeMixin):
 
     @property
     def image(self):
+        """Get the image of the tile.  (N.B. see full docstring!)
+
+        N.B. No transformations are applied to the image. This can change in
+        future versions. Use self.tileset_tile.image for future-safe behavior.
+        """
+        # XXX: Apply transformations... ?
         tileset_tile = self.tileset_tile
         if tileset_tile:
             return self.tileset_tile.image
 
     def tile_to_image_coordinates(self, x, y):
-        """Transform map-tile pixel oordinates to tileset-tile pixel coords.
+        """Transform map-tile pixel coordinates to tileset-tile pixel coords.
+
+        Handles negative indices in the obvious way.
         """
         if self.rotated:
             # rotate 90deg clockwise = invert axes + horizontal flip
@@ -668,6 +995,11 @@ class TileLikeObject(SizeMixin):
         return x, y
 
     def get_pixel(self, x, y):
+        """Get the pixel at the given x, y coordinates.
+
+        Handles negative indices in the obvious way.
+        """
+        # XXX: Does this work OK with tiles that aren't of the map's tile size?
         tileset_tile = self.tileset_tile
         if tileset_tile:
             tile_coords = self.tile_to_image_coordinates(x, y)
@@ -676,12 +1008,26 @@ class TileLikeObject(SizeMixin):
             return 0, 0, 0, 0
 
 class MapTile(TileLikeObject):
-    def __init__(self, layer, x, y):
+    """Contents of a particular spot on a layer in a map
+
+    init arguments, which become attributes:
+    `layer`: The associated layer.
+    `pos`: The associated coordinates, as (x, y).
+    """
+    # XXX: `pos` for consistency?
+    def __init__(self, layer, pos):
         self.layer = layer
-        self.pos = x, y
+        x, y = pos
+        if x < 0:
+            x += layer.map.width
+        if y < 0:
+            y += layer.map.height
+        self._pos = x, y
 
     @property
-    def _value(self): return self.layer.value_at(self.pos)
+    def _value(self):
+        """Use `value` instead."""
+        return self.layer.value_at(self.pos)
     @_value.setter
     def _value(self, new): return self.layer.set_value_at(self.pos, new)
 
@@ -696,6 +1042,10 @@ class MapTile(TileLikeObject):
 
     @property
     def size(self):
+        """Size of the referenced tile, taking rotation into account.
+
+        Empty tiles have (0, 0) size.
+        """
         tileset_tile = self.tileset_tile
         if tileset_tile:
             if self.rotated:
@@ -706,7 +1056,19 @@ class MapTile(TileLikeObject):
             return 0, 0
 
     @property
+    def pos(self):
+        """Position of the tile as a (x, y) tuple in tile coordinates
+        """
+        return self._pos
+
+    @property
     def properties(self):
+        """Properties of the *referenced tileset-tile*
+
+        If that wasn't clear enough: Changing this will change properties of
+        all tiles using this image. Possibly across more maps if tilesets
+        are shared.
+        """
         tileset_tile = self.tileset_tile
         if tileset_tile:
             return tileset_tile.properties
@@ -714,26 +1076,42 @@ class MapTile(TileLikeObject):
             return {}
 
     def __eq__(self, other):
-        return self.layer == other.layer and self.pos == other.pos
+        try:
+            # Compare to other tiles
+            return self.layer == other.layer and self.pos == other.pos
+        except AttributeError:
+            # Compare to int values
+            return self.value == other
 
     def __ne__(self, other):
         return not self == other
 
 
 class ObjectLayer(Layer, NamedElementList):
+    """A layer of objects.
+
+    Acts as a named list of objects. This means semantics similar to
+    layer/tileset lists: indexing by name is possible, where a name references
+    the first object of such name.
+
+    See Layer for init arguments.
+    """
     def __init__(self, map, name, visible=True, opacity=1):
         super(ObjectLayer, self).__init__(map=map, name=name,
                 visible=visible, opacity=opacity)
         self.type = 'objects'
 
     def all_tiles(self):
+        """Iterate through all tile objects in this layer, in order.
+        """
         for obj in self:
             if obj.gid:
                 yield obj
 
     def all_objects(self):
-        for obj in self:
-            yield obj
+        """Iterate through all objects in this layer (i.e. return self)
+        """
+        return self
 
     def stored_value(self, item):
         if item.layer is not self:
@@ -741,6 +1119,26 @@ class ObjectLayer(Layer, NamedElementList):
         return item
 
 class MapObject(TileLikeObject, SizeMixin):
+    """A map object: something that's not placed on the fixed grid
+
+    Can be either a "tile object", which has an associated tile much like a
+    map-tile, or a regular (non-tile) object that has a settable size.
+
+    init arguments, which become attributes:
+    `layer`: The associated layer.
+    `x`, `y`: The associated coordinates. The `pos` attribute will hold a
+        tuple containing these.
+    `size`: Size of this object, as a (width, height) tuple. Must be specified
+        for non-tile objects, and must not be specified for tile objects
+        (unless the size matches the tile).
+        Similar restrictions apply to setting the property (and width & height)
+    `name`: Name of the object. A string (or unicode)
+    `type`: Type of the object. A string (or unicode). No semantics attached.
+    `value`: Value of the tile, if it's a tile object. See the value property.
+
+    Extra attributes:
+    `properties`: Dict of string (or unicode) keys & values for custom data
+    """
     def __init__(self, layer, pos, size=None, name=None, type=None,
             value=0):
         self.layer = layer
@@ -750,12 +1148,19 @@ class MapObject(TileLikeObject, SizeMixin):
         self.value = value
         if size:
             self.size = size
+        elif not value:
+            raise ValueError('Size must be given for non-tile objects')
         self.properties = {}
 
     @property
     def size(self):
+        """Size of the object. For tile objects, it's fixed to the tile size.
+        """
         if self.gid:
-            return self.tileset_tile.size
+            if self.rotated:
+                return self.tileset_tile.height, self.tileset_tile.width
+            else:
+                return self.tileset_tile.size
         else:
             return self._size
     @size.setter
@@ -765,13 +1170,3 @@ class MapObject(TileLikeObject, SizeMixin):
                 raise ValueError("Cannot modify size of tile objects")
         else:
             self._size = value
-
-    @property
-    def x(self): return self.pos[0]
-    @x.setter
-    def x(self, value): self.pos = value, self.pos[1]
-
-    @property
-    def y(self): return self.pos[1]
-    @y.setter
-    def y(self, value): self.pos = self.pos[0], value

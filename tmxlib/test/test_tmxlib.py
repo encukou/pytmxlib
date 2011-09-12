@@ -252,6 +252,13 @@ def test_map_tile():
     map.layers[0][1, 2] = 0
     assert not map.layers[0][1, 2]
 
+    assert map.layers[0][-1, -1] == 30
+    map.layers[0][-1, -1] = 1
+    assert map.layers[0][-1, -1] == 1
+    map.layers[0][-1, -1].value = 2
+    assert map.layers[0][-1, -1] == 2
+    assert map.layers[0][-1, -1] != 3
+
 def test_map_tiles():
     map = desert()
     assert len(list(map.get_tiles(0, 0))) == 1

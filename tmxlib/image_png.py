@@ -19,7 +19,7 @@ class PngImage(tmxlib.Image):
             if self._size:
                 assert (w, h) == self._size
             else:
-                self.size = w, h
+                self._size = w, h
             return w, h
 
     @property
