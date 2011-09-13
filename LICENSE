@@ -1,3 +1,11 @@
+The example and test map and tileset files (*.tmx and *.tsx) are provided under
+the GPL license.
+
+
+
+All Python code in this library is provided under the following MIT license:
+
+
 Copyright (C) 2011 by Petr Viktorin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
