@@ -14,27 +14,55 @@ from lxml import etree
 
 parser = etree.XMLParser(remove_comments=True)
 
-def read_write_base(obj_type):
-    class ReadWriteBase(object):
-        @classmethod
-        def open(cls, filename, serializer=None, base_path=None, shared=False):
-            serializer = serializer_getdefault(serializer)
-            return serializer.open(cls, obj_type, filename, base_path, shared)
+class ReadWriteBase(object):
+    """Base class for objects that support loading and saving.
+    """
+    @classmethod
+    def open(cls, filename, serializer=None, base_path=None, shared=False):
+        """Load an object of this class from a file
 
-        @classmethod
-        def load(cls, string, serializer=None, base_path=None):
-            serializer = serializer_getdefault(serializer)
-            return serializer.load(cls, obj_type, string, base_path)
+        :arg filename: The file from which to load
 
-        def save(self, filename, serializer=None, base_path=None):
-            serializer = serializer_getdefault(serializer, self)
-            return serializer.save(self, obj_type, filename, base_path)
+        :arg shared: Objects loaded from a single file with `shared=True` will
+            be reused.
+            Modifications to this shared object will, naturally, be visible
+            from all variables that reference it.
+            (External tilesets are loaded as `shared` by default.)
+        """
+        serializer = serializer_getdefault(serializer)
+        return serializer.open(cls, cls._rw_obj_type, filename, base_path,
+                shared)
 
-        def dump(self, serializer=None, base_path=None):
-            serializer = serializer_getdefault(serializer, self)
-            return serializer.dump(self, obj_type, base_path)
+    @classmethod
+    def load(cls, string, serializer=None, base_path=None):
+        """Load an object of this class from a string.
 
-    return ReadWriteBase
+        :arg string:
+            String containing the XML description of the object, as it would be
+            read from a file.
+        """
+        serializer = serializer_getdefault(serializer)
+        return serializer.load(cls, cls._rw_obj_type, string, base_path)
+
+    def save(self, filename, serializer=None, base_path=None):
+        """Save this object to a file
+
+        :arg filename:
+            Name of the file to save to.
+        """
+        serializer = serializer_getdefault(serializer, self)
+        return serializer.save(self, self._rw_obj_type, filename, base_path)
+
+    def dump(self, serializer=None, base_path=None):
+        """Save this object as a string
+
+        :returns:
+            String with the representation of the object, suitable for
+            writing to a file.
+        """
+        serializer = serializer_getdefault(serializer, self)
+        return serializer.dump(self, self._rw_obj_type, base_path)
+
 
 def load_method(func):
     """Helper to set the loaded object's `serializer` and `base_path`
@@ -55,7 +83,7 @@ class TMXSerializer(object):
         import tmxlib
         self.map_class = tmxlib.Map
         self.tileset_class = tmxlib.ImageTileset
-        self.tile_layer_class = tmxlib.ArrayMapLayer
+        self.tile_layer_class = tmxlib.TileLayer
         self.object_layer_class = tmxlib.ObjectLayer
         self.object_class = tmxlib.MapObject
 

@@ -109,7 +109,7 @@ def test_bad_layer_by_name():
 
 def test_set_layer_by_name():
     map = desert()
-    layer = tmxlib.ArrayMapLayer(map, 'Ground')
+    layer = tmxlib.TileLayer(map, 'Ground')
     map.layers['Ground'] = layer
     assert map.layers[0] is layer
 
@@ -125,16 +125,16 @@ def test_layers_contains_name():
 def test_layers_contains_layer():
     map = desert()
     assert map.layers[0] in map.layers
-    assert tmxlib.ArrayMapLayer(map, 'Ground') not in map.layers
+    assert tmxlib.TileLayer(map, 'Ground') not in map.layers
 
 def test_explicit_layer_creation():
     map = desert()
     data = [0] * (map.width * map.height)
     data[5] = 1
-    layer = tmxlib.ArrayMapLayer(map, 'New layer', data=data)
+    layer = tmxlib.TileLayer(map, 'New layer', data=data)
     assert list(layer.data) == data
     with pytest.raises(ValueError):
-        tmxlib.ArrayMapLayer(map, 'New layer', data=[1, 2, 3])
+        tmxlib.TileLayer(map, 'New layer', data=[1, 2, 3])
 
 def test_size_get_set():
     map = desert()
@@ -271,7 +271,7 @@ def test_map_tiles():
 
 def test_empty_tile():
     map = desert()
-    layer = map.layers[0] = tmxlib.ArrayMapLayer(map, 'Empty')
+    layer = map.layers[0] = tmxlib.TileLayer(map, 'Empty')
     tile = layer[0, 0]
     assert tile.value == 0
     assert tile.number == 0
@@ -424,6 +424,11 @@ def test_multiple_tilesets():
     del map.tilesets['Walls2']
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
+
+def test_remove_used_tileset():
+    map = desert()
+    with pytest.raises(ValueError):
+        del map.tilesets[0]
 
 def test_objects():
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))

@@ -1,0 +1,8 @@
+@import url("default.css");
+
+th {
+    background-color:   inherit;
+}
+blockquote {
+    margin-right:       0;
+}
