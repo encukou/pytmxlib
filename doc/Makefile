@@ -39,10 +39,15 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
+	# Preserve the gh-pages repo in there (see http://pages.github.com/)
+	-mv $(BUILDDIR)/html/.git build_git
 	-rm -rf $(BUILDDIR)/*
+	-mkdir $(BUILDDIR)/html
+	-mv build_git $(BUILDDIR)/html/.git
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	touch $(BUILDDIR)/html/.nojekyll
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
