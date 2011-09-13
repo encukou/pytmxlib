@@ -441,10 +441,15 @@ def test_objects():
     hole.size = 1, 1
     assert hole.width == 1
 
-    assert hole.pos == (hole.x, hole.y) == (438, 246)
+    assert hole.pos == (hole.x, hole.y) == (438 / 32, 246 / 32)
     hole.x = 10
     hole.y = 10
     assert hole.pos == (10, 10)
+    assert hole.pixel_pos == (hole.pixel_x, hole.pixel_y) == (320, 320)
+    hole.pixel_x = 20
+    hole.pixel_y = 20
+    assert hole.pixel_pos == (hole.pixel_x, hole.pixel_y) == (20, 20)
+    assert hole.pos == (20 / 32, 20 / 32)
 
     # This map has all objects in one layer only
     all_map_objects = list(map.all_objects())

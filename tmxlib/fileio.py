@@ -397,7 +397,7 @@ class TMXSerializer(object):
                 layer.properties.update(self.read_properties(subelem))
             elif subelem.tag == 'object':
                 kwargs = dict(
-                        pos=(
+                        pixel_pos=(
                                 int(subelem.attrib.pop('x')),
                                 int(subelem.attrib.pop('y'))),
                         layer=layer,
@@ -432,7 +432,7 @@ class TMXSerializer(object):
         self.append_properties(element, layer.properties)
 
         for object in layer:
-            attrib = dict(x=str(object.x), y=str(object.y))
+            attrib = dict(x=str(object.pixel_x), y=str(object.pixel_y))
             if object.value:
                 attrib['gid'] = str(object.value)
             if object.name:

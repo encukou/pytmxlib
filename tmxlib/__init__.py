@@ -4,6 +4,8 @@
 For the Tiled map editor http://www.mapeditor.org/
 """
 
+from __future__ import division
+
 import array
 import collections
 import contextlib
@@ -564,7 +566,7 @@ class ImageTileset(Tileset):
 
     def _count(self, axis):
         return (
-                (self.image.size[axis] - 2 * self.margin + self.spacing) /
+                (self.image.size[axis] - 2 * self.margin + self.spacing) //
                 (self.tile_size[axis] + self.spacing)
             )
 
@@ -898,18 +900,14 @@ class TileLikeObject(SizeMixin):
 
     @property
     def x(self):
-        """The X position of this tile"""
-        # XXX: Currently in tile coordinates for tiles, and pixel coords for
-        #  objects. Do something with this!
+        """The X position of this tile, in tile coordinates"""
         return self.pos[0]
     @x.setter
     def x(self, value): self.pos = value, self.pos[1]
 
     @property
     def y(self):
-        """The Y position of this tile"""
-        # XXX: Currently in tile coordinates for tiles, and pixel coords for
-        #  objects. Do something with this!
+        """The Y position of this tile, in tile coordinates"""
         return self.pos[1]
     @y.setter
     def y(self, value): self.pos = self.pos[0], value
@@ -1126,8 +1124,8 @@ class MapObject(TileLikeObject, SizeMixin):
 
     init arguments, which become attributes:
     `layer`: The associated layer.
-    `x`, `y`: The associated coordinates. The `pos` attribute will hold a
-        tuple containing these.
+    `pixel_pos`: The associated coordinates. Will also be available in the
+        `pixel_x` and `pixel_y` attributes.
     `size`: Size of this object, as a (width, height) tuple. Must be specified
         for non-tile objects, and must not be specified for tile objects
         (unless the size matches the tile).
@@ -1138,11 +1136,13 @@ class MapObject(TileLikeObject, SizeMixin):
 
     Extra attributes:
     `properties`: Dict of string (or unicode) keys & values for custom data
+    `pos`: Position of the object in tile coordinates, as (x, y) float tuple.
+        Also available in unpacked form, as `x` and `y`.
     """
-    def __init__(self, layer, pos, size=None, name=None, type=None,
+    def __init__(self, layer, pixel_pos, size=None, name=None, type=None,
             value=0):
         self.layer = layer
-        self.pos = pos
+        self.pixel_pos = pixel_pos
         self.name = name
         self.type = type
         self.value = value
@@ -1151,6 +1151,32 @@ class MapObject(TileLikeObject, SizeMixin):
         elif not value:
             raise ValueError('Size must be given for non-tile objects')
         self.properties = {}
+
+    @property
+    def pos(self):
+        """Position in tile coordinates, as (x, y) float tuple.
+        """
+        return (self.pixel_pos[0] / self.layer.map.tile_width,
+                self.pixel_pos[1] / self.layer.map.tile_height)
+    @pos.setter
+    def pos(self, value):
+        x, y = value
+        self.pixel_pos = (x * self.layer.map.tile_width,
+                y * self.layer.map.tile_height)
+
+    @property
+    def pixel_x(self):
+        return self.pixel_pos[0]
+    @pixel_x.setter
+    def pixel_x(self, value):
+        self.pixel_pos = value, self.pixel_pos[1]
+
+    @property
+    def pixel_y(self):
+        return self.pixel_pos[1]
+    @pixel_y.setter
+    def pixel_y(self, value):
+        self.pixel_pos = self.pixel_pos[0], value
 
     @property
     def size(self):
