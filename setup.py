@@ -1,24 +1,10 @@
 #! /usr/bin/python
 # Encoding: UTF-8
 
-from setuptools import setup, find_packages, Command
+import sys
+from setuptools import setup, find_packages
 
 __version__ = '0.1.0'
-
-
-class PyTest(Command):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import pytest
-        errno = pytest.main([])
-        raise SystemExit(errno)
 
 
 setup(
@@ -47,8 +33,9 @@ setup(
             'formencode',
         ],
     packages=find_packages(),
-    cmdclass={'test': PyTest},
+    test_suite='tmxlib.test.run',
 
+    package_data={'tmxlib': ['test/data/*']},
     zip_safe=False,
 )
 
@@ -58,4 +45,4 @@ except ImportError:
     pass
 else:
     if __version__ != tmxlib.__version__:
-        print 'WARNING! setup.py / __init__.py version mismatch!'
+        print('WARNING! setup.py / __init__.py version mismatch!')
