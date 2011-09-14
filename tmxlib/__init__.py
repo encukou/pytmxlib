@@ -226,7 +226,7 @@ class TilesetList(NamedElementList):
                     # skip renumbering if tilesets were appended, or unchanged
                     if previous_tilesets != self.list[:len(previous_tilesets)]:
                         self._renumber_map(previous_tilesets)
-                    if self.map.tilesets[-1].end_gid(self.map) > 0x0FFF:
+                    if self.map.end_gid > 0x0FFF:
                         raise ValueError('Too many tiles to be represented')
             finally:
                 self._being_modified = False
@@ -322,6 +322,11 @@ class Map(fileio.ReadWriteBase, SizeMixin):
             The size of the map, in pixels. Not settable directly: use
             `size` and `tile_size` for that.
 
+        .. attribute:: end_gid
+
+            The first GID that is not available for tiles.
+            This is the end_gid for the map's last tileset.
+
     Unpacked size attributes:
 
         Each "size" property has corresponding "width" and "height" properties.
@@ -370,6 +375,9 @@ class Map(fileio.ReadWriteBase, SizeMixin):
     @property
     def pixel_height(self): return self.height * self.tile_height
 
+    @property
+    def end_gid(self): return self.tilesets[-1].end_gid(self)
+
     def add_layer(self, name, before=None, after=None):
         """Add an empty layer with the given name to the map.
 
@@ -417,7 +425,7 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         This will do a more expensive check than what's practical from within
         readers.
         """
-        large_gid = self.tilesets[-1].end_gid
+        large_gid = self.end_gid
         for tile in self.all_tiles():
             assert tile.gid < large_gid
 
@@ -934,7 +942,7 @@ class TileLayer(Layer):
                 # Add the tileset
                 self.map.tilesets.append(value.tileset)
                 value = value.gid(self.map)
-        elif value < 0 or (value & 0x0FFF) >= self.map.tilesets[-1].end_gid:
+        elif value < 0 or (value & 0x0FFF) >= self.map.end_gid:
             raise ValueError('GID not in map!')
         self.data[self._data_index(pos)] = int(value)
 
@@ -1032,7 +1040,7 @@ class TileLikeObject(SizeMixin):
     def value(self, new):
         if isinstance(new, TilesetTile):
             new = new.gid(self.map)
-        elif new < 0 or (new & 0x0FFF) >= self.map.tilesets[-1].end_gid:
+        elif new < 0 or (new & 0x0FFF) >= self.map.end_gid:
             raise ValueError('GID not in map!')
         self._value = new
 
