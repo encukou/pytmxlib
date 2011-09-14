@@ -14,6 +14,7 @@ from lxml import etree
 
 parser = etree.XMLParser(remove_comments=True)
 
+
 class ReadWriteBase(object):
     """Base class for objects that support loading and saving.
     """
@@ -77,6 +78,7 @@ def load_method(func):
             pass
         return obj
     return loader
+
 
 class TMXSerializer(object):
     def __init__(self):
@@ -424,10 +426,12 @@ class TMXSerializer(object):
                                 int(subelem.attrib.pop('y'))),
                         layer=layer,
                     )
+
                 def put(attr_type, attr_name, arg_name):
                     attr = subelem.attrib.pop(attr_name, None)
                     if attr is not None:
                         kwargs[arg_name] = attr_type(attr)
+
                 put(int, 'gid', 'value')
                 put(unicode, 'name', 'name')
                 put(unicode, 'type', 'type')
@@ -494,7 +498,6 @@ class TMXSerializer(object):
                     )))
             parent.append(element)
 
-
     def from_rgb(self, string):
         if string.startswith('#'):
             string = string[1:]
@@ -507,6 +510,7 @@ class TMXSerializer(object):
     def to_rgb(self, rgb):
         print rgb
         return ''.join(hex(p)[2:].ljust(2, '0') for p in rgb)
+
 
 def serializer_getdefault(serializer=None, object=None):
     """Returns an appropriate serializer

@@ -5,6 +5,7 @@ import png
 
 import tmxlib
 
+
 class PngImage(tmxlib.Image):
     def load_image(self):
         """Load the image from self.data, and set self.size
@@ -31,13 +32,11 @@ class PngImage(tmxlib.Image):
             return self._image_data
 
     def get_pixel(self, x, y):
-        if x < 0: x += self.width
-        if y < 0: y += self.height
-        return tuple(v / 255 for v in self.image_data[y][x * 4 : (x+1) * 4])
+        x, y = self._wrap_coords(x, y)
+        return tuple(v / 255 for v in self.image_data[y][x * 4:(x + 1) * 4])
 
     def set_pixel(self, x, y, value):
-        if x < 0: x += self.width
-        if y < 0: y += self.height
+        x, y = self._wrap_coords(x, y)
         value = (round(v * 255) for v in value)
-        self.image_data[y][x * 4 : (x+1) * 4] = value
+        self.image_data[y][x * 4:(x + 1) * 4] = value
         self.dirty = True

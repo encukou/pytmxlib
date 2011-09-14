@@ -18,7 +18,9 @@ import itertools
 
 from tmxlib import fileio
 
+
 class TilesetNotInMapError(ValueError): pass
+
 
 class NamedElementList(collections.MutableSequence):
     """A list that supports indexing by element name, as a convenience, etc
@@ -171,6 +173,7 @@ class NamedElementList(collections.MutableSequence):
             self.list = previous
             raise
 
+
 class LayerList(NamedElementList):
     """A list of layers.
 
@@ -186,6 +189,7 @@ class LayerList(NamedElementList):
         if layer.map != self.map:
             raise ValueError('Incompatible layer')
         return layer
+
 
 class TilesetList(NamedElementList):
     """A list of tilesets.
@@ -250,6 +254,7 @@ class TilesetList(NamedElementList):
                         raise ValueError(msg % tileset_tile.tileset)
                     memo[prev_gid] = tile.gid
 
+
 class SizeMixin(object):
     """Provides `width` and `height` properties that get/set a 2D size
 
@@ -272,6 +277,14 @@ class SizeMixin(object):
         return self.size[1]
     @height.setter
     def height(self, value): self.size = self.size[0], value
+
+    def _wrap_coords(self, x, y):
+        if x < 0:
+            x += self.width
+        if y < 0:
+            y += self.height
+        return x, y
+
 
 class Map(fileio.ReadWriteBase, SizeMixin):
     """A tile map. tmxlib's core class
@@ -408,6 +421,7 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         for tile in self.all_tiles():
             assert tile.gid < large_gid
 
+
 class TilesetTile(SizeMixin):
     """Reference to a tile within a tileset
 
@@ -476,6 +490,7 @@ class TilesetTile(SizeMixin):
         Pixels are returned as RGBA 4-tuples.
         """
         return self.image.get_pixel(x, y)
+
 
 class Tileset(fileio.ReadWriteBase):
     """Base class for a tileset: bank of tiles a map can use.
@@ -609,6 +624,7 @@ class Tileset(fileio.ReadWriteBase):
     def __repr__(self):
         return '<%s %r at 0x%x>' % (type(self).__name__, self.name, id(self))
 
+
 class ImageTileset(Tileset):
     """A tileset whose tiles form a rectangular grid on a single image.
 
@@ -681,6 +697,7 @@ class ImageTileset(Tileset):
         top = self.margin + y * (self.tile_height + self.spacing)
         return ImageRegion(self.image, (left, top), self.tile_size)
 
+
 class ImageBase(SizeMixin):
     """Provide __getitem__ and __setitem__ for images"""
     def __getitem__(self, pos):
@@ -693,6 +710,7 @@ class ImageBase(SizeMixin):
         x, y = pos
         r, g, b, a = value
         return self.set_pixel(x, y, value)
+
 
 class Image(ImageBase, fileio.ReadWriteBase):
     """An image. Conceptually, an 2D array of pixels.
@@ -761,6 +779,7 @@ class Image(ImageBase, fileio.ReadWriteBase):
         """
         raise TypeError('Image data not available')
 
+
 class ImageRegion(ImageBase):
     """A rectangular region of a larger image
     """
@@ -775,8 +794,7 @@ class ImageRegion(ImageBase):
 
         Supports negative indices by wrapping around in the obvious way.
         """
-        if x < 0: x += self.width
-        if y < 0: y += self.height
+        x, y = self._wrap_coords(x, y)
         assert 0 <= x < self.width
         assert 0 <= y < self.height
         return self.image.get_pixel(x + self.x, y + self.y)
@@ -786,11 +804,11 @@ class ImageRegion(ImageBase):
 
         Supports negative indices by wrapping around in the obvious way.
         """
-        if x < 0: x += self.width
-        if y < 0: y += self.height
+        x, y = self._wrap_coords(x, y)
         assert 0 <= x < self.width
         assert 0 <= y < self.height
         self.image.set_pixel(x + self.x, y + self.y, value)
+
 
 class Layer(object):
     """Base class for map layers
@@ -799,8 +817,8 @@ class Layer(object):
 
         .. attribute:: map
 
-            The map this layer belongs to. Unlike tilesets, layers are tied to a
-            particular map and cannot be shared.
+            The map this layer belongs to. Unlike tilesets, layers are tied to
+            a particular map and cannot be shared.
 
         .. attribute:: name
 
@@ -848,7 +866,7 @@ class Layer(object):
                 self.name, id(self))
 
     def all_tiles(self):
-        """Yield all tiles in this layer, including empty tiles and tile objects.
+        """Yield all tiles in this layer, including empty ones and tile objects
         """
         raise NotImplementedError('Layer.all_tiles is virtual')
 
@@ -856,6 +874,7 @@ class Layer(object):
         """Yield all objects in this layer
         """
         raise NotImplementedError('Layer.all_objects is virtual')
+
 
 class TileLayer(Layer):
     """A tile layer
@@ -952,6 +971,7 @@ class TileLayer(Layer):
         """
         self.data[self._data_index(pos)] = new
 
+
 class TileLikeObject(SizeMixin):
     """Base tile-like object: regular tile or tile object.
 
@@ -1031,14 +1051,18 @@ class TileLikeObject(SizeMixin):
     rotated = __mask_property(0x2000, bool, 13)
 
     @property
-    def x(self): return self.pos[0]
+    def x(self):
+        return self.pos[0]
     @x.setter
-    def x(self, value): self.pos = value, self.pos[1]
+    def x(self, value):
+        self.pos = value, self.pos[1]
 
     @property
-    def y(self): return self.pos[1]
+    def y(self):
+        return self.pos[1]
     @y.setter
-    def y(self, value): self.pos = self.pos[0], value
+    def y(self, value):
+        self.pos = self.pos[0], value
 
     @property
     def map(self):
@@ -1133,6 +1157,7 @@ class TileLikeObject(SizeMixin):
         else:
             return 0, 0, 0, 0
 
+
 class MapTile(TileLikeObject):
     """References a particular spot on a tile layer
 
@@ -1203,7 +1228,8 @@ class MapTile(TileLikeObject):
         """Use `value` instead."""
         return self.layer.value_at(self.pos)
     @_value.setter
-    def _value(self, new): return self.layer.set_value_at(self.pos, new)
+    def _value(self, new):
+        return self.layer.set_value_at(self.pos, new)
 
     def __repr__(self):
         flagstring = ''.join(f for (f, v) in zip('HVR', (
@@ -1226,7 +1252,8 @@ class MapTile(TileLikeObject):
             return 0, 0
 
     @property
-    def pos(self): return self._pos
+    def pos(self):
+        return self._pos
 
     @property
     def properties(self):
@@ -1278,6 +1305,7 @@ class ObjectLayer(Layer, NamedElementList):
         if item.layer is not self:
             raise ValueError('Incompatible object')
         return item
+
 
 class MapObject(TileLikeObject, SizeMixin):
     """A map object: something that's not placed on the fixed grid
@@ -1382,7 +1410,8 @@ class MapObject(TileLikeObject, SizeMixin):
         self.properties = {}
 
     @property
-    def pos(self): return (self.pixel_pos[0] / self.layer.map.tile_width,
+    def pos(self):
+        return (self.pixel_pos[0] / self.layer.map.tile_width,
                 self.pixel_pos[1] / self.layer.map.tile_height)
     @pos.setter
     def pos(self, value):
@@ -1391,14 +1420,18 @@ class MapObject(TileLikeObject, SizeMixin):
                 y * self.layer.map.tile_height)
 
     @property
-    def pixel_x(self): return self.pixel_pos[0]
+    def pixel_x(self):
+        return self.pixel_pos[0]
     @pixel_x.setter
-    def pixel_x(self, value): self.pixel_pos = value, self.pixel_pos[1]
+    def pixel_x(self, value):
+        self.pixel_pos = value, self.pixel_pos[1]
 
     @property
-    def pixel_y(self): return self.pixel_pos[1]
+    def pixel_y(self):
+        return self.pixel_pos[1]
     @pixel_y.setter
-    def pixel_y(self, value): self.pixel_pos = self.pixel_pos[0], value
+    def pixel_y(self, value):
+        self.pixel_pos = self.pixel_pos[0], value
 
     @property
     def size(self):

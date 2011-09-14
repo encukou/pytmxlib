@@ -5,16 +5,21 @@ from setuptools import setup, find_packages, Command
 
 __version__ = '0.1.0'
 
+
 class PyTest(Command):
     user_options = []
+
     def initialize_options(self):
         pass
+
     def finalize_options(self):
         pass
+
     def run(self):
         import pytest
         errno = pytest.main([])
         raise SystemExit(errno)
+
 
 setup(
     name='tmxlib',
@@ -38,12 +43,13 @@ setup(
     tests_require=[
             'pytest',
             'pytest-cov',
+            'pytest-pep8',
             'formencode',
         ],
     packages=find_packages(),
     cmdclass={'test': PyTest},
 
-    zip_safe = False,
+    zip_safe=False,
 )
 
 try:

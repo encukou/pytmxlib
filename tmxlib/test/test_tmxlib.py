@@ -12,6 +12,7 @@ import pytest
 
 import tmxlib
 
+
 # test support code
 def params(funcarglist):
     def wrapper(function):
@@ -19,28 +20,33 @@ def params(funcarglist):
         return function
     return wrapper
 
+
 def assert_color_tuple_eq(value, expected):
     assert len(value) == len(expected)
     for a, b in zip(value, expected):
         if abs(a - b) >= (1 / 256):
             assert value == expected
 
+
 def pytest_generate_tests(metafunc):
     for funcargs in getattr(metafunc.function, 'funcarglist', ()):
         metafunc.addcall(funcargs=funcargs)
 
-base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 def get_test_filename(name):
     return os.path.join(base_path, name)
+
 
 def file_contents(filename):
     with open(filename) as fileobj:
         return fileobj.read()
 
+
 def desert():
     return tmxlib.Map.open(get_test_filename('desert.tmx'))
 
+
+base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 map_filenames = [
         dict(filename='desert.tmx'),
         dict(filename='perspective_walls.tmx'),
@@ -50,8 +56,10 @@ map_filenames = [
         dict(filename='desert_and_walls.tmx'),
     ]
 
+
 def assert_xml_compare(a, b):
     report = []
+
     def reporter(problem):
         report.append(problem)
 
@@ -64,6 +72,7 @@ def assert_xml_compare(a, b):
         for r_line in report:
             print r_line
         assert False
+
 
 # actual test code
 @params(map_filenames)
@@ -83,6 +92,7 @@ def test_roundtrip_opensave(filename):
     finally:
         os.unlink(temporary_file.name)
 
+
 @params(map_filenames)
 def test_roundtrip_readwrite(filename):
     xml = file_contents(get_test_filename(filename))
@@ -93,17 +103,21 @@ def test_roundtrip_readwrite(filename):
     dumped = map.dump()
     assert_xml_compare(xml, dumped)
 
+
 def test_get_layer_by_name():
     assert desert().layers['Ground'].name == 'Ground'
+
 
 def test_get_layer_by_index():
     map = desert()
     assert map.layers[0].name == 'Ground'
     assert map.layers[0].index == 0
 
+
 def test_bad_layer_by_name():
     with pytest.raises(KeyError):
         desert().layers['(nonexisting)']
+
 
 def test_set_layer_by_name():
     map = desert()
@@ -111,19 +125,23 @@ def test_set_layer_by_name():
     map.layers['Ground'] = layer
     assert map.layers[0] is layer
 
+
 def test_del_layer():
     map = desert()
     del map.layers['Ground']
     assert len(map.layers) == 0
 
+
 def test_layers_contains_name():
     assert 'Ground' in desert().layers
     assert 'Sky' not in desert().layers
+
 
 def test_layers_contains_layer():
     map = desert()
     assert map.layers[0] in map.layers
     assert tmxlib.TileLayer(map, 'Ground') not in map.layers
+
 
 def test_explicit_layer_creation():
     map = desert()
@@ -134,11 +152,13 @@ def test_explicit_layer_creation():
     with pytest.raises(ValueError):
         tmxlib.TileLayer(map, 'New layer', data=[1, 2, 3])
 
+
 def test_size_get_set():
     map = desert()
     assert (map.width, map.height) == map.size == (40, 40)
     map.width = map.height = 1
     assert (map.width, map.height) == map.size == (1, 1)
+
 
 def test_tile_size_get_set():
     map = desert()
@@ -146,6 +166,7 @@ def test_tile_size_get_set():
     map.tile_width = 1
     map.tile_height = 2
     assert (map.tile_width, map.tile_height) == map.tile_size == (1, 2)
+
 
 def test_pixel_size_get_set():
     map = desert()
@@ -164,11 +185,11 @@ def test_tileset():
     assert list(tileset)[0] == tileset[0]
     assert list(tileset)[0] != tileset[-1]
 
-
     assert tileset.tile_width == tileset.tile_height == 32
     tileset.tile_width, tileset.tile_height = 2, 3
     assert tileset.tile_width == 2
     assert tileset.tile_height == 3
+
 
 def test_tileset_tiles():
     map = desert()
@@ -179,6 +200,7 @@ def test_tileset_tiles():
     assert map.tilesets[0][1].gid(map) == 2
 
     assert map.tilesets[0][-1].number == len(map.tilesets[0]) - 1
+
 
 def test_tileset_tile():
     tile = desert().tilesets[0][1]
@@ -257,6 +279,7 @@ def test_map_tile():
     assert map.layers[0][-1, -1] == 2
     assert map.layers[0][-1, -1] != 3
 
+
 def test_map_tiles():
     map = desert()
     assert len(list(map.get_tiles(0, 0))) == 1
@@ -266,6 +289,7 @@ def test_map_tiles():
     assert len(tile_list) == 3
     assert tile_list[0] == map.layers[0][0, 0]
     assert tile_list[1] == map.layers[1][0, 0]
+
 
 def test_empty_tile():
     map = desert()
@@ -287,33 +311,34 @@ def test_properties():
 def test_layer_list():
     map = desert()
     different_map = desert()
+    map.add_layer('Sky')
+    map.add_layer('Underground', before='Ground')
+    map.add_layer('Grass', after='Ground')
+
     def check_names(names_string):
         names = names_string.split()
         assert [l.name for l in map.layers] == names
-    map.add_layer('Sky')
-    map.add_layer('Underground', before='Ground')
-    map.add_layer('Foliage', after='Ground')
 
-    check_names('Underground Ground Foliage Sky')
-    assert [l.name for l in map.layers[2:]] == 'Foliage Sky'.split()
+    check_names('Underground Ground Grass Sky')
+    assert [l.name for l in map.layers[2:]] == 'Grass Sky'.split()
     assert [l.name for l in map.layers[:2]] == 'Underground Ground'.split()
-    assert [l.name for l in map.layers[::2]] == 'Underground Foliage'.split()
+    assert [l.name for l in map.layers[::2]] == 'Underground Grass'.split()
     assert [l.name for l in map.layers[1::2]] == 'Ground Sky'.split()
     assert [l.name for l in map.layers[:2:2]] == 'Underground'.split()
-    assert [l.name for l in map.layers[1:3]] == 'Ground Foliage'.split()
+    assert [l.name for l in map.layers[1:3]] == 'Ground Grass'.split()
 
-    assert [l.name for l in map.layers[-2:]] == 'Foliage Sky'.split()
+    assert [l.name for l in map.layers[-2:]] == 'Grass Sky'.split()
     assert [l.name for l in map.layers[:-2]] == 'Underground Ground'.split()
     assert [l.name for l in map.layers[::-2]] == 'Sky Ground'.split()
-    assert [l.name for l in map.layers[-2::-2]] == 'Foliage Underground'.split()
+    assert [l.name for l in map.layers[-2::-2]] == 'Grass Underground'.split()
     assert [l.name for l in map.layers[:-2:-2]] == 'Sky'.split()
-    assert [l.name for l in map.layers[-3:-1]] == 'Ground Foliage'.split()
+    assert [l.name for l in map.layers[-3:-1]] == 'Ground Grass'.split()
 
     ground = map.layers[1]
     assert ground.name == 'Ground'
 
     del map.layers[1::2]
-    check_names('Underground Foliage')
+    check_names('Underground Grass')
     two_layers = list(map.layers)
 
     del map.layers[1]
@@ -323,31 +348,33 @@ def test_layer_list():
     check_names('Ground')
 
     map.layers[1:] = two_layers
-    check_names('Ground Underground Foliage')
+    check_names('Ground Underground Grass')
 
     del map.layers[:1]
     map.layers[1:1] = [ground]
-    check_names('Underground Ground Foliage')
+    check_names('Underground Ground Grass')
 
     with pytest.raises(ValueError):
         map.layers[0] = different_map.layers[0]
 
-    map.layers.move('Foliage', -2)
-    check_names('Foliage Underground Ground')
+    map.layers.move('Grass', -2)
+    check_names('Grass Underground Ground')
     map.layers.move('Ground', -20)
-    check_names('Ground Foliage Underground')
+    check_names('Ground Grass Underground')
     map.layers.move('Underground', -1)
-    check_names('Ground Underground Foliage')
+    check_names('Ground Underground Grass')
     map.layers.move('Underground', 1)
-    check_names('Ground Foliage Underground')
+    check_names('Ground Grass Underground')
     map.layers.move('Ground', 20)
-    check_names('Foliage Underground Ground')
-    map.layers.move('Foliage', 2)
-    check_names('Underground Ground Foliage')
+    check_names('Grass Underground Ground')
+    map.layers.move('Grass', 2)
+    check_names('Underground Ground Grass')
+
 
 def test_layer_list_empty():
     map = desert()
     ground = map.layers[0]
+
     def check_names(names_string):
         names = names_string.split()
         assert [l.name for l in map.layers] == names
@@ -374,8 +401,10 @@ def test_layer_list_empty():
     map.layers.insert(-1, ground)
     check_names('Ground')
 
+
 def test_multiple_tilesets():
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
+
     def check_names(names_string):
         names = names_string.split()
         assert [l.name for l in map.tilesets] == names
@@ -423,10 +452,12 @@ def test_multiple_tilesets():
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
 
+
 def test_remove_used_tileset():
     map = desert()
     with pytest.raises(ValueError):
         del map.tilesets[0]
+
 
 def test_objects():
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
@@ -457,6 +488,7 @@ def test_objects():
     # This map has all objects in one layer only
     all_map_objects = list(map.all_objects())
     assert all_map_objects == list(objects) == list(objects.all_objects())
+
 
 def test_get_pixel():
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
@@ -523,13 +555,15 @@ def test_get_pixel():
     assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
     assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_right)
     assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1),  top_right)
+    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_right)
+
 
 def test_shared_tilesets():
     map1 = tmxlib.Map.open(get_test_filename('perspective_walls.tmx'))
     map2 = tmxlib.Map.open(get_test_filename('perspective_walls.tmx'))
 
     assert map1.tilesets[0] is map2.tilesets[0]
+
 
 def test_autoadd_tileset():
     map = desert()
