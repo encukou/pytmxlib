@@ -79,7 +79,7 @@ def load_method(func):
     return loader
 
 class TMXSerializer(object):
-    def __init__(self, image_backend=None):
+    def __init__(self):
         import tmxlib
         self.map_class = tmxlib.Map
         self.tileset_class = tmxlib.ImageTileset
@@ -87,14 +87,8 @@ class TMXSerializer(object):
         self.object_layer_class = tmxlib.ObjectLayer
         self.object_class = tmxlib.MapObject
 
-        if image_backend is None:
-            self.image_class = tmxlib.Image
-        elif image_backend == 'png':
-            from tmxlib import image_png
-            self.image_class = image_png.PngImage
-        else:
-            image_backend.load_image  # image backends must have this method
-            self.image_class = image_backend
+        from tmxlib import image_png
+        self.image_class = tmxlib.image_png.PngImage
 
         self._shared_objects = WeakValueDictionary()
 
