@@ -17,19 +17,33 @@ pytmxloader_ project instead.
 .. _pytmxloader: http://code.google.com/p/pytmxloader/
 
 
-Installation
-============
+Development installation
+========================
 
-Currently, only a “development” install is supported:
+Make sure you have Python 2.6+ and pip_, navigate to the source folder, and
+run ``pip install -e .``
 
-Make sure you have Python 2.7 and pip_, navigate to the source folder,
-and run ``pip install -e .``
+If you're using Python 3, you will need to run the 2to3_ tool first.
 
-Tests are run using pytest_ (run ``py.test`` in the source directory), and
-documentation is generated using Sphinx_ (run ``make`` in the doc/ directory).
+.. _2to3: http://docs.python.org/library/2to3.html
+
+Tests
+-----
+
+Tests are run using tox_, to ensure cross-Python compatibility. Make sure
+you have all supported Pythons (2.6, 2.7, 3.1, 3.2) installed, and run ``tox``.
+
+If you only want to test on your current Python version, simply run ``python
+setup.py test`` or ``py.test``.
+
+Documentation
+-------------
+
+This documentation is generated using Sphinx_ (install it and run ``make`` in
+the doc/ directory).
 
 .. _pip: http://pypi.python.org/pypi/pip
-.. _pytest: http://pytest.org/
+.. _tox: http://tox.readthedocs.org/
 .. _Sphinx: http://sphinx.pocoo.org/
 
 
@@ -40,7 +54,7 @@ This package sports the SemVer_ versioning scheme. In this pre-1.0 version,
 that doesn't mean much.
 
 Version 1.0 will include at least one generally useful command-line utility,
-and will target Python 3.
+most likely a crop/merge tool for maps.
 
 .. _SemVer: http://semver.org/
 

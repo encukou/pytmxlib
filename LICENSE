@@ -3,7 +3,9 @@ the GPL license.
 
 
 
-All Python code in this library is provided under the following MIT license:
+All Python code in this library is provided under the following MIT license,
+with the exception of some files in the compatibility/ module, whose licences
+are specified within them.
 
 
 Copyright (C) 2011 by Petr Viktorin

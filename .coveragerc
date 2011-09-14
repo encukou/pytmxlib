@@ -3,3 +3,7 @@ exclude_lines =
     raise
     def __repr__
     assert
+
+[run]
+omit =
+    tmxlib/compatibility/*

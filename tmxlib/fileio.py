@@ -1,16 +1,19 @@
 
 import os
 import base64
-import gzip
 import zlib
 import array
+import gzip
 import struct
 import binascii
-import StringIO
+import io
 import functools
 from weakref import WeakValueDictionary
+import sys
 
 from lxml import etree
+
+from tmxlib.compatibility import ord_
 
 parser = etree.XMLParser(remove_comments=True)
 
@@ -97,7 +100,7 @@ class TMXSerializer(object):
     def load_file(self, filename, base_path=None):
         if base_path:
             filename = os.path.join(base_path, filename)
-        with open(filename, 'r') as fileobj:
+        with open(filename, 'rb') as fileobj:
             return fileobj.read()
 
     def open(self, cls, obj_type, filename, base_path=None, shared=False):
@@ -127,7 +130,7 @@ class TMXSerializer(object):
     def save(self, obj, obj_type, filename, serializer=None, base_path=None):
         if not base_path:
             base_path = os.path.dirname(os.path.abspath(filename))
-        with open(filename, 'w') as fileobj:
+        with open(filename, 'wb') as fileobj:
             fileobj.write(self.dump(obj, obj_type, base_path=base_path))
 
     def dump(self, obj, obj_type, base_path=None):
@@ -317,7 +320,7 @@ class TMXSerializer(object):
                 layer.properties.update(self.read_properties(subelem))
             elif subelem.tag == 'data':
                 assert data_set is False
-                data = subelem.text
+                data = subelem.text.encode('ascii')
                 encoding = subelem.attrib.pop('encoding')
                 if encoding == 'base64':
                     data = base64.b64decode(data)
@@ -326,9 +329,10 @@ class TMXSerializer(object):
                     assert False, 'Bad encoding %s' % encoding
                 compression = subelem.attrib.pop('compression', None)
                 if compression == 'gzip':
-                    filelike = StringIO.StringIO(data)
-                    with gzip.GzipFile(fileobj=filelike) as gzfile:
-                        data = gzfile.read()
+                    filelike = io.BytesIO(data)
+                    gzfile = gzip.GzipFile(fileobj=filelike)
+                    data = gzfile.read()
+                    gzfile.close()
                     layer.compression = 'gzip'
                 elif compression == 'zlib':
                     data = zlib.decompress(data)
@@ -339,10 +343,10 @@ class TMXSerializer(object):
                 else:
                     layer.compression = None
                 layer.data = array.array('l', [(
-                            ord(a) +
-                            (ord(b) << 8) +
-                            (ord(c) << 16) +
-                            (ord(d) << 24)) for
+                            ord_(a) +
+                            (ord_(b) << 8) +
+                            (ord_(c) << 16) +
+                            (ord_(d) << 24)) for
                         a, b, c, d in
                         zip(*(data[x::4] for x in range(4)))])
                 data_set = True
@@ -385,12 +389,15 @@ class TMXSerializer(object):
             extra_attrib['encoding'] = encoding
 
         if compression == 'gzip':
-            io = StringIO.StringIO()
-            gzfile = gzip.GzipFile(fileobj=io, mode='wb',
-                    mtime=getattr(layer, 'mtime', None))
+            bytes_io = io.BytesIO()
+            if sys.version_info >= (2, 7):
+                kwargs = dict(mtime=getattr(layer, 'mtime', None))
+            else:
+                kwargs = dict()
+            gzfile = gzip.GzipFile(fileobj=bytes_io, mode='wb', **kwargs)
             gzfile.write(data)
             gzfile.close()
-            data = io.getvalue()
+            data = bytes_io.getvalue()
         elif compression == 'zlib':
             data = zlib.compress(data)
             extra_attrib['compression'] = 'zlib'
@@ -505,10 +512,9 @@ class TMXSerializer(object):
             parts = string[0] * 2, string[1] * 2, string[2] * 2
         elif len(string) == 6:
             parts = string[0:2], string[2:4], string[4:6]
-        return tuple(ord(binascii.unhexlify(p)) for p in parts)
+        return tuple(ord(binascii.unhexlify(p.encode('ascii'))) for p in parts)
 
     def to_rgb(self, rgb):
-        print rgb
         return ''.join(hex(p)[2:].ljust(2, '0') for p in rgb)
 
 

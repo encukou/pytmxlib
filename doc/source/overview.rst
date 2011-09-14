@@ -31,7 +31,7 @@ You can also load from a string:
 .. doctest::
     :options: +SKIP
 
-    >>> string = open('desert.tmx').read()
+    >>> string = open('desert.tmx', 'rb').read()
     >>> map = tmxlib.Map.load(string)
 
 Saving is equally easy:

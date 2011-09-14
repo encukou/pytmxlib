@@ -1,4 +1,7 @@
+/build/
 /*.tmx
 *.pyc
-/.coverage
 /*.egg-info/
+/*.egg/
+/.coverage
+/.tox/

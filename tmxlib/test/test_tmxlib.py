@@ -2,12 +2,12 @@
 from __future__ import division
 
 import os
+import sys
 import tempfile
-from StringIO import StringIO
 import contextlib
 
 from lxml import etree
-from formencode.doctest_xml_compare import xml_compare
+from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
 import pytest
 
 import tmxlib
@@ -38,7 +38,7 @@ def get_test_filename(name):
 
 
 def file_contents(filename):
-    with open(filename) as fileobj:
+    with open(filename, 'rb') as fileobj:
         return fileobj.read()
 
 
@@ -48,12 +48,12 @@ def desert():
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 map_filenames = [
-        dict(filename='desert.tmx'),
-        dict(filename='perspective_walls.tmx'),
-        dict(filename='sewers.tmx'),
-        dict(filename='tilebmp-test.tmx'),
-        dict(filename='desert_nocompress.tmx'),
-        dict(filename='desert_and_walls.tmx'),
+        dict(filename='desert.tmx', has_gzip=False),
+        dict(filename='perspective_walls.tmx', has_gzip=False),
+        dict(filename='sewers.tmx', has_gzip=False),
+        dict(filename='tilebmp-test.tmx', has_gzip=True),
+        dict(filename='desert_nocompress.tmx', has_gzip=False),
+        dict(filename='desert_and_walls.tmx', has_gzip=False),
     ]
 
 
@@ -76,7 +76,10 @@ def assert_xml_compare(a, b):
 
 # actual test code
 @params(map_filenames)
-def test_roundtrip_opensave(filename):
+def test_roundtrip_opensave(filename, has_gzip):
+    if has_gzip and sys.version_info < (2, 7):
+        raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
+
     filename = get_test_filename(filename)
     map = tmxlib.Map.open(filename)
     for layer in map.layers:
@@ -94,7 +97,10 @@ def test_roundtrip_opensave(filename):
 
 
 @params(map_filenames)
-def test_roundtrip_readwrite(filename):
+def test_roundtrip_readwrite(filename, has_gzip):
+    if has_gzip and sys.version_info < (2, 7):
+        raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
+
     xml = file_contents(get_test_filename(filename))
     map = tmxlib.Map.load(xml, base_path=base_path)
     for layer in map.layers:
