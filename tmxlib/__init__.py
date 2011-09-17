@@ -194,7 +194,10 @@ class LayerList(NamedElementList):
 class TilesetList(NamedElementList):
     """A list of tilesets.
 
-    Allows indexing by name
+    Allows indexing by name.
+
+    Whenever the list is changed, GIDs of tiles in the associated map are
+    renumbered to match the new set of tilesets.
     """
     def __init__(self, map, lst=None):
         self.map = map

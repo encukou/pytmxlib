@@ -31,6 +31,52 @@ class :class:`tmxlib.ObjectLayer`
         .. automethod:: tmxlib.ObjectLayer.retrieved_value
         .. automethod:: tmxlib.ObjectLayer.stored_value
 
+class :class:`tmxlib.LayerList`
+
+    :class:`NamedList` methods
+
+        .. automethod:: tmxlib.LayerList.__getitem__
+        .. automethod:: tmxlib.LayerList.__setitem__
+        .. automethod:: tmxlib.LayerList.__contains__
+
+        .. automethod:: tmxlib.LayerList.index
+        .. automethod:: tmxlib.LayerList.count
+        .. automethod:: tmxlib.LayerList.append
+        .. automethod:: tmxlib.LayerList.extend
+        .. automethod:: tmxlib.LayerList.pop
+        .. automethod:: tmxlib.LayerList.remove
+        .. automethod:: tmxlib.LayerList.reverse
+        .. automethod:: tmxlib.LayerList.insert
+        .. automethod:: tmxlib.LayerList.insert_after
+        .. automethod:: tmxlib.LayerList.move
+
+        .. automethod:: tmxlib.LayerList.modification_context
+        .. automethod:: tmxlib.LayerList.retrieved_value
+        .. automethod:: tmxlib.LayerList.stored_value
+
+class :class:`tmxlib.TilesetList`
+
+    :class:`NamedList` methods
+
+        .. automethod:: tmxlib.TilesetList.__getitem__
+        .. automethod:: tmxlib.TilesetList.__setitem__
+        .. automethod:: tmxlib.TilesetList.__contains__
+
+        .. automethod:: tmxlib.TilesetList.index
+        .. automethod:: tmxlib.TilesetList.count
+        .. automethod:: tmxlib.TilesetList.append
+        .. automethod:: tmxlib.TilesetList.extend
+        .. automethod:: tmxlib.TilesetList.pop
+        .. automethod:: tmxlib.TilesetList.remove
+        .. automethod:: tmxlib.TilesetList.reverse
+        .. automethod:: tmxlib.TilesetList.insert
+        .. automethod:: tmxlib.TilesetList.insert_after
+        .. automethod:: tmxlib.TilesetList.move
+
+        .. automethod:: tmxlib.TilesetList.modification_context
+        .. automethod:: tmxlib.TilesetList.retrieved_value
+        .. automethod:: tmxlib.TilesetList.stored_value
+
 class :class:`tmxlib.ImageTileset`
 
     Load/save methods (see :class:`tmxlib.fileio.ReadWriteBase`):

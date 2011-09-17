@@ -141,6 +141,27 @@ MapObject
         .. automethod:: get_pixel
         .. automethod:: __nonzero__
 
+Lists with named elements
+-------------------------
+
+LayerList
+~~~~~~~~~
+
+.. autoclass:: tmxlib.LayerList
+
+    See :class:`~tmxlib.NamedElementList` for LayerList's methods.
+
+TilesetList
+~~~~~~~~~~~
+
+.. autoclass:: tmxlib.TilesetList
+
+    See :class:`~tmxlib.NamedElementList` for TilesetList's methods.
+
+    .. automethod:: modification_context
+
+
+
 
 
 
