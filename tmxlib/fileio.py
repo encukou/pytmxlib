@@ -11,6 +11,7 @@ import functools
 from weakref import WeakValueDictionary
 import sys
 
+import six
 from lxml import etree
 
 from tmxlib.compatibility import ord_
@@ -440,8 +441,8 @@ class TMXSerializer(object):
                         kwargs[arg_name] = attr_type(attr)
 
                 put(int, 'gid', 'value')
-                put(unicode, 'name', 'name')
-                put(unicode, 'type', 'type')
+                put(six.text_type, 'name', 'name')
+                put(six.text_type, 'type', 'type')
                 width = subelem.attrib.pop('width', None)
                 height = subelem.attrib.pop('height', None)
                 if width is not None or height is not None:

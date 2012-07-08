@@ -16,6 +16,8 @@ import collections
 import contextlib
 import itertools
 
+import six
+
 from tmxlib import fileio
 
 
@@ -42,7 +44,7 @@ class NamedElementList(collections.MutableSequence):
 
         Raises KeyError if a name is not found.
         """
-        if isinstance(index_or_name, basestring):
+        if isinstance(index_or_name, six.string_types):
             for i, element in enumerate(self):
                 if self.retrieved_value(element).name == index_or_name:
                     return i
@@ -64,7 +66,7 @@ class NamedElementList(collections.MutableSequence):
 
         NamedElementLists can be queried either by name or by item.
         """
-        if isinstance(item_or_name, basestring):
+        if isinstance(item_or_name, six.string_types):
             return any(i for i in self.list if
                     self.retrieved_value(i).name == item_or_name)
         else:
@@ -997,6 +999,7 @@ class TileLikeObject(SizeMixin):
         Empty, "false" tiles have a GID of zero.
         """
         return bool(self.gid)
+    __bool__ = __nonzero__
 
     @property
     def value(self):

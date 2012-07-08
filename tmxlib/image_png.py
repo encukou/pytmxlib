@@ -1,7 +1,7 @@
 
 from __future__ import division
 
-from tmxlib.compatibility import png
+import png
 
 import tmxlib
 

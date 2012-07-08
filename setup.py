@@ -26,9 +26,10 @@ setup(
             Programming Language :: Python :: 3.2
             Topic :: Games/Entertainment
         """.splitlines() if x.strip()],
-    use_2to3=True,
     install_requires=[
+            'six',
             'lxml>=2.3',
+            'pypng>=0.0.13',
         ],
     setup_requires=[],
     tests_require=[

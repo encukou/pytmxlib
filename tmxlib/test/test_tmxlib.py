@@ -64,13 +64,13 @@ def assert_xml_compare(a, b):
         report.append(problem)
 
     if not xml_compare(etree.XML(a), etree.XML(b), reporter=reporter):
-        print a
-        print
-        print b
-        print
-        print 'XML compare report:'
+        print(a)
+        print()
+        print(b)
+        print()
+        print('XML compare report:')
         for r_line in report:
-            print r_line
+            print(r_line)
         assert False
 
 
@@ -439,8 +439,8 @@ def test_multiple_tilesets():
 
     map.tilesets.move('Walls2', -1)
     check_names('Desert Walls2 Walls')
-    print tile.gid, walls.first_gid(map)
-    print tile.tileset_tile
+    print(tile.gid, walls.first_gid(map))
+    print(tile.tileset_tile)
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
     assert walls2.first_gid(map) < walls.first_gid(map) < building[1, 1].gid

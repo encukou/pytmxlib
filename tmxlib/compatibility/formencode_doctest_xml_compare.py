@@ -1,15 +1,18 @@
 """
-This gile is from the `formencode` library; normally importable as
+This file is from the `formencode` library; normally importable as
 formencode.doctest_xml_compare.
 
 It is repeated here because formencode doesn't support Python 3 yet; however
-this particular module makes it through 2to3 just fine.
+this particular module made it through 2to3 just fine.
 
 This file is available under the PSF license; see the formencode project.
 
-XXX: Remove once formencode is py3k-compatible
+XXX: Remove once formencode is py3k-compatible!
+    (Or find another XML compare tool for the tests)
 
 """
+
+import six
 
 try:
     import doctest
@@ -27,7 +30,8 @@ RealOutputChecker = doctest.OutputChecker
 
 def debug(*msg):
     import sys
-    print >> sys.stderr, ' '.join(map(str, msg))
+    sys.stderr.write(' '.join(map(str, msg)))
+    sys.stderr.write('\n')
 
 
 class HTMLOutputChecker(RealOutputChecker):
@@ -57,7 +61,7 @@ class HTMLOutputChecker(RealOutputChecker):
         try:
             want_xml = make_xml(example.want)
             want_norm = make_string(want_xml)
-        except XMLParseError, e:
+        except XMLParseError as e:
             if example.want.startswith('<'):
                 want_norm = '(bad XML: %s)' % e
                 #  '<xml>%s</xml>' % example.want
@@ -66,7 +70,7 @@ class HTMLOutputChecker(RealOutputChecker):
         try:
             got_xml = make_xml(got)
             got_norm = make_string(got_xml)
-        except XMLParseError, e:
+        except XMLParseError as e:
             if example.want.startswith('<'):
                 got_norm = '(bad XML: %s)' % e
             else:
@@ -136,7 +140,7 @@ def make_xml(s):
 
 
 def make_string(xml):
-    if isinstance(xml, (str, unicode)):
+    if isinstance(xml, six.string_types):
         xml = make_xml(xml)
     s = ET.tostring(xml)
     if s == '<xml />':
