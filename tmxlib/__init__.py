@@ -1008,23 +1008,11 @@ class TileLikeObject(SizeMixin):
         See the TMX format for a hopefully more detailed specification.
         The upper bits of this number are used for flags:
 
-            - 0x8000: tile is flipped horizontally.
-            - 0x4000: tile is flipped vertically.
-            - 0x2000: tile is rotated 90 degrees clockwise.
-                .. note::
-
-                    DO NOT USE yet if interoperability is required!
-
-                    This is not implemented yet in Tiled; see Tiled issues
-                    `#19`_, `#65`_, `#73`_ for various conflicting ideas as to
-                    what to this bit should mean.
-
-                    .. _#19: https://github.com/bjorn/tiled/issues/19
-                    .. _#65: https://github.com/bjorn/tiled/issues/65
-                    .. _#73: https://github.com/bjorn/tiled/issues/73
-
-            - 0x1000: tmxlib reserves this bit for now, just because 0x0FFF is
-                a nice round number.
+            - 0x80000000: tile is flipped horizontally.
+            - 0x40000000: tile is flipped vertically.
+            - 0x20000000: tile is flipped diagonally (axes are swapped).
+            - 0x10000000: tmxlib reserves this bit for now, just because
+                0x0FFFFFFF is a nice round number.
 
         The rest of the value is zero if the layer is empty at the
         corresponding spot (or an object has no associated tile image), or it
@@ -1036,17 +1024,17 @@ class TileLikeObject(SizeMixin):
 
         The individual parts of value are reflected in individual properties:
 
-            - flipped_horizontally (0x8000)
-            - flipped_vertically (0x4000)
-            - rotated (0x2000)
-            - gid (0x0FFF)
+            - flipped_horizontally (0x80000000)
+            - flipped_vertically (0x40000000)
+            - flipped_diagonally (0x20000000)
+            - gid (0x0FFFFFFF)
         """
         return self._value
     @value.setter
     def value(self, new):
         if isinstance(new, TilesetTile):
             new = new.gid(self.map)
-        elif new < 0 or (new & 0x0FFF) >= self.map.end_gid:
+        elif new < 0 or (new & 0x0FFFFFFF) >= self.map.end_gid:
             raise ValueError('GID not in map!')
         self._value = new
 
@@ -1059,10 +1047,10 @@ class TileLikeObject(SizeMixin):
                     self.value & ~mask)
         return property(getter, setter, doc="See the value property")
 
-    gid = __mask_property(0x0FFF)
-    flipped_horizontally = __mask_property(0x8000, bool, 15)
-    flipped_vertically = __mask_property(0x4000, bool, 14)
-    rotated = __mask_property(0x2000, bool, 13)
+    gid = __mask_property(0x0FFFFFFF)
+    flipped_horizontally = __mask_property(0x80000000, bool, 31)
+    flipped_vertically = __mask_property(0x40000000, bool, 30)
+    flipped_diagonally = __mask_property(0x20000000, bool, 29)
 
     @property
     def x(self):
@@ -1140,22 +1128,16 @@ class TileLikeObject(SizeMixin):
 
         Handles negative indices in the obvious way.
         """
-        if self.rotated:
-            # rotate 90deg clockwise = invert axes + horizontal flip
-            # so: first invert axes, then check for negative indices,
-            #  and flip after that
-            x, y = y, x
         if y < 0:
             y = self.height + y
         if x < 0:
             x = self.width + x
-        if self.rotated:
-            # here's the horizontal flip
-            x = self.width - x - 1
         if self.flipped_vertically:
-            x = self.width - x - 1
-        if self.flipped_horizontally:
             y = self.height - y - 1
+        if self.flipped_horizontally:
+            x = self.width - x - 1
+        if self.flipped_diagonally:
+            x, y = y, x
         return x, y
 
     def get_pixel(self, x, y):
@@ -1249,7 +1231,7 @@ class MapTile(TileLikeObject):
         flagstring = ''.join(f for (f, v) in zip('HVR', (
                 self.flipped_horizontally,
                 self.flipped_vertically,
-                self.rotated,
+                self.flipped_diagonally,
             )) if v)
         return '<%s %s on %s, gid=%s %s at 0x%x>' % (type(self).__name__,
                 self.pos, self.layer.name, self.gid, flagstring, id(self))
@@ -1258,7 +1240,7 @@ class MapTile(TileLikeObject):
     def size(self):
         tileset_tile = self.tileset_tile
         if tileset_tile:
-            if self.rotated:
+            if self.flipped_diagonally:
                 return tileset_tile.height, tileset_tile.width
             else:
                 return tileset_tile.size
@@ -1450,7 +1432,7 @@ class MapObject(TileLikeObject, SizeMixin):
     @property
     def size(self):
         if self.gid:
-            if self.rotated:
+            if self.flipped_diagonally:
                 return self.tileset_tile.height, self.tileset_tile.width
             else:
                 return self.tileset_tile.size

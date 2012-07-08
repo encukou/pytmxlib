@@ -240,37 +240,37 @@ def test_map_tile():
     assert tile.value == tile.gid == 3
     assert tile.flipped_horizontally == False
     assert tile.flipped_vertically == False
-    assert tile.rotated == False
+    assert tile.flipped_diagonally == False
 
     tile.flipped_horizontally = True
-    assert tile.value == 0x8003
+    assert tile.value == 0x80000003
     assert tile.flipped_horizontally == True
     assert tile.flipped_vertically == False
-    assert tile.rotated == False
+    assert tile.flipped_diagonally == False
     assert tile.gid == 3
 
     tile.flipped_vertically = True
-    assert tile.value == 0xC003
+    assert tile.value == 0xC0000003
     assert tile.flipped_horizontally == True
     assert tile.flipped_vertically == True
-    assert tile.rotated == False
+    assert tile.flipped_diagonally == False
     assert tile.gid == 3
 
-    tile.rotated = True
-    assert tile.value == 0xE003
+    tile.flipped_diagonally = True
+    assert tile.value == 0xE0000003
     assert tile.flipped_horizontally == True
     assert tile.flipped_vertically == True
-    assert tile.rotated == True
+    assert tile.flipped_diagonally == True
     assert tile.gid == 3
 
     tile.flipped_horizontally = False
-    assert tile.value == 0x6003
+    assert tile.value == 0x60000003
     assert tile.flipped_horizontally == False
     assert tile.flipped_vertically == True
-    assert tile.rotated == True
+    assert tile.flipped_diagonally == True
     assert tile.gid == 3
 
-    assert map.layers[0][1, 2].value == 0x6003
+    assert map.layers[0][1, 2].value == 0x60000003
 
     map.layers[0][1, 2] = map.tilesets[0][0]
     assert map.layers[0][1, 2].gid == 1
@@ -535,33 +535,33 @@ def test_get_pixel():
 
     tile.value = map.tilesets['Desert'][9]
     tile.flipped_horizontally = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), top_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_right)
-
-    tile.value = map.tilesets['Desert'][9]
-    tile.flipped_vertically = True
     assert_color_tuple_eq(tile.get_pixel(0, 0), top_right)
     assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_right)
     assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
     assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_left)
 
     tile.value = map.tilesets['Desert'][9]
-    tile.rotated = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), top_right)
+    tile.flipped_vertically = True
+    assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
     assert_color_tuple_eq(tile.get_pixel(0, -1), top_left)
     assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_left)
+    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_right)
+
+    tile.value = map.tilesets['Desert'][9]
+    tile.flipped_diagonally = True
+    assert_color_tuple_eq(tile.get_pixel(0, 0), top_left)
+    assert_color_tuple_eq(tile.get_pixel(0, -1), top_right)
+    assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_left)
+    assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_right)
 
     tile.value = map.tilesets['Desert'][9]
     tile.flipped_horizontally = True
     tile.flipped_vertically = True
-    tile.rotated = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_right)
+    tile.flipped_diagonally = True
+    assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_right)
+    assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_left)
+    assert_color_tuple_eq(tile.get_pixel(-1, 0), top_right)
+    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_left)
 
 
 def test_shared_tilesets():
@@ -581,3 +581,39 @@ def test_autoadd_tileset():
     map.layers[0][0, 0] = tileset[0]
 
     assert tileset in map.tilesets
+
+def test_flipping():
+    testmap = tmxlib.Map.open(get_test_filename('flip-test.tmx'))
+    layer = testmap.layers[0]
+    colors = {
+        (1, 0, 0, 1): 'red',
+        (1, 1, 0, 1): 'ylw',
+        (0, 1, 0, 1): 'grn',
+        (0, 0, 1, 1): 'blu',
+    }
+    def assert_corners(tile_x, tile_y, *expected):
+        # "expected" are colors clockwise from top left, and the 3 flags
+        tile = layer[tile_x, tile_y]
+        g = colors.get
+        actual = (
+            g(tile.get_pixel(0, 0)),
+            g(tile.get_pixel(15, 0)),
+            g(tile.get_pixel(15, 15)),
+            g(tile.get_pixel(0, 15)),
+            int(tile.flipped_horizontally),
+            int(tile.flipped_vertically),
+            int(tile.flipped_diagonally),
+        )
+        assert actual == expected
+
+    # Test all combinations of flags, as Tiled saved them
+    # (tiles are tested clockwise from top left, again)
+    assert_corners(0, 0, 'red', 'ylw', 'grn', 'blu', 0, 0, 0)
+    assert_corners(1, 0, 'blu', 'red', 'ylw', 'grn', 1, 0, 1)
+    assert_corners(2, 0, 'grn', 'blu', 'red', 'ylw', 1, 1, 0)
+    assert_corners(2, 1, 'ylw', 'grn', 'blu', 'red', 0, 1, 1)
+
+    assert_corners(2, 2, 'red', 'blu', 'grn', 'ylw', 0, 0, 1)
+    assert_corners(1, 2, 'ylw', 'red', 'blu', 'grn', 1, 0, 0)
+    assert_corners(0, 2, 'grn', 'ylw', 'red', 'blu', 1, 1, 1)
+    assert_corners(0, 1, 'blu', 'grn', 'ylw', 'red', 0, 1, 0)
