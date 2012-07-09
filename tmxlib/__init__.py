@@ -1153,6 +1153,37 @@ class TileLikeObject(SizeMixin):
         else:
             return 0, 0, 0, 0
 
+    def rotate(self, degrees=90):
+        """Rotate the tile clockwise by the specified number of degrees
+
+        Note that tiles can only be rotated in 90-degree increments.
+        """
+        if degrees > 0:
+            mask = (5, 4, 1, 0, 7, 6, 3, 2)
+        else:
+            mask = (3, 2, 7, 6, 1, 0, 5, 4)
+            degrees = -degrees
+        num_steps, remainder = divmod(degrees, 90)
+        if remainder:
+            raise ValueError('Can only rotate in 90 degree increments')
+        code = sum((
+                self.flipped_horizontally << 2,
+                self.flipped_vertically << 1,
+                self.flipped_diagonally))
+        for i in range(num_steps):
+            code = mask[code]
+        self.flipped_horizontally = bool((code >> 2) % 2)
+        self.flipped_vertically = bool((code >> 1) % 2)
+        self.flipped_diagonally = bool(code % 2)
+
+    def hflip(self):
+        """Flip the tile horizontally"""
+        self.flipped_horizontally = not self.flipped_horizontally
+
+    def vflip(self):
+        """Flip the tile vertically"""
+        self.flipped_vertically = not self.flipped_vertically
+
 
 class MapTile(TileLikeObject):
     """References a particular spot on a tile layer
@@ -1228,7 +1259,7 @@ class MapTile(TileLikeObject):
         return self.layer.set_value_at(self.pos, new)
 
     def __repr__(self):
-        flagstring = ''.join(f for (f, v) in zip('HVR', (
+        flagstring = ''.join(f for (f, v) in zip('HVD', (
                 self.flipped_horizontally,
                 self.flipped_vertically,
                 self.flipped_diagonally,
@@ -1338,9 +1369,7 @@ class MapObject(TileLikeObject, SizeMixin):
 
         .. attribute:: value
 
-            Value of the tile, if it's a tile object. See the value property.
-
-        .. attribute:: value
+            Value of the tile, if it's a tile object.
 
             See :class:`MapTile`
 

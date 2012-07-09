@@ -130,6 +130,12 @@ MapTile
         .. automethod:: get_pixel
         .. automethod:: __nonzero__
 
+    Flipping:
+
+        .. automethod:: vflip
+        .. automethod:: hflip
+        .. automethod:: rotate
+
 MapObject
 ---------
 
@@ -140,6 +146,12 @@ MapObject
         .. automethod:: tile_to_image_coordinates
         .. automethod:: get_pixel
         .. automethod:: __nonzero__
+
+    Flipping:
+
+        .. automethod:: vflip
+        .. automethod:: hflip
+        .. automethod:: rotate
 
 Lists with named elements
 -------------------------

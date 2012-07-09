@@ -617,3 +617,49 @@ def test_flipping():
     assert_corners(1, 2, 'ylw', 'red', 'blu', 'grn', 1, 0, 0)
     assert_corners(0, 2, 'grn', 'ylw', 'red', 'blu', 1, 1, 1)
     assert_corners(0, 1, 'blu', 'grn', 'ylw', 'red', 0, 1, 0)
+
+def test_rotation():
+    testmap = tmxlib.Map.open(get_test_filename('flip-test.tmx'))
+    layer = testmap.layers[0]
+
+    tile = layer[1, 1]
+    tile.gid = layer[0, 0].gid
+    assert tile.value == layer[0, 0].value
+    tile.rotate()
+    assert tile.value == layer[1, 0].value
+    tile.rotate()
+    assert tile.value == layer[2, 0].value
+    tile.rotate()
+    assert tile.value == layer[2, 1].value
+    tile.rotate()
+    assert tile.value == layer[0, 0].value
+
+    tile.rotate(-90)
+    assert tile.value == layer[2, 1].value
+    tile.rotate(-180)
+    assert tile.value == layer[1, 0].value
+    tile.rotate(270)
+    assert tile.value == layer[0, 0].value
+
+    tile.flipped_diagonally = True
+
+    assert tile.value == layer[2, 2].value
+    tile.rotate()
+    assert tile.value == layer[1, 2].value
+    tile.rotate()
+    assert tile.value == layer[0, 2].value
+    tile.rotate()
+    assert tile.value == layer[0, 1].value
+    tile.rotate()
+
+    tile.flipped_diagonally = False
+    assert tile.value == layer[0, 0].value
+
+    tile.hflip()
+    assert tile.value == layer[1, 2].value
+    tile.vflip()
+    assert tile.value == layer[2, 0].value
+    tile.hflip()
+    assert tile.value == layer[0, 1].value
+    tile.rotate()
+    assert tile.value == layer[2, 2].value

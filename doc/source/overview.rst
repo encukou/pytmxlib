@@ -58,7 +58,7 @@ A map's `orientation` is its fundamental mode. Tiled currently supports
 to any other orientation (as it does not need to actually draw maps).
 Orthogonal orientation is the default.
 
-Maps have has a dict of properties, with which you can assign arbitrary string
+Each map has a dict of properties, with which you can assign arbitrary string
 values to string keys.
 
 Tilesets
@@ -155,16 +155,19 @@ a location on the map.
 
     >>> layer[6, 7] = map.tilesets['Desert'][29]
 
-Map tiles can also be flipped and rotated.
-(As of this writing, rotation is not implemented in Tiled, but it's planned.)
+Map tiles can also be flipped around, using Tiled's three flipping flags:
+horizontal (H), vertical(V), and diagonal (D) flip.
 
     >>> tile = layer[6, 7]
     >>> tile.flipped_horizontally = True
     >>> tile
     <MapTile (6, 7) on Ground, gid=30 H at ...>
-    >>> tile.rotated = True
+    >>> tile.vflip()
     >>> tile
-    <MapTile (6, 7) on Ground, gid=30 HR at ...>
+    <MapTile (6, 7) on Ground, gid=30 HV at ...>
+    >>> tile.rotate()
+    >>> tile
+    <MapTile (6, 7) on Ground, gid=30 VD at ...>
 
 Map tiles are true in a boolean context iff they're not empty (i.e. their
 `gid` is not 0).
