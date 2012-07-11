@@ -23,10 +23,6 @@ Development installation
 Make sure you have Python 2.6+ and pip_, navigate to the source folder, and
 run ``pip install -e .``
 
-If you're using Python 3, you will need to run the 2to3_ tool first.
-
-.. _2to3: http://docs.python.org/library/2to3.html
-
 Tests
 -----
 
