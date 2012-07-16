@@ -115,7 +115,7 @@ class TMXSerializer(object):
                 self._shared_objects[obj_type, filename] = obj = self.open(
                         cls, obj_type, filename)
                 return obj
-        return self.load(cls, obj_type, self.load_file(filename, base_path),
+        return self.load(cls, obj_type, self.load_file(filename),
                 base_path=base_path)
 
     def load(self, cls, obj_type, string, base_path=None):
