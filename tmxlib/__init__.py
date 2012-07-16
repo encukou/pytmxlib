@@ -231,7 +231,7 @@ class TilesetList(NamedElementList):
                     # skip renumbering if tilesets were appended, or unchanged
                     if previous_tilesets != self.list[:len(previous_tilesets)]:
                         self._renumber_map(previous_tilesets)
-                    if self.map.end_gid > 0x0FFF:
+                    if self.map.end_gid > 0x0FFFFFFF:
                         raise ValueError('Too many tiles to be represented')
             finally:
                 self._being_modified = False
