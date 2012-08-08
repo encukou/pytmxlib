@@ -422,11 +422,6 @@ def test_multiple_tilesets():
     map.tilesets.append(walls2)
     check_names('Desert Walls Walls2')
 
-    with pytest.raises(ValueError):
-        # Too many tiles to be represented in 2 bytes (along with their flags)
-        map.tilesets.append(tmxlib.ImageTileset('Walls2', tile_size=(1, 1),
-            image=map.tilesets[0].image))
-
     assert walls2.first_gid(map) == walls.first_gid(map) + len(walls) == 65
     assert any(t.tileset is walls for t in map.all_tiles())
     assert not any(t.tileset is walls2 for t in map.all_tiles())
