@@ -73,7 +73,7 @@ class NamedElementList(collections.MutableSequence):
             return self.stored_value(item_or_name) in self.list
 
     def __setitem__(self, index_or_name, value):
-        """Same as list, except non-slice indices may be names instead of ints.
+        """Same as list's, except non-slice indices may be names instead of ints.
         """
         with self.modification_context():
             if isinstance(index_or_name, slice):
@@ -84,7 +84,7 @@ class NamedElementList(collections.MutableSequence):
                 self.list[self._get_index(index_or_name)] = stored
 
     def __getitem__(self, index_or_name):
-        """Same as list, except non-slice indices may be names instead of ints.
+        """Same as list's, except non-slice indices may be names.
         """
         if isinstance(index_or_name, slice):
             return [self.retrieved_value(item) for item in
@@ -93,8 +93,17 @@ class NamedElementList(collections.MutableSequence):
             index = self._get_index(index_or_name)
             return self.retrieved_value(self.list[index])
 
+    def get(self, index_or_name, default=None):
+        """Same as __getitem__, but a returns default if not found
+        """
+        try:
+            index = self._get_index(index_or_name)
+            return self[index_or_name]
+        except (IndexError, KeyError):
+            return default
+
     def __delitem__(self, index_or_name):
-        """Same as list, except non-slice indices may be names instead of ints.
+        """Same as list's, except non-slice indices may be names instead of ints.
         """
         with self.modification_context():
             if isinstance(index_or_name, slice):
@@ -103,7 +112,7 @@ class NamedElementList(collections.MutableSequence):
                 del self.list[self._get_index(index_or_name)]
 
     def insert(self, index_or_name, value):
-        """Same as list, except indices may be names instead of ints.
+        """Same as list.insert, except indices may be names instead of ints.
         """
         index = self._get_index(index_or_name)
         with self.modification_context():
@@ -744,7 +753,6 @@ class Image(ImageBase, fileio.ReadWriteBase):
     _rw_obj_type = 'image'
 
     def __init__(self, data=None, trans=None, size=None, source=None):
-        self.source = source
         self.trans = trans
         self._data = data
         self.source = source

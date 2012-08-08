@@ -125,6 +125,21 @@ def test_bad_layer_by_name():
         desert().layers['(nonexisting)']
 
 
+def test_layer_get():
+    map = desert()
+    assert map.layers.get(0).name == 'Ground'
+    assert map.layers.get(0).index == 0
+    assert map.layers.get(0) is map.layers[0]
+    assert map.layers.get(0) is map.layers.get('Ground')
+
+
+def test_layer_get_default():
+    map = desert()
+    assert map.layers.get(50, 3) == 3
+    assert map.layers.get('bad name') == None
+    assert map.layers.get(-50, 'default') == 'default'
+
+
 def test_set_layer_by_name():
     map = desert()
     layer = tmxlib.TileLayer(map, 'Ground')
