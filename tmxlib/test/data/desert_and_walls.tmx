@@ -32,6 +32,10 @@
   <object gid="61" x="165" y="122"/>
   <object name="Hole A" type="hole" x="438" y="246" width="53" height="85"/>
   <object name="Hole B" type="hole" x="631" y="374" width="52" height="23"/>
-  <object name="Sign" gid="46" x="527" y="107"/>
+  <object name="Sign" gid="46" x="527" y="107">
+   <properties>
+    <property name="text" value="Beware monsters!"/>
+   </properties>
+   </object>
  </objectgroup>
 </map>

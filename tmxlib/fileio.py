@@ -449,7 +449,11 @@ class TMXSerializer(object):
                     kwargs['size'] = int(width), int(height)
                 assert not subelem.attrib, (
                     'Unexpected object attributes: %s' % subelem.attrib)
-                layer.append(self.object_class(**kwargs))
+                obj = self.object_class(**kwargs)
+                for subsubelem in subelem:
+                    if subsubelem.tag == 'properties':
+                        obj.properties.update(self.read_properties(subsubelem))
+                layer.append(obj)
         return layer
 
     def object_layer_to_element(self, layer):
@@ -478,6 +482,7 @@ class TMXSerializer(object):
                 attrib['width'] = str(object.width)
                 attrib['height'] = str(object.height)
             obj_element = etree.Element('object', attrib=attrib)
+            self.append_properties(obj_element, object.properties)
             element.append(obj_element)
 
         return element
