@@ -32,6 +32,12 @@ you have all supported Pythons (2.6, 2.7, 3.1, 3.2) installed, and run ``tox``.
 If you only want to test on your current Python version, simply run ``python
 setup.py test`` or ``py.test``.
 
+Thanks to Travis CI, the tests run on each commit: |ci-status|.
+
+.. |ci-status| image:: https://secure.travis-ci.org/encukou/pytmxlib.png?branch=master
+    :alt: (Link to Travis CI)
+    :target: http://travis-ci.org/encukou/pytmxlib
+
 Documentation
 -------------
 
