@@ -920,11 +920,11 @@ class TileLayer(Layer):
                 visible=visible, opacity=opacity)
         data_size = map.width * map.height
         if data is None:
-            self.data = array.array('h', [0] * data_size)
+            self.data = array.array('L', [0] * data_size)
         else:
             if len(data) != data_size:
                 raise ValueError('Invalid layer data size')
-            self.data = array.array('h', data)
+            self.data = array.array('L', data)
         self.encoding = 'base64'
         self.compression = 'zlib'
         self.type = 'tiles'

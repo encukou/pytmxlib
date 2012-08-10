@@ -343,7 +343,7 @@ class TMXSerializer(object):
                                 'Bad compression %s' % compression)
                 else:
                     layer.compression = None
-                layer.data = array.array('l', [(
+                layer.data = array.array('L', [(
                             ord_(a) +
                             (ord_(b) << 8) +
                             (ord_(c) << 16) +
