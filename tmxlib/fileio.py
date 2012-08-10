@@ -10,13 +10,18 @@ import io
 import functools
 from weakref import WeakValueDictionary
 import sys
+import warnings
 
 import six
-from lxml import etree
+try:
+    from lxml import etree
+    have_lxml = True
+except ImportError:
+    from xml.etree import ElementTree as etree
+    have_lxml = False
+    warnings.warn(ImportWarning('lxml is recommended'))
 
 from tmxlib.compatibility import ord_
-
-parser = etree.XMLParser(remove_comments=True)
 
 
 class ReadWriteBase(object):
@@ -119,7 +124,15 @@ class TMXSerializer(object):
                 base_path=base_path)
 
     def load(self, cls, obj_type, string, base_path=None):
-        tree = etree.XML(string, parser=parser)
+        if have_lxml:
+            tree = etree.XML(string, etree.XMLParser(remove_comments=True))
+        else:
+            tree = etree.XML(string)
+            def strip_comments(elem):
+                for subelem in elem:
+                    if subelem.tag == etree.Comment:
+                        elem.remove(subelem)
+            strip_comments(tree)
         return self.from_element(cls, obj_type, tree, base_path=base_path)
 
     def from_element(self, cls, obj_type, element, base_path=None):
@@ -135,8 +148,13 @@ class TMXSerializer(object):
             fileobj.write(self.dump(obj, obj_type, base_path=base_path))
 
     def dump(self, obj, obj_type, base_path=None):
+        extra_kwargs = {}
+        if have_lxml:
+            extra_kwargs = dict(pretty_print=True, xml_declaration=True)
+        else:
+            extra_kwargs = dict()
         return etree.tostring(self.to_element(obj, obj_type, base_path),
-                pretty_print=True, xml_declaration=True, encoding='UTF-8')
+                encoding='UTF-8', **extra_kwargs)
 
     def to_element(self, obj, obj_type, base_path=None,
             **kwargs):
@@ -410,6 +428,9 @@ class TMXSerializer(object):
         else:
             raise ValueError('Bad encoding: %s', encoding)
         data_elem = etree.Element('data', attrib=extra_attrib)
+        if six.PY3:
+            # etree only deals with (unicode) strings
+            data = data.decode('ascii')
         data_elem.text = data
         element.append(data_elem)
         return element

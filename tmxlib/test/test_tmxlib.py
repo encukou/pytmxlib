@@ -6,7 +6,7 @@ import sys
 import tempfile
 import contextlib
 
-from lxml import etree
+from tmxlib.fileio import etree
 from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
 import pytest
 
@@ -48,12 +48,20 @@ def desert():
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 map_filenames = [
-        dict(filename='desert.tmx', has_gzip=False),
-        dict(filename='perspective_walls.tmx', has_gzip=False),
-        dict(filename='sewers.tmx', has_gzip=False),
-        dict(filename='tilebmp-test.tmx', has_gzip=True),
-        dict(filename='desert_nocompress.tmx', has_gzip=False),
-        dict(filename='desert_and_walls.tmx', has_gzip=False),
+        dict(filename='desert.tmx', has_gzip=False,
+            output_filename=None),
+        dict(filename='perspective_walls.tmx', has_gzip=False,
+            output_filename=None),
+        dict(filename='sewers.tmx', has_gzip=False,
+            output_filename=None),
+        dict(filename='tilebmp-test.tmx', has_gzip=True,
+            output_filename=None),
+        dict(filename='desert_nocompress.tmx', has_gzip=False,
+            output_filename=None),
+        dict(filename='desert_and_walls.tmx', has_gzip=False,
+            output_filename=None),
+        dict(filename='sewers_comment.tmx', has_gzip=False,
+            output_filename='sewers.tmx'),
     ]
 
 
@@ -76,11 +84,15 @@ def assert_xml_compare(a, b):
 
 # actual test code
 @params(map_filenames)
-def test_roundtrip_opensave(filename, has_gzip):
+def test_roundtrip_opensave(filename, has_gzip, output_filename):
     if has_gzip and sys.version_info < (2, 7):
         raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
 
     filename = get_test_filename(filename)
+    if output_filename:
+        output_filename = get_test_filename(output_filename)
+    else:
+        output_filename = filename
     map = tmxlib.Map.open(filename)
     for layer in map.layers:
         # normalize mtime, for Gzip
@@ -90,14 +102,14 @@ def test_roundtrip_opensave(filename, has_gzip):
     try:
         temporary_file.close()
         map.save(temporary_file.name)
-        assert_xml_compare(file_contents(filename),
+        assert_xml_compare(file_contents(output_filename),
                 file_contents(temporary_file.name))
     finally:
         os.unlink(temporary_file.name)
 
 
 @params(map_filenames)
-def test_roundtrip_readwrite(filename, has_gzip):
+def test_roundtrip_readwrite(filename, has_gzip, output_filename):
     if has_gzip and sys.version_info < (2, 7):
         raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
 
@@ -107,6 +119,8 @@ def test_roundtrip_readwrite(filename, has_gzip):
         # normalize mtime, for Gzip
         layer.mtime = 0
     dumped = map.dump()
+    if output_filename:
+        xml = file_contents(get_test_filename(output_filename))
     assert_xml_compare(xml, dumped)
 
 

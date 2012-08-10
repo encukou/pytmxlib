@@ -28,7 +28,6 @@ setup(
         """.splitlines() if x.strip()],
     install_requires=[
             'six',
-            'lxml>=2.3',
             'pypng>=0.0.13',
         ],
     setup_requires=[],
