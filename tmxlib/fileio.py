@@ -98,8 +98,12 @@ class TMXSerializer(object):
         self.object_layer_class = tmxlib.ObjectLayer
         self.object_class = tmxlib.MapObject
 
-        from tmxlib import image_png
-        self.image_class = tmxlib.image_png.PngImage
+        try:
+            from tmxlib import image_pil
+            self.image_class = tmxlib.image_pil.PilImage
+        except ImportError:
+            from tmxlib import image_png
+            self.image_class = tmxlib.image_png.PngImage
 
         self._shared_objects = WeakValueDictionary()
 

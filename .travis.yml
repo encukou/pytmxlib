@@ -8,9 +8,11 @@ python:
   - "3.2"
 install:
   - python setup.py develop
-  - '[ "$WITH_LXML" = "yes" ] && sudo apt-get install python-lxml; :'
+  - '[ "$USE_LXML" = "yes" ] && sudo apt-get install python-lxml; :'
+  - '[ "$USE_PIL" = "yes" ] && sudo apt-get install python-imaging; :'
   - pip install pytest-cov
 env:
-  - USE_LXML=no
-  - USE_LXML=yes
+  - USE_LXML=no  USE_PIL=no
+  - USE_LXML=yes USE_PIL=no
+  - USE_LXML=yes USE_PIL=yes
 script: py.test
