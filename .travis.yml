@@ -8,6 +8,9 @@ python:
   - "3.2"
 install:
   - python setup.py develop
-  - sudo apt-get install python-lxml
+  - '[ "$WITH_LXML" = "yes" ] && sudo apt-get install python-lxml; :'
   - pip install pytest-cov
+env:
+  - USE_LXML=no
+  - USE_LXML=yes
 script: py.test
