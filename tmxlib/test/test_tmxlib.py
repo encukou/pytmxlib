@@ -272,6 +272,7 @@ def test_map_tile():
     assert tile.flipped_diagonally == False
 
     tile.flipped_horizontally = True
+    assert tile.value == 3 + tmxlib.MapTile.flipped_horizontally.value
     assert tile.value == 0x80000003
     assert tile.flipped_horizontally == True
     assert tile.flipped_vertically == False
@@ -279,6 +280,8 @@ def test_map_tile():
     assert tile.gid == 3
 
     tile.flipped_vertically = True
+    assert tile.value == (3 + tmxlib.MapTile.flipped_horizontally.value +
+        tmxlib.MapTile.flipped_vertically.value)
     assert tile.value == 0xC0000003
     assert tile.flipped_horizontally == True
     assert tile.flipped_vertically == True
@@ -287,6 +290,9 @@ def test_map_tile():
 
     tile.flipped_diagonally = True
     assert tile.value == 0xE0000003
+    assert tile.value == (3 + tmxlib.MapTile.flipped_horizontally.value +
+        tmxlib.MapTile.flipped_vertically.value +
+        tmxlib.MapTile.flipped_diagonally.value)
     assert tile.flipped_horizontally == True
     assert tile.flipped_vertically == True
     assert tile.flipped_diagonally == True
@@ -294,6 +300,9 @@ def test_map_tile():
 
     tile.flipped_horizontally = False
     assert tile.value == 0x60000003
+    assert tile.value == (3 +
+        tmxlib.MapTile.flipped_vertically.value +
+        tmxlib.MapTile.flipped_diagonally.value)
     assert tile.flipped_horizontally == False
     assert tile.flipped_vertically == True
     assert tile.flipped_diagonally == True

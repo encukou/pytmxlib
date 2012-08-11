@@ -993,6 +993,12 @@ class TileLayer(Layer):
         self.data[self._data_index(pos)] = new
 
 
+class _property(property):
+    """Trivial subclass of the `property` builtin. Allows custom attributes.
+    """
+    pass
+
+
 class TileLikeObject(SizeMixin):
     """Base tile-like object: regular tile or tile object.
 
@@ -1036,6 +1042,9 @@ class TileLikeObject(SizeMixin):
             - flipped_vertically (0x40000000)
             - flipped_diagonally (0x20000000)
             - gid (0x0FFFFFFF)
+
+        The properties themselves have a `value` attribute, eg.
+        `tmxlib.MapTile.flipped_diagonally.value == 0x20000000`.
         """
         return self._value
     @value.setter
@@ -1053,7 +1062,9 @@ class TileLikeObject(SizeMixin):
         def setter(self, new):
             self.value = ((value_type(new) << shift) & mask) | (
                     self.value & ~mask)
-        return property(getter, setter, doc="See the value property")
+        prop = _property(getter, setter, doc="See the value property")
+        prop.value = mask
+        return prop
 
     gid = __mask_property(0x0FFFFFFF)
     flipped_horizontally = __mask_property(0x80000000, bool, 31)
