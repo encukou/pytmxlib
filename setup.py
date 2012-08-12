@@ -10,7 +10,8 @@ __version__ = '0.1.0'
 setup(
     name='tmxlib',
     version=__version__,
-    description='TMX tile map utilities',
+    description='Library for manipulating TMX tile maps',
+    url='http://pytmxlib.readthedocs.org',
     author='Petr Viktorin',
     author_email='encukou@gmail.com',
     classifiers=[x.strip() for x in """
