@@ -179,7 +179,7 @@ Images and pixels
 The library has some basic support for working with tile images.
 
 
-If tmxlib can't fing PIL_, it will use the pure-python `png`_ package.
+If tmxlib can't find PIL_, it will use the pure-python `png`_ package.
 This is very slow when reading the pictures, and it can only handle PNG files.
 For this reason, it's recommended that you install PIL to work with images.
 
