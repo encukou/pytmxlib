@@ -21,16 +21,20 @@ import six
 from tmxlib import fileio
 
 
-class TilesetNotInMapError(ValueError): pass
+class TilesetNotInMapError(ValueError):
+    """Raised when trying to remove a tileset from a map that is uses its tiles
+    """
 
 
 class NamedElementList(collections.MutableSequence):
     """A list that supports indexing by element name, as a convenience, etc
 
-    `lst[some_name]` means the first element where `element.name == some_name`
+    ``lst[some_name]`` means the first `element` where
+    ``element.name == some_name``.
+    The dict-like ``get`` method is provided.
 
-    There are hooks for subclasses: stored_value, retrieved_value, and
-    modification_context
+    Additionally, NamedElementList subclasses can use several hooks to control
+    how their elements are stored or what is allowed as elements.
     """
     def __init__(self, lst=None):
         """Initialize this list from an iterable"""
@@ -73,7 +77,7 @@ class NamedElementList(collections.MutableSequence):
             return self.stored_value(item_or_name) in self.list
 
     def __setitem__(self, index_or_name, value):
-        """Same as list's, except non-slice indices may be names instead of ints.
+        """Same as list's, but non-slice indices may be names instead of ints.
         """
         with self.modification_context():
             if isinstance(index_or_name, slice):
@@ -121,7 +125,7 @@ class NamedElementList(collections.MutableSequence):
     def insert_after(self, index_or_name, value):
         """Insert the new value after the position specified by index_or_name
 
-        For numerical indexes, the same as insert(index + 1, value).
+        For numerical indexes, the same as ``insert(index + 1, value)``.
         Useful when indexing by strings.
         """
         with self.modification_context():
@@ -132,10 +136,10 @@ class NamedElementList(collections.MutableSequence):
         """Move an item by the specified number of indexes
 
         `amount` can be negative.
-        For example, "move layer down" translates to layers.move(idx, -1)
+        For example, "move layer down" translates to ``layers.move(idx, -1)``
 
         The method will clamp out-of range amounts, so, for eample,
-        lst.move(0, -1) will do nothing.
+        ``lst.move(0, -1)`` will do nothing.
         """
         with self.modification_context():
             index = self._get_index(index_or_name)
@@ -736,15 +740,30 @@ class Image(ImageBase, fileio.ReadWriteBase):
     """An image. Conceptually, an 2D array of pixels.
 
     init arguments that become attributes:
-    `data`: The image data, as they've been read from disk
-    `trans`: A color key used for transparency (currently not implemented)
-    `size`: Size of the image. If given, the image doesn't have to be decoded
-        to get this information, speeding up operations that don't require
-        pixel access.
-        If it does not equal the actual image size, an exception will be raised
-        as soon as the image is decoded.
-    `source`: The file name of this image, if it is to be saved separately from
-        maps/tilesets that use it.
+
+        .. autoattribute:: data
+
+        .. autoattribute:: size
+
+            If given in constructor, the image doesn't have to be decoded to
+            get this information, somewhat speeding up operations that don't
+            require pixel access.
+
+            If it's given in constructor and it does not equal the actual image
+            size, an exception will be raised as soon as the image is decoded.
+
+        .. attribute:: source
+
+            The file name of this image, if it is to be saved separately from
+            maps/tilesets that use it.
+
+        .. attribute:: trans
+
+            A color key used for transparency (currently not implemented)
+
+    Images support indexing (``img[x, y]``) as a shortcut for the get_pixel
+    and set_pixel methods.
+
     """
     # XXX: Make `trans` actually work
     # XXX: Make modifying and saving images work
@@ -801,12 +820,43 @@ class Image(ImageBase, fileio.ReadWriteBase):
 
 class ImageRegion(ImageBase):
     """A rectangular region of a larger image
+
+    init arguments that become attributes:
+
+        .. attribute:: image
+
+            The "parent" image
+
+        .. attribute:: top_left
+
+            The coordinates of the top-left corner of the region.
+            Will also available as ``x`` and ``y`` attributes.
+
+        .. attribute:: size
+
+            The size of the region.
+            Will also available as ``width`` and ``height`` attributes.
     """
     def __init__(self, image, top_left, size):
         self.image = image
-        self.x = top_left[0]
-        self.y = top_left[1]
+        self.top_left = x, y = top_left
         self.size = size
+
+    @property
+    def x(self):
+        return self.top_left[0]
+
+    @x.setter
+    def x(self, value):
+        self.top_left = value, self.top_left[1]
+
+    @property
+    def y(self):
+        return self.top_left[1]
+
+    @y.setter
+    def y(self, value):
+        self.top_left = self.top_left[0], value
 
     def get_pixel(self, x, y):
         """Get the color of the pixel at position (x, y) as a RGBA 4-tuple.
@@ -1023,7 +1073,8 @@ class TileLikeObject(SizeMixin):
             - 0x80000000: tile is flipped horizontally.
             - 0x40000000: tile is flipped vertically.
             - 0x20000000: tile is flipped diagonally (axes are swapped).
-            - 0x10000000: tmxlib reserves this bit for now, just because
+            -
+                0x10000000: tmxlib reserves this bit for now, just because
                 0x0FFFFFFF is a nice round number.
 
         The rest of the value is zero if the layer is empty at the
@@ -1041,8 +1092,8 @@ class TileLikeObject(SizeMixin):
             - flipped_diagonally (0x20000000)
             - gid (0x0FFFFFFF)
 
-        The properties themselves have a `value` attribute, eg.
-        `tmxlib.MapTile.flipped_diagonally.value == 0x20000000`.
+        The properties themselves have a `value` attribute, e.g.
+        ``tmxlib.MapTile.flipped_diagonally.value == 0x20000000``.
         """
         return self._value
     @value.setter
@@ -1373,8 +1424,8 @@ class MapObject(TileLikeObject, SizeMixin):
             Must be specified for non-tile objects, and must *not* be specified
             for tile objects (unless the size matches the tile).
 
-            Similar restrictions apply to setting the property (and `width` &
-            `height`).
+            Similar restrictions apply to setting the property (and ``width`` &
+            ``height``).
 
         .. attribute:: name
 

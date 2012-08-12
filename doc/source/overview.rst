@@ -173,14 +173,15 @@ Map tiles are true in a boolean context iff they're not empty (i.e. their
 `gid` is not 0).
 
 
-Pixels
-------
+Images and pixels
+-----------------
 
-The library has some basic support for getting tile pixels.
+The library has some basic support for working with tile images.
 
-tmxlib uses the pure-python `png`_ package. This is very slow when reading
-the pictures and it can only handle PNG files; its advantage is that it's easy
-to install.
+
+If tmxlib can't fing PIL_, it will use the pure-python `png`_ package.
+This is very slow when reading the pictures, and it can only handle PNG files.
+For this reason, it's recommended that you install PIL to work with images.
 
     >>> map.tilesets['Desert'][0].get_pixel(0, 0)
     (1.0, 0.8156862..., 0.5803921..., 1.0)
@@ -188,9 +189,4 @@ to install.
     (1.0, 0.8156862..., 0.5803921..., 1.0)
 
 .. _png: http://pypi.python.org/pypi/pypng/0.0.12
-
-.. note::
-
-    See :mod:`tmxlib.image_png` to see how to make another image backend.
-    It's not that hard if you know some image library with Python bindings.
-    Patches welcome, pull requests welcomer!
+.. _PIL: http://www.pythonware.com/products/pil/

@@ -27,7 +27,6 @@ class :class:`tmxlib.ObjectLayer`
         .. automethod:: tmxlib.ObjectLayer.insert_after
         .. automethod:: tmxlib.ObjectLayer.move
 
-        .. automethod:: tmxlib.ObjectLayer.modification_context
         .. automethod:: tmxlib.ObjectLayer.retrieved_value
         .. automethod:: tmxlib.ObjectLayer.stored_value
 
@@ -73,7 +72,6 @@ class :class:`tmxlib.TilesetList`
         .. automethod:: tmxlib.TilesetList.insert_after
         .. automethod:: tmxlib.TilesetList.move
 
-        .. automethod:: tmxlib.TilesetList.modification_context
         .. automethod:: tmxlib.TilesetList.retrieved_value
         .. automethod:: tmxlib.TilesetList.stored_value
 
@@ -100,3 +98,5 @@ class :class:`tmxlib.ImageTileset`
 
         .. automethod:: tmxlib.ImageTileset.first_gid
         .. automethod:: tmxlib.ImageTileset.end_gid
+
+.. autoclass:: tmxlib.ImageBase

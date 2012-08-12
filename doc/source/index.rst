@@ -10,29 +10,52 @@ Tiled_, a GUI editor, and play around with it.
 Tiled's wiki and IRC channel are places to go if you have questions about the
 TMX format.
 
-If you're looking to use maps in a game, `tmxlib` won't help you much. Try the
-pytmxloader_ project instead.
+If you're looking to use maps in a game, chances are `tmxlib` won't help you
+much. Try pytmxloader_,  PyTMX_, or one of the other projects listed on the
+`Tiled wiki`_.
 
 .. _Tiled: http://www.mapeditor.org/
 .. _pytmxloader: http://code.google.com/p/pytmxloader/
+.. _PyTMX: https://github.com/bitcraft/PyTMX
+.. _Tiled wiki: https://github.com/bjorn/tiled/wiki/Support-for-TMX-maps
 
+Installation
+============
 
-Development installation
-========================
+To install tmxlib, you can use pip_: ``pip install --user tmxlib``.
+To install system-wide, leave out the ``--user`` option.
 
-Make sure you have Python 2.6+ and pip_, navigate to the source folder, and
-run ``pip install -e .``
+If you can't find pip on your system, look around.
+In Fedora, it's named ``pip-python`` and lives in the ``python-pip`` package.
+
+Optionally, also install the lxml_ and PIL_ packages to speed up XML and image
+handling, respectively.
+Linux distributions are likely to have them (in Fedora,
+``yum install python-lxml python-imaging``).
+If you can't find them, use pip to get them.
+
+.. _pip: http://pypi.python.org/pypi/pip
+.. _lxml: http://lxml.de/
+.. _PIL: http://www.pythonware.com/products/pil/
+
+Development
+===========
+
+The project is `hosted on Github`_ (as ``pytmxlib``), free for anyone to
+file bugs, clone, fork, or otherwise help make it better.
+
+To install the library for development, navigate to the source folder, and
+run ``python setup.py develop``.
 
 Tests
 -----
 
-Tests are run using tox_, to ensure cross-Python compatibility. Make sure
+To run tests, ``pip install pytest-cov``, and run ``py.test``.
+
+Tests can be run using tox_, to ensure cross-Python compatibility. Make sure
 you have all supported Pythons (2.6, 2.7, 3.1, 3.2) installed, and run ``tox``.
 
-If you only want to test on your current Python version, simply run ``python
-setup.py test`` or ``py.test``.
-
-Thanks to Travis CI, the tests run on each commit: |ci-status|.
+Nowadays we use Travis CI to run tests after each commit: |ci-status|.
 
 .. |ci-status| image:: https://secure.travis-ci.org/encukou/pytmxlib.png?branch=master
     :alt: (Link to Travis CI)
@@ -41,10 +64,11 @@ Thanks to Travis CI, the tests run on each commit: |ci-status|.
 Documentation
 -------------
 
-This documentation is generated using Sphinx_ (install it and run ``make`` in
-the doc/ directory).
+This documentation is generated using Sphinx_. To build it,
+``pip install sphinx`` and run ``make`` in the doc/ directory.
 
-.. _pip: http://pypi.python.org/pypi/pip
+.. _hosted on Github: http://github.com/encukou/pytmxlib
+.. _virtualenv: http://www.virtualenv.org/
 .. _tox: http://tox.readthedocs.org/
 .. _Sphinx: http://sphinx.pocoo.org/
 

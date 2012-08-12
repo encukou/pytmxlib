@@ -156,6 +156,22 @@ MapObject
 Lists with named elements
 -------------------------
 
+NamedElementList
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: tmxlib.NamedElementList
+
+    .. automethod:: get
+    .. automethod:: insert
+    .. automethod:: insert_after
+    .. automethod:: move
+
+    Hooks for subclasses:
+
+        .. automethod:: modification_context
+        .. automethod:: retrieved_value
+        .. automethod:: stored_value
+
 LayerList
 ~~~~~~~~~
 
@@ -172,10 +188,40 @@ TilesetList
 
     .. automethod:: modification_context
 
+Images
+------
+
+Image
+~~~~~
+
+.. autoclass:: tmxlib.Image
+
+    .. automethod:: get_pixel
+    .. automethod:: set_pixel
+
+    Methods interesting for subclassers:
+
+        .. automethod:: load_image
+
+    .. note::
+        It's currently not possible to save modified images.
+
+ImageRegion
+~~~~~~~~~~~
+
+.. autoclass:: tmxlib.ImageRegion
+
+    Except for the constructor and attributes, `ImageRegion` supports the
+    same external API as :class:`Image`:
+
+        .. method:: get_pixel(x, y)
+        .. method:: set_pixel(x, y, value)
 
 
+Exceptions
+------
 
-
+.. autoclass:: tmxlib.TilesetNotInMapError
 
 
 .. toctree::
