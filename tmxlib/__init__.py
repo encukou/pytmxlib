@@ -253,20 +253,18 @@ class TilesetList(NamedElementList):
         If an used tilesed was removed, raise a ValueError. (Note that this
         method by itself won't restore the previous state.)
         """
-        memo = dict()
+        gid_map = dict()
+        for tile in self.map.all_tiles():
+            if tile and tile.gid not in gid_map:
+                tileset_tile = tile._tileset_tile(previous_tilesets)
+                try:
+                    gid_map[tile.gid] = tileset_tile.gid(self.map)
+                except TilesetNotInMapError:
+                    msg = 'Cannot remove %s: map contains its tiles'
+                    raise ValueError(msg % tileset_tile.tileset)
         for tile in self.map.all_tiles():
             if tile:
-                try:
-                    tile.gid = memo[tile.gid]
-                except KeyError:
-                    prev_gid = tile.gid
-                    tileset_tile = tile._tileset_tile(previous_tilesets)
-                    try:
-                        tile.gid = tileset_tile.gid(self.map)
-                    except TilesetNotInMapError:
-                        msg = 'Cannot remove %s: map contains its tiles'
-                        raise ValueError(msg % tileset_tile.tileset)
-                    memo[prev_gid] = tile.gid
+                tile.gid = gid_map[tile.gid]
 
 
 class SizeMixin(object):

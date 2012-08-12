@@ -62,6 +62,8 @@ map_filenames = [
             output_filename=None),
         dict(filename='sewers_comment.tmx', has_gzip=False,
             output_filename='sewers.tmx'),
+        dict(filename='walls_and_desert.tmx', has_gzip=False,
+            output_filename=None),
     ]
 
 
@@ -696,3 +698,16 @@ def test_rotation():
     assert tile.value == layer[0, 1].value
     tile.rotate()
     assert tile.value == layer[2, 2].value
+
+
+def test_del_tileset():
+    filename = get_test_filename('walls_and_desert.tmx')
+    testmap = tmxlib.Map.open(filename)
+
+    with pytest.raises(ValueError):
+        del testmap.tilesets['Walls']
+
+    # Ensure deleting did not mess up anything
+    dumped = testmap.dump()
+    xml = file_contents(filename)
+    assert_xml_compare(xml, dumped)

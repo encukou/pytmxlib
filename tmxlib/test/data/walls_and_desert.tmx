@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="40" height="40" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="Walls" tilewidth="64" tileheight="64">
+  <image source="perspective_walls.png" width="256" height="256"/>
+ </tileset>
+ <tileset firstgid="17" name="Desert" tilewidth="32" tileheight="32" spacing="1" margin="1">
+  <image source="tmw_desert_spacing.png" width="265" height="199"/>
+ </tileset>
+ <layer name="Ground" width="40" height="40">
+  <data encoding="base64" compression="zlib">
+   eJztmNkKwjAQRfML2gc3sC7girVa963+/1c5YkNlCG0Sk3GUPhxsICXHO2M7GAkhIo90gRDoeT7HhpvCb8nA61fye2Y1AsbAhIGPihpQBwLk7eOsKTAzYA60gDbQIchiBawNSDz6HQr8NsAJ2H7Rryi/RDNPCr8dQ7878sJ+F/Hq/yuxH+45vC7LC/elCz/V7+CA8pPXZX44V1f57dFa+pjm57u+2BNzzOqny9mBXyOjKfJ3URGB5j7J4kO/UOTzhfyuRXQ096nus/Ebi3y+6AODEoaa+1T3+ew9amKhnnM4ecaEPjazGYXXLfvUeXa+v38SR+frouP3dLpneyn9UoZ+uK+5+dnU932+oPJLDfxwltzyU9Wasx9lfjazGaXfvxAzcPgVcFbc/husalxR8RkP9IUb3g==
+  </data>
+ </layer>
+ <layer name="Building" width="40" height="40">
+  <data encoding="base64" compression="zlib">
+   eJzt0rsKgDAQBMBT8AEW/v/fRrEwhUFsvBQzsM1WW2xE/6Yjw0PmzFGV8WP/t3rH3ugz9b5vjetvpy3u/y1piwAAAAAAeFMA1jUAWA==
+  </data>
+ </layer>
+ <objectgroup name="Objects" width="40" height="40">
+  <properties>
+   <property name="password" value="xyzzy"/>
+  </properties>
+  <object gid="13" x="165" y="122"/>
+  <object name="Hole A" type="hole" x="438" y="246" width="53" height="85"/>
+  <object name="Hole B" type="hole" x="631" y="374" width="52" height="23"/>
+  <object name="Sign" gid="62" x="527" y="107">
+   <properties>
+    <property name="text" value="Beware monsters!"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
