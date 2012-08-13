@@ -71,8 +71,10 @@ class NamedElementList(collections.MutableSequence):
         NamedElementLists can be queried either by name or by item.
         """
         if isinstance(item_or_name, six.string_types):
-            return any(i for i in self.list if
-                    self.retrieved_value(i).name == item_or_name)
+            for i in self.list:
+                if self.retrieved_value(i).name == item_or_name:
+                    return True
+            return False
         else:
             return self.stored_value(item_or_name) in self.list
 
@@ -917,6 +919,9 @@ class Layer(object):
         .. attribute:: index
 
             Index of this layer in the layer list
+
+    A Layer is false in a boolean context iff it is empty, that is, if all
+    tiles of a tile layer are false, or if an object layer contains no objects.
     """
     def __init__(self, map, name, visible=True, opacity=1):
         super(Layer, self).__init__()
@@ -944,6 +949,8 @@ class Layer(object):
         """
         raise NotImplementedError('Layer.all_objects is virtual')
 
+    def __nonzero__(self):
+        raise NotImplementedError('Layer.__nonzero__ is virtual')
 
 class TileLayer(Layer):
     """A tile layer
@@ -1040,6 +1047,8 @@ class TileLayer(Layer):
         """
         self.data[self._data_index(pos)] = new
 
+    def __nonzero__(self):
+        return not any(self.all_tiles())
 
 class _property(property):
     """Trivial subclass of the `property` builtin. Allows custom attributes.
@@ -1400,6 +1409,9 @@ class ObjectLayer(Layer, NamedElementList):
         if item.layer is not self:
             raise ValueError('Incompatible object')
         return item
+
+    def __nonzero__(self):
+        return NamedElementList.__nonzero__(self)
 
 
 class MapObject(TileLikeObject, SizeMixin):

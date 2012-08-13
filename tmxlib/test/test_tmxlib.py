@@ -170,8 +170,9 @@ def test_del_layer():
 
 
 def test_layers_contains_name():
-    assert 'Ground' in desert().layers
-    assert 'Sky' not in desert().layers
+    map = desert()
+    assert 'Ground' in map.layers
+    assert 'Sky' not in map.layers
 
 
 def test_layers_contains_layer():
