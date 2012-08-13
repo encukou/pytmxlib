@@ -402,14 +402,18 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         else:
             return last_tileset.end_gid(self)
 
-    def add_layer(self, name, before=None, after=None):
+    def add_layer(self, name, before=None, after=None, layer_class=None):
         """Add an empty layer with the given name to the map.
 
         By default, the new layer is added at the end of the layer list.
         A different position may be specified with either of the `before` or
         `after` arguments, which may be integer indices or names.
+
+        layer_class defaults to TileLayer
         """
-        new_layer = TileLayer(self, name)
+        if not layer_class:
+            layer_class = TileLayer
+        new_layer = layer_class(self, name)
         if after is not None:
             if before is not None:
                 raise ValueError("Can't specify both before and after")
@@ -419,6 +423,20 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         else:
             self.layers.append(new_layer)
         return new_layer
+
+    def add_tile_layer(self, name, before=None, after=None):
+        """Add an empty tile layer with the given name to the map.
+
+        See add_layer
+        """
+        return self.add_layer(name, before, after, layer_class=TileLayer)
+
+    def add_object_layer(self, name, before=None, after=None):
+        """Add an empty object layer with the given name to the map.
+
+        See add_layer
+        """
+        return self.add_layer(name, before, after, layer_class=ObjectLayer)
 
     def all_tiles(self):
         """Yield all tiles in the map, including tile objects
@@ -1054,7 +1072,8 @@ class TileLayer(Layer):
         self.data[self._data_index(pos)] = new
 
     def __nonzero__(self):
-        return not any(self.all_tiles())
+        return any(self.all_tiles())
+    __bool__ = __nonzero__
 
 class _property(property):
     """Trivial subclass of the `property` builtin. Allows custom attributes.
@@ -1417,7 +1436,9 @@ class ObjectLayer(Layer, NamedElementList):
         return item
 
     def __nonzero__(self):
-        return NamedElementList.__nonzero__(self)
+        return bool(len(self))
+
+    __bool__ = __nonzero__
 
 
 class MapObject(TileLikeObject, SizeMixin):

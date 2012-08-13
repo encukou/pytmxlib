@@ -359,8 +359,8 @@ def test_layer_list():
     map = desert()
     different_map = desert()
     map.add_layer('Sky')
-    map.add_layer('Underground', before='Ground')
-    map.add_layer('Grass', after='Ground')
+    map.add_tile_layer('Underground', before='Ground')
+    map.add_object_layer('Grass', after='Ground')
 
     def check_names(names_string):
         names = names_string.split()
@@ -720,3 +720,18 @@ def test_del_tileset():
     dumped = testmap.dump()
     xml = file_contents(filename)
     assert_xml_compare(xml, dumped)
+
+
+def test_layer_nonzero():
+    map = desert()
+    assert map.layers[0]
+
+    layer = map.add_layer('Tile layer')
+    assert not layer
+    layer[0, 0] = 1
+    assert layer
+
+    layer = map.add_object_layer('Object layer')
+    assert not layer
+    layer.append(tmxlib.MapObject(layer, (0, 0), size=(3, 3)))
+    assert layer
