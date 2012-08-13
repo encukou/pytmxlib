@@ -394,7 +394,13 @@ class Map(fileio.ReadWriteBase, SizeMixin):
     def pixel_height(self): return self.height * self.tile_height
 
     @property
-    def end_gid(self): return self.tilesets[-1].end_gid(self)
+    def end_gid(self):
+        try:
+            last_tileset = self.tilesets[-1]
+        except IndexError:
+            return 0
+        else:
+            return last_tileset.end_gid(self)
 
     def add_layer(self, name, before=None, after=None):
         """Add an empty layer with the given name to the map.

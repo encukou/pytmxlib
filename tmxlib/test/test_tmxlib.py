@@ -472,6 +472,7 @@ def test_multiple_tilesets():
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
     assert walls.first_gid(map) < building[1, 1].gid < walls2.first_gid(map)
+    assert map.end_gid == 182
 
     map.tilesets.move('Walls2', -1)
     check_names('Desert Walls2 Walls')
@@ -480,19 +481,26 @@ def test_multiple_tilesets():
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
     assert walls2.first_gid(map) < walls.first_gid(map) < building[1, 1].gid
+    assert map.end_gid == 182
 
     assert any(t.tileset is walls for t in map.all_tiles())
     assert not any(t.tileset is walls2 for t in map.all_tiles())
+    assert map.end_gid == 182
 
     map.tilesets.move('Walls2', 1)
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
     assert walls.first_gid(map) < building[1, 1].gid < walls2.first_gid(map)
+    assert map.end_gid == 182
 
-    map.tilesets.move('Walls2', -1)
     del map.tilesets['Walls2']
     assert tile.tileset is walls
     assert tile.gid == walls.first_gid(map) + tile.number
+    assert map.end_gid == 65
+
+    del map.layers[:]
+    del map.tilesets[:]
+    assert map.end_gid == 0
 
 
 def test_remove_used_tileset():
