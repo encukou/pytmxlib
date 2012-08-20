@@ -21,8 +21,12 @@ import six
 from tmxlib import fileio
 
 
-class TilesetNotInMapError(ValueError):
+class UsedTilesetError(ValueError):
     """Raised when trying to remove a tileset from a map that is uses its tiles
+    """
+
+class TilesetNotInMapError(ValueError):
+    """Used when trying to use a tile from a tileset that's not in the map
     """
 
 
@@ -267,7 +271,7 @@ class TilesetList(NamedElementList):
                     gid_map[tile.gid] = tileset_tile.gid(self.map)
                 except TilesetNotInMapError:
                     msg = 'Cannot remove %s: map contains its tiles'
-                    raise ValueError(msg % tileset_tile.tileset)
+                    raise UsedTilesetError(msg % tileset_tile.tileset)
         for tile in self.map.all_tiles():
             if tile:
                 tile.gid = gid_map[tile.gid]

@@ -505,7 +505,7 @@ def test_multiple_tilesets():
 
 def test_remove_used_tileset():
     map = desert()
-    with pytest.raises(ValueError):
+    with pytest.raises(tmxlib.UsedTilesetError):
         del map.tilesets[0]
 
 
@@ -713,7 +713,7 @@ def test_del_tileset():
     filename = get_test_filename('walls_and_desert.tmx')
     testmap = tmxlib.Map.open(filename)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(tmxlib.UsedTilesetError):
         del testmap.tilesets['Walls']
 
     # Ensure deleting did not mess up anything

@@ -221,6 +221,7 @@ ImageRegion
 Exceptions
 ------
 
+.. autoclass:: tmxlib.UsedTilesetError
 .. autoclass:: tmxlib.TilesetNotInMapError
 
 

@@ -85,7 +85,7 @@ that to delete a tileset, the map may not contain any of its tiles.
     >>> del map.tilesets['Desert']
     Traceback (most recent call last):
       ...
-    ValueError: Cannot remove <ImageTileset 'Desert' at ...>: map contains its tiles
+    UsedTilesetError: Cannot remove <ImageTileset 'Desert' at ...>: map contains its tiles
 
 (If this causes you trouble when you need to move tilesets around, use the
 `map.tilesets.move` method)
