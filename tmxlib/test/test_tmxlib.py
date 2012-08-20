@@ -241,12 +241,17 @@ def test_tileset_tiles():
 
 
 def test_tileset_tile():
-    tile = desert().tilesets[0][1]
+    map = desert()
+    tile = map.tilesets[0][1]
     assert tile.tileset.name == 'Desert'
     assert tile.size == (32, 32)
     assert tile.properties == {}
 
     assert tile.width == tile.height == 32
+
+    assert map.tilesets[0][0] is not map.tilesets[0][0]  # implementation detail
+    assert map.tilesets[0][0] == map.tilesets[0][0]
+    assert hash(map.tilesets[0][0]) == hash(map.tilesets[0][0])
 
 
 def test_map_tile():
@@ -325,6 +330,11 @@ def test_map_tile():
     map.layers[0][-1, -1].value = 2
     assert map.layers[0][-1, -1] == 2
     assert map.layers[0][-1, -1] != 3
+
+
+    assert map.layers[0][0, 0] is not map.layers[0][0, 0]  # implementation detail
+    assert map.layers[0][0, 0] == map.layers[0][0, 0]
+    assert hash(map.layers[0][0, 0]) == hash(map.layers[0][0, 0])
 
 
 def test_map_tiles():

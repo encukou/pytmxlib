@@ -525,7 +525,15 @@ class TilesetTile(SizeMixin):
         return self.tileset.tile_properties[self.number]
 
     def __eq__(self, other):
-        return self.number == other.number and self.tileset is other.tileset
+        try:
+            other_number = other.number
+            other_tileset = other.tileset
+        except AttributeError:
+            return False
+        return self.number == other_number and self.tileset is other_tileset
+
+    def __hash__(self):
+        return hash(('tmxlib tileset tile', self.number, self.tileset))
 
     def __ne__(self, other):
         return not (self == other)
@@ -1406,6 +1414,9 @@ class MapTile(TileLikeObject):
 
     def __ne__(self, other):
         return not self == other
+
+    def __hash__(self):
+        return hash(('tmxlib map tile', self.layer, self.pos))
 
 
 class ObjectLayer(Layer, NamedElementList):
