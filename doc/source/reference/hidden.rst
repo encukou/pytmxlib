@@ -9,6 +9,12 @@ This page documents such members, so that they can be linked.
 
 .. currentmodule:: tmxlib
 
+class :class:`tmxlib.TileLayer`
+
+    :class:`Layer` methods
+
+        .. automethod:: tmxlib.TileLayer.to_dict
+
 class :class:`tmxlib.ObjectLayer`
 
     :class:`NamedList` methods
@@ -29,6 +35,10 @@ class :class:`tmxlib.ObjectLayer`
 
         .. automethod:: tmxlib.ObjectLayer.retrieved_value
         .. automethod:: tmxlib.ObjectLayer.stored_value
+
+    :class:`Layer` methods
+
+        .. automethod:: tmxlib.ObjectLayer.to_dict
 
 class :class:`tmxlib.LayerList`
 
@@ -83,6 +93,7 @@ class :class:`tmxlib.ImageTileset`
         .. automethod:: tmxlib.ImageTileset.load(string)
         .. automethod:: tmxlib.ImageTileset.save(filename)
         .. automethod:: tmxlib.ImageTileset.dump(string)
+        .. automethod:: tmxlib.ImageTileset.to_dict
 
     Overridden methods (see :class:`tmxlib.Tileset`):
 

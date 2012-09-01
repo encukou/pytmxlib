@@ -11,13 +11,14 @@ Map
 
 .. autoclass:: tmxlib.Map
 
-    Loading and saving (see :class:`tmxlib.fileio.ReadWriteBase` for detailed
+    Loading and saving (see :class:`tmxlib.fileio.ReadWriteBase` for more
     information):
 
         .. classmethod:: open(filename, shared=False)
         .. classmethod:: load(string)
         .. method:: save(filename)
         .. method:: dump(string)
+        .. automethod:: to_dict
 
     Methods:
 
@@ -33,13 +34,14 @@ Tileset
 
 .. autoclass:: tmxlib.Tileset
 
-    Loading and saving (see :class:`tmxlib.fileio.ReadWriteBase` for detailed
+    Loading and saving (see :class:`tmxlib.fileio.ReadWriteBase` for more
     information):
 
         .. classmethod:: open(filename, shared=False)
         .. classmethod:: load(string)
         .. method:: save(filename)
         .. method:: dump(string)
+        .. automethod:: to_dict
 
     List-like access:
 
@@ -88,6 +90,7 @@ Layer
 
         .. automethod:: all_objects
         .. automethod:: all_tiles
+        .. automethod:: to_dict
 
 TileLayer
 ~~~~~~~~~
@@ -146,6 +149,7 @@ MapObject
         .. automethod:: tile_to_image_coordinates
         .. automethod:: get_pixel
         .. automethod:: __nonzero__
+        .. automethod:: to_dict
 
     Flipping:
 

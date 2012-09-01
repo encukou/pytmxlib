@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import contextlib
+import json
 
 from tmxlib.fileio import etree
 from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
@@ -84,6 +85,45 @@ def assert_xml_compare(a, b):
         assert False
 
 
+def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
+    """Test that two JSON-safe data structures are "almost equal"
+
+    Recurses into dicts, lists, tuples.
+    Checks that floats (and ints) are within epsilon from each other
+    """
+    if a == b:
+        pass
+    elif isinstance(a, (list, tuple)):
+        assert isinstance(b, (list, tuple))
+        assert len(a) == len(b), (
+            'Differing elements: {}'.format(list(set(a) ^ set(b))))
+        for i, (aa, bb) in enumerate(zip(a, b)):
+            try:
+                assert_json_safe_almost_equal(aa, bb, epsilon)
+            except:
+                print('in element {}'.format(i))
+                raise
+    elif isinstance(a, dict):
+        assert isinstance(b, dict)
+        keys = sorted(a.keys())
+        try:
+            assert_json_safe_almost_equal(keys, sorted(b.keys()), epsilon)
+        except:
+            print('in dict keys')
+            raise
+        for key in keys:
+            try:
+                assert_json_safe_almost_equal(a[key], b[key], epsilon)
+            except:
+                print('in dict key {0!r}'.format(key))
+                raise
+    elif isinstance(a, (int, float)):
+        assert isinstance(b, (int, float))
+        assert abs(a - b) < epsilon
+    else:
+        assert a == b
+
+
 # actual test code
 @params(map_filenames)
 def test_roundtrip_opensave(filename, has_gzip, output_filename):
@@ -124,6 +164,15 @@ def test_roundtrip_readwrite(filename, has_gzip, output_filename):
     if output_filename:
         xml = file_contents(get_test_filename(output_filename))
     assert_xml_compare(xml, dumped)
+
+
+@params(map_filenames)
+def test_dict_export(filename, has_gzip, output_filename):
+    xml = file_contents(get_test_filename(filename))
+    map = tmxlib.Map.load(xml, base_path=base_path)
+    dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
+    result = map.to_dict()
+    assert_json_safe_almost_equal(result, dct)
 
 
 def test_get_layer_by_name():

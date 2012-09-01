@@ -1,0 +1,39 @@
+{ "height":3,
+ "layers":[
+        {
+         "data":[1, 2684354561, 3221225473, 1073741825, 0, 1610612737, 3758096385, 2147483649, 536870913],
+         "height":3,
+         "name":"Tile Layer 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":3,
+         "x":0,
+         "y":0
+        }],
+ "orientation":"orthogonal",
+ "properties":
+    {
+
+    },
+ "tileheight":16,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "image":"colorcorners.png",
+         "imageheight":16,
+         "imagewidth":16,
+         "margin":0,
+         "name":"colorcorners",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":16,
+         "tilewidth":16
+        }],
+ "tilewidth":16,
+ "version":1,
+ "width":3
+}

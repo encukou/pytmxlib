@@ -475,6 +475,19 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         for tile in self.all_tiles():
             assert tile.gid < large_gid
 
+    def to_dict(self):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        return dict(
+                height=self.height,
+                width=self.width,
+                tileheight=self.tile_height,
+                tilewidth=self.tile_width,
+                orientation=self.orientation,
+                properties=self.properties,
+                version=1,
+                layers=[la.to_dict() for la in self.layers],
+                tilesets=[t.to_dict(map=self) for t in self.tilesets],
+            )
 
 class TilesetTile(SizeMixin):
     """Reference to a tile within a tileset
@@ -686,6 +699,22 @@ class Tileset(fileio.ReadWriteBase):
     def __repr__(self):
         return '<%s %r at 0x%x>' % (type(self).__name__, self.name, id(self))
 
+    def to_dict(self, **kwargs):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = dict(
+                name=self.name,
+                properties=self.properties,
+            )
+        if 'map' in kwargs:
+            d['firstgid'] = self.first_gid(kwargs['map'])
+        tileset_properties = {}
+        for tile in self:
+            if tile.properties:
+                tileset_properties[str(tile.number)] = tile.properties
+        if tileset_properties:
+            d['tileproperties'] = tileset_properties
+        return d
+
 
 class ImageTileset(Tileset):
     """A tileset whose tiles form a rectangular grid on a single image.
@@ -758,6 +787,23 @@ class ImageTileset(Tileset):
         left = self.margin + x * (self.tile_width + self.spacing)
         top = self.margin + y * (self.tile_height + self.spacing)
         return ImageRegion(self.image, (left, top), self.tile_size)
+
+    def to_dict(self, **kwargs):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = super(ImageTileset, self).to_dict(**kwargs)
+        d.update(dict(
+                image=self.image.source,
+                imageheight=self.image.height,
+                imagewidth=self.image.width,
+                margin=self.margin,
+                spacing=self.spacing,
+                tilewidth=self.tile_width,
+                tileheight=self.tile_height,
+            ))
+        if self.image.trans:
+            hex_trans = '#{0:02x}{1:02x}{2:02x}'.format(*self.image.trans)
+            d['transparentcolor'] = hex_trans
+        return d
 
 
 class ImageBase(SizeMixin):
@@ -988,6 +1034,22 @@ class Layer(object):
     def __nonzero__(self):
         raise NotImplementedError('Layer.__nonzero__ is virtual')
 
+    def to_dict(self):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = dict(
+                name=self.name,
+                opacity=self.opacity,
+                visible=self.visible,
+                width=self.map.width,
+                height=self.map.height,
+                x=0,
+                y=0,
+            )
+        if self.properties:
+            d['properties'] = self.properties
+        return d
+
+
 class TileLayer(Layer):
     """A tile layer
 
@@ -1086,6 +1148,16 @@ class TileLayer(Layer):
     def __nonzero__(self):
         return any(self.all_tiles())
     __bool__ = __nonzero__
+
+    def to_dict(self):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = super(TileLayer, self).to_dict()
+        d.update(dict(
+                data=list(self.data),
+                type='tilelayer',
+            ))
+        return d
+
 
 class _property(property):
     """Trivial subclass of the `property` builtin. Allows custom attributes.
@@ -1456,6 +1528,16 @@ class ObjectLayer(Layer, NamedElementList):
     __bool__ = __nonzero__
 
 
+    def to_dict(self):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = super(ObjectLayer, self).to_dict()
+        d.update(dict(
+                type='objectgroup',
+                objects=[o.to_dict() for o in self]
+            ))
+        return d
+
+
 class MapObject(TileLikeObject, SizeMixin):
     """A map object: something that's not placed on the fixed grid
 
@@ -1596,3 +1678,24 @@ class MapObject(TileLikeObject, SizeMixin):
                 raise ValueError("Cannot modify size of tile objects")
         else:
             self._size = value
+
+    def to_dict(self):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        if self.gid:
+            width = height = 0
+        else:
+            width = self.width
+            height = self.height
+        d = dict(
+                name=self.name or '',
+                type=self.type or '',
+                x=self.pixel_x,
+                y=self.pixel_y,
+                width=width,
+                height=height,
+                visible=True,
+                properties=self.properties,
+            )
+        if self.value:
+            d['gid'] = self.value
+        return d
