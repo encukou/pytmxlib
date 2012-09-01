@@ -251,7 +251,7 @@ class TilesetList(NamedElementList):
                     # skip renumbering if tilesets were appended, or unchanged
                     if previous_tilesets != self.list[:len(previous_tilesets)]:
                         self._renumber_map(previous_tilesets)
-                    if self.map.end_gid > 0x0FFFFFFF:
+                    if self.map.end_gid > TileLikeObject.gid.value:
                         raise ValueError('Too many tiles to be represented')
             finally:
                 self._being_modified = False
@@ -1350,7 +1350,7 @@ class TileLikeObject(SizeMixin):
     def value(self, new):
         if isinstance(new, TilesetTile):
             new = new.gid(self.map)
-        elif new < 0 or (new & 0x0FFFFFFF) >= self.map.end_gid:
+        elif new < 0 or (new & TileLikeObject.gid.value) >= self.map.end_gid:
             raise ValueError('GID not in map!')
         self._value = new
 
