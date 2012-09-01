@@ -1792,10 +1792,11 @@ class MapObject(TileLikeObject, SizeMixin):
     @property
     def pos(self):
         return (self.pixel_pos[0] / self.layer.map.tile_width,
-                self.pixel_pos[1] / self.layer.map.tile_height)
+                self.pixel_pos[1] / self.layer.map.tile_height - 1)
     @pos.setter
     def pos(self, value):
         x, y = value
+        y += 1
         self.pixel_pos = (x * self.layer.map.tile_width,
                 y * self.layer.map.tile_height)
 
