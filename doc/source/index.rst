@@ -55,7 +55,8 @@ To run tests, ``pip install pytest-cov``, and run ``py.test``.
 Tests can be run using tox_, to ensure cross-Python compatibility. Make sure
 you have all supported Pythons (2.6, 2.7, 3.1, 3.2) installed, and run ``tox``.
 
-Nowadays we use Travis CI to run tests after each commit: |ci-status|.
+Nowadays we use Travis CI to run tests after each commit: |ci-status|
+(Note that a failing build may be due to a Travis bug).
 
 .. |ci-status| image:: https://secure.travis-ci.org/encukou/pytmxlib.png?branch=master
     :alt: (Link to Travis CI)
