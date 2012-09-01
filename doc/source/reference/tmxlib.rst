@@ -19,6 +19,7 @@ Map
         .. method:: save(filename)
         .. method:: dump(string)
         .. automethod:: to_dict
+        .. automethod:: from_dict
 
     Methods:
 
@@ -42,6 +43,7 @@ Tileset
         .. method:: save(filename)
         .. method:: dump(string)
         .. automethod:: to_dict
+        .. automethod:: from_dict
 
     List-like access:
 
@@ -91,6 +93,7 @@ Layer
         .. automethod:: all_objects
         .. automethod:: all_tiles
         .. automethod:: to_dict
+        .. automethod:: from_dict
 
 TileLayer
 ~~~~~~~~~
@@ -150,6 +153,7 @@ MapObject
         .. automethod:: get_pixel
         .. automethod:: __nonzero__
         .. automethod:: to_dict
+        .. automethod:: from_dict
 
     Flipping:
 

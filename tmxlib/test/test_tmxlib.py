@@ -175,6 +175,40 @@ def test_dict_export(filename, has_gzip, output_filename):
     assert_json_safe_almost_equal(result, dct)
 
 
+@params(map_filenames)
+def test_dict_import(filename, has_gzip, output_filename):
+    dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
+    map = tmxlib.Map.from_dict(dct)
+
+    # Check JSON roundtrip
+
+    result_dct = map.to_dict()
+    assert_json_safe_almost_equal(result_dct, dct)
+
+    # Check XML roundtrip
+
+    if has_gzip and sys.version_info < (2, 7):
+        raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
+
+    xml = file_contents(get_test_filename(filename))
+    xml_map = tmxlib.Map.load(xml, base_path=base_path)
+
+    if output_filename:
+        xml = file_contents(get_test_filename(output_filename))
+    else:
+        xml = file_contents(get_test_filename(filename))
+
+    # Have to copy presentation attrs, since those aren't in the JSON
+    for layer, xml_layer in zip(map.layers, xml_map.layers):
+        layer.compression = getattr(xml_layer, 'compression', None)
+        layer.mtime = 0
+    for tileset, xml_tileset in zip(map.tilesets, xml_map.tilesets):
+        tileset.source = xml_tileset.source
+
+    dumped = map.dump()
+    assert_xml_compare(xml, dumped)
+
+
 def test_get_layer_by_name():
     assert desert().layers['Ground'].name == 'Ground'
 

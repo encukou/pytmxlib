@@ -14,6 +14,7 @@ class :class:`tmxlib.TileLayer`
     :class:`Layer` methods
 
         .. automethod:: tmxlib.TileLayer.to_dict
+        .. automethod:: tmxlib.TileLayer.from_dict
 
 class :class:`tmxlib.ObjectLayer`
 
@@ -39,6 +40,7 @@ class :class:`tmxlib.ObjectLayer`
     :class:`Layer` methods
 
         .. automethod:: tmxlib.ObjectLayer.to_dict
+        .. automethod:: tmxlib.ObjectLayer.from_dict
 
 class :class:`tmxlib.LayerList`
 
@@ -94,6 +96,7 @@ class :class:`tmxlib.ImageTileset`
         .. automethod:: tmxlib.ImageTileset.save(filename)
         .. automethod:: tmxlib.ImageTileset.dump(string)
         .. automethod:: tmxlib.ImageTileset.to_dict
+        .. automethod:: tmxlib.ImageTileset.from_dict
 
     Overridden methods (see :class:`tmxlib.Tileset`):
 

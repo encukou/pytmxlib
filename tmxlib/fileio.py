@@ -395,7 +395,7 @@ class TMXSerializer(object):
         if not layer.visible:
             element.attrib['visible'] = '0'
         if layer.opacity != 1:
-            element.attrib['opacity'] = str(layer.opacity)
+            element.attrib['opacity'] = str(round(layer.opacity, 5))
 
         self.append_properties(element, layer.properties)
 
@@ -490,7 +490,7 @@ class TMXSerializer(object):
         if not layer.visible:
             element.attrib['visible'] = '0'
         if layer.opacity != 1:
-            element.attrib['opacity'] = str(layer.opacity)
+            element.attrib['opacity'] = str(round(layer.opacity, 5))
 
         self.append_properties(element, layer.properties)
 

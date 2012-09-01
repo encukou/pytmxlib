@@ -15,6 +15,7 @@ import array
 import collections
 import contextlib
 import itertools
+import functools
 
 import six
 
@@ -308,6 +309,33 @@ class SizeMixin(object):
         return x, y
 
 
+def _from_dict_method(func):
+    """Decorator for from_dict classmethods
+
+    Takes a copy of the second argument (dct), and makes sure it is empty at
+    the end.
+    """
+    @classmethod
+    @functools.wraps(func)
+    def _wrapped(cls, dct, *args, **kwargs):
+        dct = dict(dct)
+        result = func(cls, dct, *args, **kwargs)
+        if dct:
+            raise ValueError(
+                'Loading {}: Data dictionary has unknown elements: {}'.format(
+                    cls.__name__,
+                    ', '.join(str(k) for k in dct.keys())))
+        return result
+    return _wrapped
+
+
+def _assert_item(dct, key, expected_value):
+    actual_value = dct.pop(key, expected_value)
+    if actual_value != expected_value:
+        raise ValueError('bad value: {} = {}; should be {}'.format(
+            key, actual_value, expected_value))
+
+
 class Map(fileio.ReadWriteBase, SizeMixin):
     """A tile map. tmxlib's core class
 
@@ -476,7 +504,10 @@ class Map(fileio.ReadWriteBase, SizeMixin):
             assert tile.gid < large_gid
 
     def to_dict(self):
-        """Export to a dict compatible with Tiled's JSON plugin"""
+        """Export to a dict compatible with Tiled's JSON plugin
+
+        You can use e.g. a JSON or YAML library to write such a dict to a file.
+        """
         return dict(
                 height=self.height,
                 width=self.width,
@@ -488,6 +519,27 @@ class Map(fileio.ReadWriteBase, SizeMixin):
                 layers=[la.to_dict() for la in self.layers],
                 tilesets=[t.to_dict(map=self) for t in self.tilesets],
             )
+
+    @_from_dict_method
+    def from_dict(cls, dct):
+        """Import from a dict compatible with Tiled's JSON plugin
+
+        Use e.g. a JSON or YAML library to read such a dict from a file.
+        """
+        if dct.pop('version', 1) != 1:
+            raise ValueError('tmxlib only supports Tiled JSON version 1')
+        self = cls(
+                size=(dct.pop('width'), dct.pop('height')),
+                tile_size=(dct.pop('tilewidth'), dct.pop('tileheight')),
+                orientation=dct.pop('orientation', 'orthogonal'),
+            )
+        self.properties = dct.pop('properties')
+        self.tilesets = [
+                ImageTileset.from_dict(d) for d in dct.pop('tilesets')]
+        self.layers = [Layer.from_dict(d, self) for d in dct.pop('layers')]
+        self.properties.update(dct.pop('properties', {}))
+        return self
+
 
 class TilesetTile(SizeMixin):
     """Reference to a tile within a tileset
@@ -715,6 +767,28 @@ class Tileset(fileio.ReadWriteBase):
             d['tileproperties'] = tileset_properties
         return d
 
+    @classmethod
+    def from_dict(cls, dct):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        raise NotImplementedError(
+            'Tileset.from_dict must be implemented in subclasses')
+
+
+def _parse_html_color(color):
+    orig_color = color
+    if color.startswith('#'):
+        color = color[1:]
+    if len(color) == 3:
+        r, g, b = color
+        r = r * 2
+        g = g * 2
+        b = b * 2
+    elif len(color) == 6:
+        r, g, b = color[0:2], color[2:4], color[4:6]
+    else:
+        raise ValueError('Bad CSS color: {0!r}'.format(orig_color))
+    return int(r, 16), int(g, 16), int(b, 16)
+
 
 class ImageTileset(Tileset):
     """A tileset whose tiles form a rectangular grid on a single image.
@@ -801,9 +875,34 @@ class ImageTileset(Tileset):
                 tileheight=self.tile_height,
             ))
         if self.image.trans:
-            hex_trans = '#{0:02x}{1:02x}{2:02x}'.format(*self.image.trans)
-            d['transparentcolor'] = hex_trans
+            html_trans = '#{0:02x}{1:02x}{2:02x}'.format(*self.image.trans)
+            d['transparentcolor'] = html_trans
         return d
+
+    @_from_dict_method
+    def from_dict(cls, dct):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        dct.pop('firstgid', None)
+        html_trans = source=dct.pop('transparentcolor', None)
+        if html_trans:
+            trans = _parse_html_color(html_trans)
+        else:
+            trans = None
+        self = cls(
+                name=dct.pop('name'),
+                tile_size=(dct.pop('tilewidth'), dct.pop('tileheight')),
+                image=Image(
+                        size=(dct.pop('imagewidth'), dct.pop('imageheight')),
+                        source=dct.pop('image'),
+                        trans = trans,
+                    ),
+                margin=dct.pop('margin', 0),
+                spacing=dct.pop('spacing', 0),
+            )
+        self.properties.update(dct.pop('properties', {}))
+        for number, properties in dct.pop('tileproperties', {}).items():
+            self[int(number)].properties.update(properties)
+        return self
 
 
 class ImageBase(SizeMixin):
@@ -1049,6 +1148,16 @@ class Layer(object):
             d['properties'] = self.properties
         return d
 
+    @classmethod
+    def from_dict(cls, dct, *args, **kwargs):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        subclass = dict(
+                tilelayer=TileLayer,
+                objectgroup=ObjectLayer,
+            )[dct['type']]
+        return subclass.from_dict(dct, *args, **kwargs)
+
+
 
 class TileLayer(Layer):
     """A tile layer
@@ -1157,6 +1266,29 @@ class TileLayer(Layer):
                 type='tilelayer',
             ))
         return d
+
+    @_from_dict_method
+    def from_dict(cls, dct, map):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        def assert_item(key, expected_value):
+            actual_value = dct.pop(key, expected_value)
+            if actual_value != expected_value:
+                raise ValueError('bad value: {} = {}; should be {}'.format(
+                    key, actual_value, expected_value))
+        _assert_item(dct, 'type', 'tilelayer')
+        _assert_item(dct, 'width', map.width)
+        _assert_item(dct, 'height', map.height)
+        _assert_item(dct, 'x', 0)
+        _assert_item(dct, 'y', 0)
+        self = cls(
+                map=map,
+                name=dct.pop('name'),
+                visible=dct.pop('visible', True),
+                opacity=dct.pop('opacity', 1),
+                data=dct.pop('data')
+            )
+        self.properties.update(dct.pop('properties', {}))
+        return self
 
 
 class _property(property):
@@ -1537,6 +1669,25 @@ class ObjectLayer(Layer, NamedElementList):
             ))
         return d
 
+    @_from_dict_method
+    def from_dict(cls, dct, map):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        _assert_item(dct, 'type', 'objectgroup')
+        _assert_item(dct, 'width', map.width)
+        _assert_item(dct, 'height', map.height)
+        _assert_item(dct, 'x', 0)
+        _assert_item(dct, 'y', 0)
+        self = cls(
+                map=map,
+                name=dct.pop('name'),
+                visible=dct.pop('visible', True),
+                opacity=dct.pop('opacity', 1),
+            )
+        self.properties.update(dct.pop('properties', {}))
+        for obj in dct.pop('objects', {}):
+            self.append(MapObject.from_dict(obj, self))
+        return self
+
 
 class MapObject(TileLikeObject, SizeMixin):
     """A map object: something that's not placed on the fixed grid
@@ -1699,3 +1850,25 @@ class MapObject(TileLikeObject, SizeMixin):
         if self.value:
             d['gid'] = self.value
         return d
+
+    @_from_dict_method
+    def from_dict(cls, dct, layer):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        _assert_item(dct, 'visible', True)
+        gid = dct.pop('gid', 0)
+        if gid:
+            size = None
+            dct.pop('width')
+            dct.pop('height')
+        else:
+            size = dct.pop('width'), dct.pop('height')
+        self = cls(
+                layer=layer,
+                pixel_pos=(dct.pop('x'), dct.pop('y')),
+                size=size,
+                name=dct.pop('name', None),
+                type=dct.pop('type', None),
+                value=gid,
+            )
+        self.properties.update(dct.pop('properties', {}))
+        return self
