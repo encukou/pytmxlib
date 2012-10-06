@@ -1,0 +1,13 @@
+0.2 [unreleased]
+    ! Fix hashes of TilesetTile, improve equality tests
+    + Support testing for empty layers with bool(layer)
+    + Support for export/import to/from a dict compatible with Tiled's
+        JSON plugin
+    + Export GID bitfield masks as attributes of the properties
+
+
+0.1 [2012-08-12] - Initial release.
+    + maps, tile & object layers, tilesets
+    + pypng image backend
+    + PIL image backend (used automatically if available)
+    + Python 2.[6-7], 3.[1-2] compatibility
