@@ -308,6 +308,42 @@ class SizeMixin(object):
         return x, y
 
 
+class TileSizeMixin(object):
+    """Provides `tile_width` and `tile_height` properties
+
+    Subclasses will need a `tile_size` property, a pair of values.
+
+    Note: setting tile_width or tile_height will set tile_size to a new tuple.
+    """
+    @property
+    def tile_width(self): return self.tile_size[0]
+    @tile_width.setter
+    def tile_width(self, value): self.tile_size = value, self.tile_size[1]
+
+    @property
+    def tile_height(self): return self.tile_size[1]
+    @tile_height.setter
+    def tile_height(self, value): self.tile_size = self.tile_size[0], value
+
+
+class PixelSizeMixin(object):
+    """Provides `pixel_width` and `pixel_height` properties
+
+    Subclasses will need a `pixel_size` property, a pair of values.
+
+    Note: setting pixel_width/pixel_height will set pixel_size to a new tuple.
+    """
+    @property
+    def pixel_width(self): return self.pixel_size[0]
+    @pixel_width.setter
+    def pixel_width(self, value): self.pixel_size = value, self.pixel_size[1]
+
+    @property
+    def pixel_height(self): return self.pixel_size[1]
+    @pixel_height.setter
+    def pixel_height(self, value): self.pixel_size = self.pixel_size[0], value
+
+
 def _from_dict_method(func):
     """Decorator for from_dict classmethods
 
@@ -335,7 +371,7 @@ def _assert_item(dct, key, expected_value):
             key, actual_value, expected_value))
 
 
-class Map(fileio.ReadWriteBase, SizeMixin):
+class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
     """A tile map. tmxlib's core class
 
     init arguments, which become attributes:
@@ -406,23 +442,8 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         self.base_path = base_path
 
     @property
-    def tile_width(self): return self.tile_size[0]
-    @tile_width.setter
-    def tile_width(self, value): self.tile_size = value, self.tile_size[1]
-
-    @property
-    def tile_height(self): return self.tile_size[1]
-    @tile_height.setter
-    def tile_height(self, value): self.tile_size = self.tile_size[0], value
-
-    @property
-    def pixel_size(self): return self.pixel_width, self.pixel_height
-
-    @property
-    def pixel_width(self): return self.width * self.tile_width
-
-    @property
-    def pixel_height(self): return self.height * self.tile_height
+    def pixel_size(self):
+        return self.width * self.tile_width, self.height * self.tile_height
 
     @property
     def end_gid(self):
@@ -540,7 +561,7 @@ class Map(fileio.ReadWriteBase, SizeMixin):
         return self
 
 
-class TilesetTile(SizeMixin):
+class TilesetTile(PixelSizeMixin):
     """Reference to a tile within a tileset
 
     init arguents, which become attributes:
@@ -555,7 +576,7 @@ class TilesetTile(SizeMixin):
 
     Other attributes:
 
-        .. attribute:: size
+        .. attribute:: pixel_size
 
             The size of the tile, in pixels
 
@@ -581,7 +602,7 @@ class TilesetTile(SizeMixin):
         return self.tileset.first_gid(map) + self.number
 
     @property
-    def size(self):
+    def pixel_size(self):
         return self.tileset.tile_size
 
     @property
@@ -1295,7 +1316,7 @@ class _property(property):
     pass
 
 
-class TileLikeObject(SizeMixin):
+class TileLikeObject(SizeMixin, PixelSizeMixin):
     """Base tile-like object: regular tile or tile object.
 
     Has an associated layer and value, and can be flipped, etc.
@@ -1445,13 +1466,13 @@ class TileLikeObject(SizeMixin):
         Handles negative indices in the obvious way.
         """
         if y < 0:
-            y = self.height + y
+            y = self.pixel_height + y
         if x < 0:
-            x = self.width + x
+            x = self.pixel_width + x
         if self.flipped_vertically:
-            y = self.height - y - 1
+            y = self.pixel_height - y - 1
         if self.flipped_horizontally:
-            x = self.width - x - 1
+            x = self.pixel_width - x - 1
         if self.flipped_diagonally:
             x, y = y, x
         return x, y
@@ -1500,6 +1521,28 @@ class TileLikeObject(SizeMixin):
         """Flip the tile vertically"""
         self.flipped_vertically = not self.flipped_vertically
 
+    @property
+    def size(self):
+        px_self = self.pixel_size
+        px_parent = self.map.tile_size
+        return px_self[0] / px_parent[0], px_self[1] / px_parent[1]
+    @size.setter
+    def size(self, value):
+        px_parent = self.map.tile_size
+        self.pixel_size = value[0] * px_parent[0], value[1] * px_parent[1]
+
+    @property
+    def pixel_size(self):
+        tileset_tile = self.tileset_tile
+        if tileset_tile:
+            ts_size = tileset_tile.pixel_size
+            if self.flipped_diagonally:
+                return ts_size[1], ts_size[0]
+            else:
+                return ts_size
+        else:
+            return 0, 0
+
 
 class MapTile(TileLikeObject):
     """References a particular spot on a tile layer
@@ -1531,6 +1574,10 @@ class MapTile(TileLikeObject):
         .. attribute:: size
 
             Size of the referenced tile, taking rotation into account.
+            The size is given in map tiles, i.e. "normal" tiles are 1x1.
+            A "large tree" tile, twice a big as a regular tile, would have a
+            size of (1, 2).
+            The size will be given as floats.
 
             Empty tiles have (0, 0) size.
 
@@ -1582,17 +1629,6 @@ class MapTile(TileLikeObject):
             )) if v)
         return '<%s %s on %s, gid=%s %s at 0x%x>' % (type(self).__name__,
                 self.pos, self.layer.name, self.gid, flagstring, id(self))
-
-    @property
-    def size(self):
-        tileset_tile = self.tileset_tile
-        if tileset_tile:
-            if self.flipped_diagonally:
-                return tileset_tile.height, tileset_tile.width
-            else:
-                return tileset_tile.size
-        else:
-            return 0, 0
 
     @property
     def pos(self):
@@ -1702,7 +1738,7 @@ class MapObject(TileLikeObject, SizeMixin):
 
             The pixel coordinates
 
-        .. attribute:: size
+        .. attribute:: pixel_size
 
             Size of this object, as a (width, height) tuple, in pixels.
             Must be specified for non-tile objects, and must *not* be specified
@@ -1710,6 +1746,15 @@ class MapObject(TileLikeObject, SizeMixin):
 
             Similar restrictions apply to setting the property (and ``width`` &
             ``height``).
+
+        .. attribute:: size
+
+            Size of this object, as a (width, height) tuple, in units of map
+            tiles.
+
+            Shares setting restrictions with ``pixel_size``.
+            Note that the constructor will nly accept one of ``size`` or
+            ``pixel_size``, not both at the same time.
 
         .. attribute:: name
 
@@ -1728,13 +1773,6 @@ class MapObject(TileLikeObject, SizeMixin):
     Attributes for accessing to the referenced tile:
 
         .. autoattribute:: tileset_tile
-
-
-        .. attribute:: size
-
-            Size of the referenced tile, taking rotation into account.
-
-            Empty tiles have (0, 0) size.
 
         .. autoattribute:: tileset
         .. autoattribute:: number
@@ -1773,14 +1811,18 @@ class MapObject(TileLikeObject, SizeMixin):
         .. attribute:: width
         .. attribute:: height
     """
-    def __init__(self, layer, pixel_pos, size=None, name=None, type=None,
-            value=0):
+    def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
+            type=None, value=0):
         self.layer = layer
         self.pixel_pos = pixel_pos
         self.name = name
         self.type = type
         self.value = value
-        if size:
+        if pixel_size:
+            if size:
+                raise ValueError('Cannot specify both size and pixel_size')
+            self.pixel_size = pixel_size
+        elif size:
             self.size = size
         elif not value:
             raise ValueError('Size must be given for non-tile objects')
@@ -1812,36 +1854,33 @@ class MapObject(TileLikeObject, SizeMixin):
         self.pixel_pos = self.pixel_pos[0], value
 
     @property
-    def size(self):
+    def pixel_size(self):
         if self.gid:
-            if self.flipped_diagonally:
-                return self.tileset_tile.height, self.tileset_tile.width
-            else:
-                return self.tileset_tile.size
+            return super(MapObject, self).pixel_size
         else:
             return self._size
-    @size.setter
-    def size(self, value):
+    @pixel_size.setter
+    def pixel_size(self, value):
         if self.gid:
-            if value != self.size:
-                raise ValueError("Cannot modify size of tile objects")
+            if value != self.pixel_size:
+                raise TypeError("Cannot modify size of tile objects")
         else:
             self._size = value
 
     def to_dict(self):
         """Export to a dict compatible with Tiled's JSON plugin"""
         if self.gid:
-            width = height = 0
+            pixel_width = pixel_height = 0
         else:
-            width = self.width
-            height = self.height
+            pixel_width = self.pixel_width
+            pixel_height = self.pixel_height
         d = dict(
                 name=self.name or '',
                 type=self.type or '',
                 x=self.pixel_x,
                 y=self.pixel_y,
-                width=width,
-                height=height,
+                width=pixel_width,
+                height=pixel_height,
                 visible=True,
                 properties=self.properties,
             )
@@ -1863,7 +1902,7 @@ class MapObject(TileLikeObject, SizeMixin):
         self = cls(
                 layer=layer,
                 pixel_pos=(dct.pop('x'), dct.pop('y')),
-                size=size,
+                pixel_size=size,
                 name=dct.pop('name', None),
                 type=dct.pop('type', None),
                 value=gid,
