@@ -235,7 +235,7 @@ def test_layer_get():
 def test_layer_get_default():
     map = desert()
     assert map.layers.get(50, 3) == 3
-    assert map.layers.get('bad name') == None
+    assert map.layers.get('bad name') is None
     assert map.layers.get(-50, 'default') == 'default'
 
 
@@ -332,7 +332,7 @@ def test_tileset_tile():
 
     assert tile.width == tile.height == 32
 
-    assert map.tilesets[0][0] is not map.tilesets[0][0]  # implementation detail
+    assert map.tilesets[0][0] is not map.tilesets[0][0]  # impl. detail
     assert map.tilesets[0][0] == map.tilesets[0][0]
     assert hash(map.tilesets[0][0]) == hash(map.tilesets[0][0])
 
@@ -358,25 +358,25 @@ def test_map_tile():
 
     tile.gid = 3
     assert tile.value == tile.gid == 3
-    assert tile.flipped_horizontally == False
-    assert tile.flipped_vertically == False
-    assert tile.flipped_diagonally == False
+    assert not tile.flipped_horizontally
+    assert not tile.flipped_vertically
+    assert not tile.flipped_diagonally
 
     tile.flipped_horizontally = True
     assert tile.value == 3 + tmxlib.MapTile.flipped_horizontally.value
     assert tile.value == 0x80000003
-    assert tile.flipped_horizontally == True
-    assert tile.flipped_vertically == False
-    assert tile.flipped_diagonally == False
+    assert tile.flipped_horizontally
+    assert not tile.flipped_vertically
+    assert not tile.flipped_diagonally
     assert tile.gid == 3
 
     tile.flipped_vertically = True
     assert tile.value == (3 + tmxlib.MapTile.flipped_horizontally.value +
         tmxlib.MapTile.flipped_vertically.value)
     assert tile.value == 0xC0000003
-    assert tile.flipped_horizontally == True
-    assert tile.flipped_vertically == True
-    assert tile.flipped_diagonally == False
+    assert tile.flipped_horizontally
+    assert tile.flipped_vertically
+    assert not tile.flipped_diagonally
     assert tile.gid == 3
 
     tile.flipped_diagonally = True
@@ -384,9 +384,9 @@ def test_map_tile():
     assert tile.value == (3 + tmxlib.MapTile.flipped_horizontally.value +
         tmxlib.MapTile.flipped_vertically.value +
         tmxlib.MapTile.flipped_diagonally.value)
-    assert tile.flipped_horizontally == True
-    assert tile.flipped_vertically == True
-    assert tile.flipped_diagonally == True
+    assert tile.flipped_horizontally
+    assert tile.flipped_vertically
+    assert tile.flipped_diagonally
     assert tile.gid == 3
 
     tile.flipped_horizontally = False
@@ -394,9 +394,9 @@ def test_map_tile():
     assert tile.value == (3 +
         tmxlib.MapTile.flipped_vertically.value +
         tmxlib.MapTile.flipped_diagonally.value)
-    assert tile.flipped_horizontally == False
-    assert tile.flipped_vertically == True
-    assert tile.flipped_diagonally == True
+    assert not tile.flipped_horizontally
+    assert tile.flipped_vertically
+    assert tile.flipped_diagonally
     assert tile.gid == 3
 
     assert map.layers[0][1, 2].value == 0x60000003
@@ -720,6 +720,7 @@ def test_autoadd_tileset():
 
     assert tileset in map.tilesets
 
+
 def test_flipping():
     testmap = tmxlib.Map.open(get_test_filename('flip-test.tmx'))
     layer = testmap.layers[0]
@@ -755,6 +756,7 @@ def test_flipping():
     assert_corners(1, 2, 'ylw', 'red', 'blu', 'grn', 1, 0, 0)
     assert_corners(0, 2, 'grn', 'ylw', 'red', 'blu', 1, 1, 1)
     assert_corners(0, 1, 'blu', 'grn', 'ylw', 'red', 0, 1, 0)
+
 
 def test_rotation():
     testmap = tmxlib.Map.open(get_test_filename('flip-test.tmx'))

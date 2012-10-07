@@ -14,7 +14,6 @@ __email__ = 'encukou@gmail.com'
 import array
 import collections
 import contextlib
-import itertools
 import functools
 
 import six
@@ -25,6 +24,7 @@ from tmxlib import fileio
 class UsedTilesetError(ValueError):
     """Raised when trying to remove a tileset from a map that is uses its tiles
     """
+
 
 class TilesetNotInMapError(ValueError):
     """Used when trying to use a tile from a tileset that's not in the map
@@ -108,13 +108,12 @@ class NamedElementList(collections.MutableSequence):
         """Same as __getitem__, but a returns default if not found
         """
         try:
-            index = self._get_index(index_or_name)
             return self[index_or_name]
         except (IndexError, KeyError):
             return default
 
     def __delitem__(self, index_or_name):
-        """Same as list's, except non-slice indices may be names instead of ints.
+        """Same as list's, except non-slice indices may be names.
         """
         with self.modification_context():
             if isinstance(index_or_name, slice):
@@ -399,7 +398,7 @@ class Map(fileio.ReadWriteBase, SizeMixin):
     def __init__(self, size, tile_size, orientation='orthogonal',
             base_path=None):
         self.orientation = orientation
-        self.size=size
+        self.size = size
         self.tile_size = tile_size
         self.tilesets = TilesetList(self)
         self.layers = LayerList(self)
@@ -883,7 +882,7 @@ class ImageTileset(Tileset):
     def from_dict(cls, dct):
         """Import from a dict compatible with Tiled's JSON plugin"""
         dct.pop('firstgid', None)
-        html_trans = source=dct.pop('transparentcolor', None)
+        html_trans = dct.pop('transparentcolor', None)
         if html_trans:
             trans = _parse_html_color(html_trans)
         else:
@@ -1156,7 +1155,6 @@ class Layer(object):
                 objectgroup=ObjectLayer,
             )[dct['type']]
         return subclass.from_dict(dct, *args, **kwargs)
-
 
 
 class TileLayer(Layer):
@@ -1658,7 +1656,6 @@ class ObjectLayer(Layer, NamedElementList):
         return bool(len(self))
 
     __bool__ = __nonzero__
-
 
     def to_dict(self):
         """Export to a dict compatible with Tiled's JSON plugin"""

@@ -12,6 +12,7 @@ try:
 except AttributeError:
     raise ImportError('Incompatible version of the PIL library')
 
+
 class PilImage(tmxlib.Image):
     def load_image(self):
         """Load the image from self.data, and set self.size

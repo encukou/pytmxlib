@@ -170,7 +170,6 @@ class TMXSerializer(object):
         assert root.tag == 'map'
         assert root.attrib.pop('version') == '1.0', 'Bad TMX file version'
 
-        tile_data = []
         args = dict(
                 size=(int(root.attrib.pop('width')),
                         int(root.attrib.pop('height'))),
@@ -249,7 +248,7 @@ class TMXSerializer(object):
                 'Unexpected tileset attributes: %s' % elem.attrib)
         for subelem in elem:
             if subelem.tag == 'image':
-                assert tileset.image == None
+                assert tileset.image is None
                 tileset.image = self.image_from_element(
                         self.image_class, subelem, base_path=base_path)
             elif subelem.tag == 'tile':
