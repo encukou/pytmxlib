@@ -3,7 +3,7 @@
  <tileset firstgid="1" name="Desert" tilewidth="32" tileheight="32" spacing="1" margin="1">
   <image source="tmw_desert_spacing.png" width="265" height="199"/>
  </tileset>
- <layer name="Tile layer" width="3" height="3">
+ <layer name="Tile Layer" width="3" height="3">
   <data encoding="base64" compression="zlib">
    eJxjYEAFcgyYAAACfAAf
   </data>

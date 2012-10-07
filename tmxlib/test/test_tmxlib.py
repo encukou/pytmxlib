@@ -845,3 +845,26 @@ def test_layer_nonzero():
     assert not layer
     layer.append(tmxlib.MapObject(layer, (0, 0), size=(3, 3)))
     assert layer
+
+
+def test_tile_and_object_attr_equivalence():
+    map = tmxlib.Map.open(get_test_filename('equivcheck.tmx'))
+    tile = map.layers['Tile Layer'][1, 1]
+    obj = map.layers['Object Layer'][0]
+
+    def assert_equal_attr(attr_name):
+        assert getattr(tile, attr_name) == getattr(obj, attr_name)
+
+    for attr_name in (
+            'size', 'width', 'height',
+            'pixel_size', 'pixel_width', 'pixel_height',
+            'pos', 'x', 'y',
+            'pixel_pos', 'pixel_x', 'pixel_y',
+            'value', 'gid', 'flipped_horizontally', 'flipped_vertically',
+                'flipped_diagonally',
+            'tileset_tile',
+        ):
+        assert_equal_attr(attr_name)
+
+    with pytest.raises(AssertionError):
+        assert_equal_attr('layer')

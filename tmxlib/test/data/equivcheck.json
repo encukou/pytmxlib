@@ -3,7 +3,7 @@
         {
          "data":[0, 0, 0, 0, 30, 0, 0, 0, 0],
          "height":3,
-         "name":"Tile layer",
+         "name":"Tile Layer",
          "opacity":1,
          "type":"tilelayer",
          "visible":true,

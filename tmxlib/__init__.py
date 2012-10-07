@@ -1543,6 +1543,20 @@ class TileLikeObject(SizeMixin, PixelSizeMixin):
         else:
             return 0, 0
 
+    @property
+    def pixel_x(self):
+        return self.pixel_pos[0]
+    @pixel_x.setter
+    def pixel_x(self, value):
+        self.pixel_pos = value, self.pixel_pos[1]
+
+    @property
+    def pixel_y(self):
+        return self.pixel_pos[1]
+    @pixel_y.setter
+    def pixel_y(self, value):
+        self.pixel_pos = self.pixel_pos[0], value
+
 
 class MapTile(TileLikeObject):
     """References a particular spot on a tile layer
@@ -1633,6 +1647,11 @@ class MapTile(TileLikeObject):
     @property
     def pos(self):
         return self._pos
+
+    @property
+    def pixel_pos(self):
+        px_parent = self.map.tile_size
+        return self.x * px_parent[0], (self.y + self.height) * px_parent[1]
 
     @property
     def properties(self):
@@ -1838,20 +1857,6 @@ class MapObject(TileLikeObject, SizeMixin):
         y += 1
         self.pixel_pos = (x * self.layer.map.tile_width,
                 y * self.layer.map.tile_height)
-
-    @property
-    def pixel_x(self):
-        return self.pixel_pos[0]
-    @pixel_x.setter
-    def pixel_x(self, value):
-        self.pixel_pos = value, self.pixel_pos[1]
-
-    @property
-    def pixel_y(self):
-        return self.pixel_pos[1]
-    @pixel_y.setter
-    def pixel_y(self, value):
-        self.pixel_pos = self.pixel_pos[0], value
 
     @property
     def pixel_size(self):
