@@ -65,6 +65,8 @@ map_filenames = [
             output_filename='sewers.tmx'),
         dict(filename='walls_and_desert.tmx', has_gzip=False,
             output_filename=None),
+        dict(filename='equivcheck.tmx', has_gzip=False,
+            output_filename=None),
     ]
 
 
@@ -327,10 +329,10 @@ def test_tileset_tile():
     map = desert()
     tile = map.tilesets[0][1]
     assert tile.tileset.name == 'Desert'
-    assert tile.size == (32, 32)
+    assert tile.pixel_size == (32, 32)
     assert tile.properties == {}
 
-    assert tile.width == tile.height == 32
+    assert tile.pixel_width == tile.pixel_height == 32
 
     assert map.tilesets[0][0] is not map.tilesets[0][0]  # impl. detail
     assert map.tilesets[0][0] == map.tilesets[0][0]
@@ -346,7 +348,8 @@ def test_map_tile():
     assert tile.map is map
     assert tile.tileset is map.tilesets[0]
     assert tile.tileset_tile == map.tilesets[0][29]
-    assert tile.size == (32, 32)
+    assert tile.size == (1, 1)
+    assert tile.pixel_size == (32, 32)
     assert tile.properties == {}
     tile.value == 1
     map.layers[0].set_value_at((1, 2), 1)
@@ -438,6 +441,7 @@ def test_empty_tile():
     assert tile.value == 0
     assert tile.number == 0
     assert tile.size == (0, 0)
+    assert tile.pixel_size == (0, 0)
     assert tile.properties == {}
 
 
@@ -608,15 +612,25 @@ def test_objects():
     objects = map.layers['Objects']
 
     sign = objects['Sign']
-    assert sign.size == (32, 32)
-    sign.size = 32, 32
-    with pytest.raises(ValueError):
-        sign.size = 1, 1
+
+    assert sign.size == (1, 1)
+    sign.size = 1, 1
+    with pytest.raises(TypeError):
+        sign.size = 10, 10
+
+    assert sign.pixel_size == (32, 32)
+    sign.pixel_size = 32, 32
+    with pytest.raises(TypeError):
+        sign.pixel_size = 3, 3
 
     hole = objects['Hole A']
-    assert hole.size == (53, 85)
-    hole.size = 1, 1
+    assert hole.pixel_size == (53, 85)
+    hole.pixel_size = 32, 10
     assert hole.width == 1
+    assert hole.pixel_width == 32
+    hole.size = 20, 2
+    assert hole.height == 2
+    assert hole.pixel_height == 64
 
     assert hole.pos == (hole.x, hole.y)
     assert hole.pos == (hole.x, hole.y) == (438 / 32, 214 / 32)
@@ -831,3 +845,26 @@ def test_layer_nonzero():
     assert not layer
     layer.append(tmxlib.MapObject(layer, (0, 0), size=(3, 3)))
     assert layer
+
+
+def test_tile_and_object_attr_equivalence():
+    map = tmxlib.Map.open(get_test_filename('equivcheck.tmx'))
+    tile = map.layers['Tile Layer'][1, 1]
+    obj = map.layers['Object Layer'][0]
+
+    def assert_equal_attr(attr_name):
+        assert getattr(tile, attr_name) == getattr(obj, attr_name)
+
+    for attr_name in (
+            'size', 'width', 'height',
+            'pixel_size', 'pixel_width', 'pixel_height',
+            'pos', 'x', 'y',
+            'pixel_pos', 'pixel_x', 'pixel_y',
+            'value', 'gid', 'flipped_horizontally', 'flipped_vertically',
+                'flipped_diagonally',
+            'tileset_tile',
+        ):
+        assert_equal_attr(attr_name)
+
+    with pytest.raises(AssertionError):
+        assert_equal_attr('layer')

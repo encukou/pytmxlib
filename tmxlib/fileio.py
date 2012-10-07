@@ -470,7 +470,7 @@ class TMXSerializer(object):
                 width = subelem.attrib.pop('width', None)
                 height = subelem.attrib.pop('height', None)
                 if width is not None or height is not None:
-                    kwargs['size'] = int(width), int(height)
+                    kwargs['pixel_size'] = int(width), int(height)
                 assert not subelem.attrib, (
                     'Unexpected object attributes: %s' % subelem.attrib)
                 obj = self.object_class(**kwargs)
@@ -501,10 +501,9 @@ class TMXSerializer(object):
                 attrib['name'] = str(object.name)
             if object.type:
                 attrib['type'] = str(object.type)
-            if object.size != (0, 0) and not (object.tileset_tile and
-                    object.tileset_tile.size == object.size):
-                attrib['width'] = str(object.width)
-                attrib['height'] = str(object.height)
+            if not object.tileset_tile:
+                attrib['width'] = str(object.pixel_width)
+                attrib['height'] = str(object.pixel_height)
             obj_element = etree.Element('object', attrib=attrib)
             self.append_properties(obj_element, object.properties)
             element.append(obj_element)

@@ -1,0 +1,64 @@
+{ "height":3,
+ "layers":[
+        {
+         "data":[0, 0, 0, 0, 30, 0, 0, 0, 0],
+         "height":3,
+         "name":"Tile Layer",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":3,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "height":3,
+         "name":"Object Layer",
+         "objects":[
+                {
+                 "gid":30,
+                 "height":0,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":32,
+                 "y":64
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "width":3,
+         "x":0,
+         "y":0
+        }],
+ "orientation":"orthogonal",
+ "properties":
+    {
+
+    },
+ "tileheight":32,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "image":"tmw_desert_spacing.png",
+         "imageheight":199,
+         "imagewidth":265,
+         "margin":1,
+         "name":"Desert",
+         "properties":
+            {
+
+            },
+         "spacing":1,
+         "tileheight":32,
+         "tilewidth":32
+        }],
+ "tilewidth":32,
+ "version":1,
+ "width":3
+}

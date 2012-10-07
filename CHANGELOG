@@ -1,4 +1,15 @@
+Legend:
+    ** Incompatible API change
+    + Feature addition
+    ! Bug fix
+    - Other change (performance, docs, etc)
+
 0.2 [unreleased]
+    ** Pixel measurements have been moved to pixel_size, pixel_width,
+        pixel_height (and pixel_pos, ~_x, ~_y) attributes.
+        The size, width and height attributes of MapTile and MapObject
+        are now in units of map tiles.
+
     ! Fix hashes of TilesetTile, improve equality tests
     + Support testing for empty layers with bool(layer)
     + Support for export/import to/from a dict compatible with Tiled's
