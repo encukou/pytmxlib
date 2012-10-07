@@ -260,7 +260,7 @@ class TilesetList(NamedElementList):
 
         This reassigns the GIDs of tiles to match the new situation.
 
-        If an used tilesed was removed, raise a ValueError. (Note that this
+        If an used tileset was removed, raise a ValueError. (Note that this
         method by itself won't restore the previous state.)
         """
         gid_map = dict()
@@ -578,7 +578,8 @@ class TilesetTile(PixelSizeMixin):
 
         .. attribute:: pixel_size
 
-            The size of the tile, in pixels
+            The size of the tile, in pixels. Also available as
+            (``pixel_width``, ``pixel_height``).
 
         .. attribute:: properties
 
@@ -1595,6 +1596,10 @@ class MapTile(TileLikeObject):
 
             Empty tiles have (0, 0) size.
 
+        .. attribute:: pixel_size
+
+            Size of the tile in pixels.
+
         .. autoattribute:: tileset
         .. autoattribute:: number
         .. autoattribute:: image
@@ -1610,12 +1615,16 @@ class MapTile(TileLikeObject):
             See :class:`TilesetTile`.
 
 
-    Unpacked `pos` and `size` attributes:
+    Unpacked position and size attributes:
 
         .. attribute:: x
         .. attribute:: y
         .. attribute:: width
         .. attribute:: height
+        .. attribute:: pixel_x
+        .. attribute:: pixel_y
+        .. attribute:: pixel_width
+        .. attribute:: pixel_height
 
     """
     def __init__(self, layer, pos):
@@ -1679,9 +1688,9 @@ class MapTile(TileLikeObject):
 class ObjectLayer(Layer, NamedElementList):
     """A layer of objects.
 
-    Acts as a :class:`named list <NamedList>` of objects. This means semantics
-    similar to layer/tileset lists: indexing by name is possible, where a name
-    references the first object of such name.
+    Acts as a :class:`named list <NamedElementList>` of objects. This means
+    semantics similar to layer/tileset lists: indexing by name is possible,
+    where a name references the first object of such name.
 
     See :class:`Layer` for the init arguments.
     """
@@ -1821,7 +1830,7 @@ class MapObject(TileLikeObject, SizeMixin):
 
             The map associated with this object
 
-    Unpacked `pos`, `pixel_pos`, and `size`:
+    Unpacked position and size attributes:
 
         .. attribute:: x
         .. attribute:: y
@@ -1829,6 +1838,8 @@ class MapObject(TileLikeObject, SizeMixin):
         .. attribute:: pixel_y
         .. attribute:: width
         .. attribute:: height
+        .. attribute:: pixel_width
+        .. attribute:: pixel_height
     """
     def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
             type=None, value=0):
