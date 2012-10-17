@@ -1117,7 +1117,7 @@ class Layer(object):
         .. attribute:: type
 
             ``'tiles'`` if this is a tile layer, ``'objects'`` if it's an
-            object layer.
+            object layer, ``'image'`` for an object layer.
 
         .. attribute:: index
 
@@ -1145,12 +1145,12 @@ class Layer(object):
     def all_tiles(self):
         """Yield all tiles in this layer, including empty ones and tile objects
         """
-        raise NotImplementedError('Layer.all_tiles is virtual')
+        return ()
 
     def all_objects(self):
         """Yield all objects in this layer
         """
-        raise NotImplementedError('Layer.all_objects is virtual')
+        return ()
 
     def __nonzero__(self):
         raise NotImplementedError('Layer.__nonzero__ is virtual')
@@ -1252,14 +1252,9 @@ class TileLayer(Layer):
     def all_tiles(self):
         """Yield all tiles in this layer, including empty ones.
         """
-        for x in range(self.map.width):
-            for y in range(self.map.height):
+        for y in range(self.map.height):
+            for x in range(self.map.width):
                 yield self[x, y]
-
-    def all_objects(self):
-        """Yield all objects in this layer (i.e. return empty iterable)
-        """
-        return ()
 
     def value_at(self, pos):
         """Return the value at the given position
@@ -1310,6 +1305,30 @@ class TileLayer(Layer):
             )
         self.properties.update(dct.pop('properties', {}))
         return self
+
+
+class ImageLayer(Layer):
+    """An image layer
+
+    See :class:`Layer` documentation for most init arguments.
+
+    Other init agruments, which become attributes:
+
+        .. attribute:: image
+
+            The image to use for the layer
+    """
+    type = 'image'
+
+    def __init__(self, map, name, visible=True, opacity=1, image=None):
+        super(ImageLayer, self).__init__(map=map, name=name,
+                visible=visible, opacity=opacity)
+        self.image = image
+
+    def __nonzero__(self):
+        """An ImageLayer is "true" iff there's an image set on it."""
+        return bool(self.image)
+    __bool__ = __nonzero__
 
 
 class _property(property):

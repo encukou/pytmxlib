@@ -96,6 +96,7 @@ class TMXSerializer(object):
         self.tileset_class = tmxlib.ImageTileset
         self.tile_layer_class = tmxlib.TileLayer
         self.object_layer_class = tmxlib.ObjectLayer
+        self.image_layer_class = tmxlib.ImageLayer
         self.object_class = tmxlib.MapObject
 
         try:
@@ -194,6 +195,9 @@ class TMXSerializer(object):
             elif elem.tag == 'objectgroup':
                 map.layers.append(self.object_layer_from_element(
                         self.object_layer_class, elem, map))
+            elif elem.tag == 'imagelayer':
+                map.layers.append(self.image_layer_from_element(
+                        self.image_layer_class, elem, map, base_path))
             else:
                 assert False, 'Unknown tag %s' % elem.tag
         return map
@@ -514,6 +518,26 @@ class TMXSerializer(object):
             element.append(obj_element)
 
         return element
+
+    @load_method
+    def image_layer_from_element(self, cls, elem, map, base_path):
+        layer = cls(map, elem.attrib.pop('name'),
+                opacity=float(elem.attrib.pop('opacity', 1)),
+                visible=bool(int(elem.attrib.pop('visible', 1))))
+        layer_size = (int(elem.attrib.pop('width')),
+                int(elem.attrib.pop('height')))
+        assert layer_size == map.size
+        assert not elem.attrib, (
+            'Unexpected tile layer attributes: %s' % elem.attrib)
+        for subelem in elem:
+            if subelem.tag == 'properties':
+                layer.properties.update(self.read_properties(subelem))
+            elif subelem.tag == 'image':
+                layer.image = self.image_from_element(
+                    self.image_class, subelem, base_path)
+            else:
+                raise ValueError('Unknown element: %s', subelem.tag)
+        return layer
 
     def read_properties(self, elem):
         assert elem.tag == 'properties'
