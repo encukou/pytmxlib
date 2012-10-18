@@ -453,11 +453,10 @@ class TMXSerializer(object):
                 layer.properties.update(self.read_properties(subelem))
             elif subelem.tag == 'object':
                 kwargs = dict(
-                        pixel_pos=(
-                                int(subelem.attrib.pop('x')),
-                                int(subelem.attrib.pop('y'))),
                         layer=layer,
                     )
+                x = int(subelem.attrib.pop('x'))
+                y = int(subelem.attrib.pop('y'))
 
                 def put(attr_type, attr_name, arg_name):
                     attr = subelem.attrib.pop(attr_name, None)
@@ -467,10 +466,13 @@ class TMXSerializer(object):
                 put(int, 'gid', 'value')
                 put(six.text_type, 'name', 'name')
                 put(six.text_type, 'type', 'type')
-                width = subelem.attrib.pop('width', None)
-                height = subelem.attrib.pop('height', None)
-                if width is not None or height is not None:
+                width = int(subelem.attrib.pop('width', 0))
+                height = int(subelem.attrib.pop('height', 0))
+                if width or height:
                     kwargs['pixel_size'] = int(width), int(height)
+                if not kwargs.get('value'):
+                    y += height
+                kwargs['pixel_pos'] = x, y
                 assert not subelem.attrib, (
                     'Unexpected object attributes: %s' % subelem.attrib)
                 obj = self.object_class(**kwargs)
@@ -501,7 +503,10 @@ class TMXSerializer(object):
                 attrib['name'] = str(object.name)
             if object.type:
                 attrib['type'] = str(object.type)
-            if not object.tileset_tile:
+            if object.tileset_tile:
+                attrib['y'] = str(object.pixel_y)
+            else:
+                attrib['y'] = str(object.pixel_y - object.pixel_height)
                 attrib['width'] = str(object.pixel_width)
                 attrib['height'] = str(object.pixel_height)
             obj_element = etree.Element('object', attrib=attrib)

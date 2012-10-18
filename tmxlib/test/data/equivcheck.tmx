@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="3" height="3" tilewidth="32" tileheight="32">
+<map version="1.0" orientation="orthogonal" width="7" height="4" tilewidth="32" tileheight="32">
  <tileset firstgid="1" name="Desert" tilewidth="32" tileheight="32" spacing="1" margin="1">
   <image source="tmw_desert_spacing.png" width="265" height="199"/>
  </tileset>
- <layer name="Tile Layer" width="3" height="3">
+ <tileset firstgid="49" name="tmw_desert_spacing" tilewidth="65" tileheight="65" spacing="1" margin="1">
+  <image source="tmw_desert_spacing.png" width="265" height="199"/>
+ </tileset>
+ <layer name="Tile Layer" width="7" height="4">
   <data encoding="base64" compression="zlib">
-   eJxjYEAFcgyYAAACfAAf
+   eJxjYMAP5AjIw4AhkeoAEXgAUA==
   </data>
  </layer>
- <objectgroup name="Object Layer" width="3" height="3">
+ <objectgroup name="Tileobject Layer" width="7" height="4">
   <object gid="30" x="32" y="64"/>
+  <object gid="49" x="128" y="96"/>
+ </objectgroup>
+ <objectgroup name="Plain Object Layer" width="7" height="4">
+  <object x="32" y="32" width="32" height="32"/>
+  <object x="128" y="31" width="65" height="65"/>
  </objectgroup>
 </map>

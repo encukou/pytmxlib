@@ -1660,7 +1660,7 @@ class MapTile(TileLikeObject):
     @property
     def pixel_pos(self):
         px_parent = self.map.tile_size
-        return self.x * px_parent[0], (self.y + self.height) * px_parent[1]
+        return self.x * px_parent[0], (self.y + 1) * px_parent[1]
 
     @property
     def properties(self):
@@ -1890,11 +1890,14 @@ class MapObject(TileLikeObject, SizeMixin):
         else:
             pixel_width = self.pixel_width
             pixel_height = self.pixel_height
+        if self.gid:
+            y = self.pixel_y
+        else:
+            y = self.pixel_y - self.pixel_height
         d = dict(
                 name=self.name or '',
                 type=self.type or '',
-                x=self.pixel_x,
-                y=self.pixel_y,
+                x=self.pixel_x, y=y,
                 width=pixel_width,
                 height=pixel_height,
                 visible=True,
@@ -1913,11 +1916,13 @@ class MapObject(TileLikeObject, SizeMixin):
             size = None
             dct.pop('width')
             dct.pop('height')
+            y = dct.pop('y')
         else:
             size = dct.pop('width'), dct.pop('height')
+            y = dct.pop('y') + size[1]
         self = cls(
                 layer=layer,
-                pixel_pos=(dct.pop('x'), dct.pop('y')),
+                pixel_pos=(dct.pop('x'), y),
                 pixel_size=size,
                 name=dct.pop('name', None),
                 type=dct.pop('type', None),

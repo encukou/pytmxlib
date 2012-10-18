@@ -97,8 +97,12 @@ def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
         pass
     elif isinstance(a, (list, tuple)):
         assert isinstance(b, (list, tuple))
-        assert len(a) == len(b), (
-            'Differing elements: {}'.format(list(set(a) ^ set(b))))
+        if len(a) != len(b):
+            try:
+                raise AssertionError('Differing elements: {}'.format(
+                    list(set(a) ^ set(b))))
+            except TypeError:
+                assert a == b
         for i, (aa, bb) in enumerate(zip(a, b)):
             try:
                 assert_json_safe_almost_equal(aa, bb, epsilon)
@@ -624,6 +628,9 @@ def test_objects():
         sign.pixel_size = 3, 3
 
     hole = objects['Hole A']
+    assert hole.pos == (hole.x, hole.y)
+    assert hole.pos == (hole.x, hole.y) == (438 / 32, 299 / 32)
+
     assert hole.pixel_size == (53, 85)
     hole.pixel_size = 32, 10
     assert hole.width == 1
@@ -633,7 +640,7 @@ def test_objects():
     assert hole.pixel_height == 64
 
     assert hole.pos == (hole.x, hole.y)
-    assert hole.pos == (hole.x, hole.y) == (438 / 32, 214 / 32)
+    assert hole.pos == (hole.x, hole.y) == (438 / 32, 299 / 32)
     hole.x = 10
     hole.y = 9
     assert hole.pos == (10, 9)
@@ -849,22 +856,39 @@ def test_layer_nonzero():
 
 def test_tile_and_object_attr_equivalence():
     map = tmxlib.Map.open(get_test_filename('equivcheck.tmx'))
-    tile = map.layers['Tile Layer'][1, 1]
-    obj = map.layers['Object Layer'][0]
 
-    def assert_equal_attr(attr_name):
+    def assert_equal_attr(attr_name, tile, obj):
+        print attr_name, getattr(tile, attr_name), getattr(obj, attr_name)
         assert getattr(tile, attr_name) == getattr(obj, attr_name)
 
-    for attr_name in (
-            'size', 'width', 'height',
-            'pixel_size', 'pixel_width', 'pixel_height',
-            'pos', 'x', 'y',
-            'pixel_pos', 'pixel_x', 'pixel_y',
-            'value', 'gid', 'flipped_horizontally', 'flipped_vertically',
-                'flipped_diagonally',
-            'tileset_tile',
+    for tile, tileobj, plainobj in (
+            (
+                map.layers['Tile Layer'][1, 1],
+                map.layers['Tileobject Layer'][0],
+                map.layers['Plain Object Layer'][0],
+                ),
+            (
+                map.layers['Tile Layer'][4, 2],
+                map.layers['Tileobject Layer'][1],
+                map.layers['Plain Object Layer'][1],
+                ),
         ):
-        assert_equal_attr(attr_name)
 
-    with pytest.raises(AssertionError):
-        assert_equal_attr('layer')
+        for attr_name in (
+                'size', 'width', 'height',
+                'pixel_size', 'pixel_width', 'pixel_height',
+                'pos', 'x', 'y',
+                'pixel_pos', 'pixel_x', 'pixel_y',
+            ):
+            assert_equal_attr(attr_name, tile, tileobj)
+            assert_equal_attr(attr_name, tile, plainobj)
+
+        for attr_name in (
+                'value', 'gid', 'flipped_horizontally', 'flipped_vertically',
+                    'flipped_diagonally',
+                'tileset_tile',
+            ):
+            assert_equal_attr(attr_name, tile, tileobj)
+
+        with pytest.raises(AssertionError):
+            assert_equal_attr('layer', tile, tileobj)
