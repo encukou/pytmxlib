@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="8" height="8" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="Desert" tilewidth="32" tileheight="32" spacing="1" margin="1">
+  <image source="tmw_desert_spacing.png" width="265" height="199"/>
+ </tileset>
+ <layer name="Ground" width="8" height="8">
+  <data encoding="base64" compression="zlib">
+   eJylwwUSggAAADDE7gIUAwQT+/+vY39gdwuCZlqGtu3YtWffgUNHjp04debchUtXro2MTdy4NXXn3oNHM3NPFpaevXj15t2HlU9fvv349effGjNPBJk=
+  </data>
+ </layer>
+ <imagelayer name="Image Layer" width="8" height="8">
+  <image source="sewer_tileset.png"/>
+  <properties>
+   <property name="a" value="b"/>
+  </properties>
+ </imagelayer>
+</map>
