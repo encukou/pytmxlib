@@ -860,7 +860,7 @@ def test_tile_and_object_attr_equivalence():
     map = tmxlib.Map.open(get_test_filename('equivcheck.tmx'))
 
     def assert_equal_attr(attr_name, tile, obj):
-        print attr_name, getattr(tile, attr_name), getattr(obj, attr_name)
+        print(attr_name, getattr(tile, attr_name), getattr(obj, attr_name))
         assert getattr(tile, attr_name) == getattr(obj, attr_name)
 
     for tile, tileobj, plainobj in (
