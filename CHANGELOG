@@ -4,13 +4,20 @@ Legend:
     ! Bug fix
     - Other change (performance, docs, etc)
 
+
 0.2 [unreleased]
     ** Pixel measurements have been moved to pixel_size, pixel_width,
         pixel_height (and pixel_pos, ~_x, ~_y) attributes.
         The size, width and height attributes of MapTile and MapObject
         are now in units of map tiles.
+    ** Tiles and objects that are at the same place now have the same pos and
+        size. Unfortunately, for non-tile objects, this means the y coordinate
+        is shifted by the height of the object relative to the value stored in
+        the TMX file.
 
     ! Fix hashes of TilesetTile, improve equality tests
+    + Add support for image layers
+    + Maps get add_tile_layer, add_object_layer, add_image_layer helpers
     + Support testing for empty layers with bool(layer)
     + Support for export/import to/from a dict compatible with Tiled's
         JSON plugin
