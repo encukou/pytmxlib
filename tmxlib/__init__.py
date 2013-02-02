@@ -491,6 +491,15 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
         """
         return self.add_layer(name, before, after, layer_class=ObjectLayer)
 
+    def add_image_layer(self, name, image, before=None, after=None):
+        """Add an image layer with the given name and image to the map.
+
+        See add_layer
+        """
+        layer = self.add_layer(name, before, after, layer_class=ObjectLayer)
+        layer.image = image
+        return layer
+
     def all_tiles(self):
         """Yield all tiles in the map, including tile objects
         """

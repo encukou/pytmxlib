@@ -24,6 +24,9 @@ Map
     Methods:
 
         .. automethod:: add_layer
+        .. automethod:: add_tile_layer
+        .. automethod:: add_object_layer
+        .. automethod:: add_image_layer
         .. automethod:: all_tiles
         .. automethod:: all_objects
         .. automethod:: get_tiles
