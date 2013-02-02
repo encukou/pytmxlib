@@ -386,7 +386,8 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
 
         .. attribute:: orientation
 
-            The orientation of the map (``'orthogonal'`` or ``'isometric'``)
+            The orientation of the map (``'orthogonal'``, ``'isometric'``,
+            or ``'staggered'``)
 
     Other attributes:
 
