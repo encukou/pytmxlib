@@ -216,7 +216,7 @@ class TMXSerializer(object):
             elem.append(self.tileset_to_element(tileset,
                     base_path=base_path, first_gid=tileset.first_gid(map)))
         for layer in map.layers:
-            elem.append(self.layer_to_element(layer))
+            elem.append(self.layer_to_element(layer, base_path))
         return elem
 
     @load_method
@@ -322,10 +322,13 @@ class TMXSerializer(object):
 
     def image_to_element(self, image, base_path):
         element = etree.Element('image', attrib=dict(source=image.source))
-        if image.height:
-            element.attrib['height'] = str(image.height)
-        if image.width:
-            element.attrib['width'] = str(image.width)
+        try:
+            if image.height:
+                element.attrib['height'] = str(image.height)
+            if image.width:
+                element.attrib['width'] = str(image.width)
+        except (TypeError, IOError):
+            pass
         if image.trans:
             element.attrib['trans'] = self.to_rgb(image.trans)
         return element
@@ -381,11 +384,13 @@ class TMXSerializer(object):
         assert data_set
         return layer
 
-    def layer_to_element(self, layer):
+    def layer_to_element(self, layer, base_path):
         if layer.type == 'objects':
             return self.object_layer_to_element(layer)
         elif layer.type == 'tiles':
             return self.tile_layer_to_element(layer)
+        elif layer.type == 'image':
+            return self.image_layer_to_element(layer, base_path)
         else:
             raise ValueError(layer.type)
 
@@ -538,6 +543,24 @@ class TMXSerializer(object):
             else:
                 raise ValueError('Unknown element: %s', subelem.tag)
         return layer
+
+    def image_layer_to_element(self, layer, base_path):
+        element = etree.Element('imagelayer', attrib=dict(
+                name=layer.name,
+                width=str(layer.map.width),
+                height=str(layer.map.height),
+            ))
+        if not layer.visible:
+            element.attrib['visible'] = '0'
+        if layer.opacity != 1:
+            element.attrib['opacity'] = str(round(layer.opacity, 5))
+
+        image = self.image_to_element(layer.image, base_path)
+        element.append(image)
+
+        self.append_properties(element, layer.properties)
+
+        return element
 
     def read_properties(self, elem):
         assert elem.tag == 'properties'

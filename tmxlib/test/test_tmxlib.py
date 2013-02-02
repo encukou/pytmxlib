@@ -67,6 +67,8 @@ map_filenames = [
             output_filename=None),
         dict(filename='equivcheck.tmx', has_gzip=False,
             output_filename=None),
+        dict(filename='imagelayer.tmx', has_gzip=False,
+            output_filename=None),
     ]
 
 

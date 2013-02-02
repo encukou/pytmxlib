@@ -125,6 +125,11 @@ ObjectLayer
         .. automethod:: all_objects
         .. automethod:: all_tiles
 
+ImageLayer
+~~~~~~~~~~~
+
+.. autoclass:: tmxlib.ImageLayer
+
 MapTile
 -------
 

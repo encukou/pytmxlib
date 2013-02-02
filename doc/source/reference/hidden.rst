@@ -42,6 +42,13 @@ class :class:`tmxlib.ObjectLayer`
         .. automethod:: tmxlib.ObjectLayer.to_dict
         .. automethod:: tmxlib.ObjectLayer.from_dict
 
+class :class:`tmxlib.ImageLayer`
+
+    :class:`Layer` methods
+
+        .. automethod:: tmxlib.ImageLayer.to_dict
+        .. automethod:: tmxlib.ImageLayer.from_dict
+
 class :class:`tmxlib.LayerList`
 
     :class:`NamedList` methods

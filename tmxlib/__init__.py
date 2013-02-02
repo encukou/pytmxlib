@@ -997,8 +997,12 @@ class Image(ImageBase, fileio.ReadWriteBase):
         if self._data:
             return self._data
         else:
+            try:
+                base_path = self.base_path
+            except AttributeError:
+                base_path = None
             self._data = self.serializer.load_file(self.source,
-                    base_path=self.base_path)
+                    base_path=base_path)
             return self._data
 
     def load_image(self):
@@ -1176,6 +1180,7 @@ class Layer(object):
         subclass = dict(
                 tilelayer=TileLayer,
                 objectgroup=ObjectLayer,
+                imagelayer=ImageLayer,
             )[dct['type']]
         return subclass.from_dict(dct, *args, **kwargs)
 
@@ -1286,11 +1291,6 @@ class TileLayer(Layer):
     @_from_dict_method
     def from_dict(cls, dct, map):
         """Import from a dict compatible with Tiled's JSON plugin"""
-        def assert_item(key, expected_value):
-            actual_value = dct.pop(key, expected_value)
-            if actual_value != expected_value:
-                raise ValueError('bad value: {} = {}; should be {}'.format(
-                    key, actual_value, expected_value))
         _assert_item(dct, 'type', 'tilelayer')
         _assert_item(dct, 'width', map.width)
         _assert_item(dct, 'height', map.height)
@@ -1301,7 +1301,7 @@ class TileLayer(Layer):
                 name=dct.pop('name'),
                 visible=dct.pop('visible', True),
                 opacity=dct.pop('opacity', 1),
-                data=dct.pop('data')
+                data=dct.pop('data'),
             )
         self.properties.update(dct.pop('properties', {}))
         return self
@@ -1329,6 +1329,33 @@ class ImageLayer(Layer):
         """An ImageLayer is "true" iff there's an image set on it."""
         return bool(self.image)
     __bool__ = __nonzero__
+
+    def to_dict(self):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = super(ImageLayer, self).to_dict()
+        d.update(dict(
+                type='imagelayer',
+                image=self.image.source,
+            ))
+        return d
+
+    @_from_dict_method
+    def from_dict(cls, dct, map):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        _assert_item(dct, 'type', 'imagelayer')
+        _assert_item(dct, 'width', map.width)
+        _assert_item(dct, 'height', map.height)
+        _assert_item(dct, 'x', 0)
+        _assert_item(dct, 'y', 0)
+        self = cls(
+                map=map,
+                name=dct.pop('name'),
+                visible=dct.pop('visible', True),
+                opacity=dct.pop('opacity', 1),
+                image=Image(source=dct.pop('image')),
+            )
+        self.properties.update(dct.pop('properties', {}))
+        return self
 
 
 class _property(property):
