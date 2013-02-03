@@ -29,7 +29,7 @@ setup(
         """.splitlines() if x.strip()],
     install_requires=[
             'six',
-            'pypng>=0.0.13',
+            'pypng>=0.0.14',
         ],
     setup_requires=[],
     tests_require=[

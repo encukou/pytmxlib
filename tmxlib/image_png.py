@@ -1,6 +1,8 @@
 
 from __future__ import division
 
+from array import array
+
 import png
 
 import tmxlib
@@ -37,6 +39,7 @@ class PngImage(tmxlib.Image):
 
     def set_pixel(self, x, y, value):
         x, y = self._wrap_coords(x, y)
-        value = (round(v * 255) for v in value)
-        self.image_data[y][x * 4:(x + 1) * 4] = value
+        value = (int(round(v * 255)) for v in value)
+        row_data = self.image_data[y]
+        row_data[x * 4:(x + 1) * 4] = array(row_data.typecode, value)
         self.dirty = True
