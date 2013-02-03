@@ -1,0 +1,3 @@
+[submodule "tmxlib/test/data/tiled"]
+	path = tmxlib/test/data/tiled
+	url = git://github.com/bjorn/tiled.git

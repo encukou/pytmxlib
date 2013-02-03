@@ -30,7 +30,7 @@ def assert_color_tuple_eq(value, expected):
 
 def pytest_generate_tests(metafunc):
     for funcargs in getattr(metafunc.function, 'funcarglist', ()):
-        metafunc.addcall(funcargs=funcargs)
+        metafunc.addcall(funcargs=funcargs, id=funcargs)
 
 
 def get_test_filename(name):
@@ -959,3 +959,15 @@ def test_tile_and_object_attr_equivalence():
 
         with pytest.raises(AssertionError):
             assert_equal_attr('layer', tile, tileobj)
+
+
+tiled_example_base = os.path.join(base_path, 'tiled/examples')
+if os.path.exists(tiled_example_base):
+    @params([{'filename': os.path.join(tiled_example_base, path)}
+             for path in os.listdir(tiled_example_base)
+             if path.endswith('.tmx')])
+    def test_load_tiled_examples(filename):
+            map = tmxlib.Map.open(filename)
+else:
+    def test_load_tiled_examples():
+        pytest.skip("Tiled examples not found (run git submodule init/update)")

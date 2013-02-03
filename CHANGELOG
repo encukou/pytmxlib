@@ -31,6 +31,9 @@ Legend:
         JSON plugin
     + Export GID bitfield masks as attributes of the properties
 
+    - Example maps from Tiled are now loaded as part of the testsuite.
+        The examples are pulled in as a Git submodule.
+
 
 0.1 [2012-08-12] - Initial release.
     + maps, tile & object layers, tilesets
