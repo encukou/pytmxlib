@@ -10,6 +10,8 @@ the Tiled editor.
 This library is designed to support automatic modification of tile maps, such
 as tiling, automapping, cutting and joining, etc.
 
+Documentation may be found at https://tmxlib.readthedocs.org
+
 
 For the Tiled editor, see http://www.mapeditor.org/
 
