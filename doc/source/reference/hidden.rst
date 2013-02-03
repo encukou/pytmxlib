@@ -121,3 +121,17 @@ class :class:`tmxlib.ImageTileset`
         .. automethod:: tmxlib.ImageTileset.end_gid
 
 .. autoclass:: tmxlib.ImageBase
+
+class :class:`tmxlib.RectangleObject`
+
+    :class:`MapObject` methods
+
+        .. automethod:: tmxlib.RectangleObject.to_dict
+        .. automethod:: tmxlib.RectangleObject.from_dict
+
+class :class:`tmxlib.EllipseObject`
+
+    :class:`MapObject` methods
+
+        .. automethod:: tmxlib.EllipseObject.to_dict
+        .. automethod:: tmxlib.EllipseObject.from_dict

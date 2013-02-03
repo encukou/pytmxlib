@@ -97,7 +97,8 @@ class TMXSerializer(object):
         self.tile_layer_class = tmxlib.TileLayer
         self.object_layer_class = tmxlib.ObjectLayer
         self.image_layer_class = tmxlib.ImageLayer
-        self.object_class = tmxlib.MapObject
+        self.rectangle_object_class = tmxlib.RectangleObject
+        self.ellipse_object_class = tmxlib.EllipseObject
 
         try:
             from tmxlib import image_pil
@@ -484,10 +485,15 @@ class TMXSerializer(object):
                 kwargs['pixel_pos'] = x, y
                 assert not subelem.attrib, (
                     'Unexpected object attributes: %s' % subelem.attrib)
-                obj = self.object_class(**kwargs)
+                properties = {}
+                cls = self.rectangle_object_class
                 for subsubelem in subelem:
                     if subsubelem.tag == 'properties':
-                        obj.properties.update(self.read_properties(subsubelem))
+                        properties.update(self.read_properties(subsubelem))
+                    elif subsubelem.tag == 'ellipse':
+                        cls = self.ellipse_object_class
+                obj = cls(**kwargs)
+                obj.properties.update(properties)
                 layer.append(obj)
         return layer
 
@@ -506,13 +512,12 @@ class TMXSerializer(object):
 
         for object in layer:
             attrib = dict(x=str(object.pixel_x), y=str(object.pixel_y))
-            if object.value:
-                attrib['gid'] = str(object.value)
             if object.name:
                 attrib['name'] = str(object.name)
             if object.type:
                 attrib['type'] = str(object.type)
-            if object.tileset_tile:
+            if object.objtype == 'tile':
+                attrib['gid'] = str(object.value)
                 attrib['y'] = str(object.pixel_y)
             else:
                 attrib['y'] = str(object.pixel_y - object.pixel_height)
@@ -520,6 +525,8 @@ class TMXSerializer(object):
                 attrib['height'] = str(object.pixel_height)
             obj_element = etree.Element('object', attrib=attrib)
             self.append_properties(obj_element, object.properties)
+            if object.objtype == 'ellipse':
+                obj_element.append(etree.Element('ellipse'))
             element.append(obj_element)
 
         return element

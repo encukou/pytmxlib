@@ -21,6 +21,9 @@ import six
 from tmxlib import fileio
 
 
+NOT_GIVEN = object()
+
+
 class UsedTilesetError(ValueError):
     """Raised when trying to remove a tileset from a map that is uses its tiles
     """
@@ -342,6 +345,80 @@ class PixelSizeMixin(object):
     def pixel_height(self): return self.pixel_size[1]
     @pixel_height.setter
     def pixel_height(self, value): self.pixel_size = self.pixel_size[0], value
+
+
+class PixelPosMixin(object):
+    """Provides `pixel_x` and `pixel_y` properties
+
+    Subclasses will need a `pixel_pos` property, a pair of values.
+
+    Note: setting pixel_x/pixel_y will set pixel_pos to a new tuple.
+    """
+    @property
+    def pixel_x(self):
+        return self.pixel_pos[0]
+    @pixel_x.setter
+    def pixel_x(self, value):
+        self.pixel_pos = value, self.pixel_pos[1]
+
+    @property
+    def pixel_y(self):
+        return self.pixel_pos[1]
+    @pixel_y.setter
+    def pixel_y(self, value):
+        self.pixel_pos = self.pixel_pos[0], value
+
+
+class PosMixin(object):
+    """Provides `x` and `y` properties
+
+    Subclasses will need a `pos` property, a pair of values.
+
+    Note: setting x/y will set pos to a new tuple.
+    """
+    flipped_diagonally = False
+
+    @property
+    def x(self):
+        return self.pos[0]
+    @x.setter
+    def x(self, value):
+        self.pos = value, self.pos[1]
+
+    @property
+    def y(self):
+        return self.pos[1]
+    @y.setter
+    def y(self, value):
+        self.pos = self.pos[0], value
+
+
+class LayerElementMixin(object):
+    """Provides a `map` attribute extracted from the object's `layer`.
+    """
+
+    @property
+    def map(self):
+        """The map associated with this tile"""
+        return self.layer.map
+
+
+class TileMixin(SizeMixin, PixelSizeMixin, PixelPosMixin, PosMixin,
+                    LayerElementMixin):
+    """Provides `size` based on `pixel_size` and the map
+
+    See the superclasses.
+    """
+
+    @property
+    def size(self):
+        px_self = self.pixel_size
+        px_parent = self.map.tile_size
+        return px_self[0] / px_parent[0], px_self[1] / px_parent[1]
+    @size.setter
+    def size(self, value):
+        px_parent = self.map.tile_size
+        self.pixel_size = value[0] * px_parent[0], value[1] * px_parent[1]
 
 
 def _from_dict_method(func):
@@ -1373,7 +1450,7 @@ class _property(property):
     pass
 
 
-class TileLikeObject(SizeMixin, PixelSizeMixin):
+class TileLikeObject(TileMixin):
     """Base tile-like object: regular tile or tile object.
 
     Has an associated layer and value, and can be flipped, etc.
@@ -1446,25 +1523,6 @@ class TileLikeObject(SizeMixin, PixelSizeMixin):
     flipped_vertically = __mask_property(0x40000000, bool, 30)
     flipped_diagonally = __mask_property(0x20000000, bool, 29)
 
-    @property
-    def x(self):
-        return self.pos[0]
-    @x.setter
-    def x(self, value):
-        self.pos = value, self.pos[1]
-
-    @property
-    def y(self):
-        return self.pos[1]
-    @y.setter
-    def y(self, value):
-        self.pos = self.pos[0], value
-
-    @property
-    def map(self):
-        """The map associated with this tile"""
-        return self.layer.map
-
     def _tileset_tile(self, tilesets):
         # Get the referenced tileset tile given a list of tilesets
         # Used tileset_tile, and also in TilesetList's renumbering code, where
@@ -1534,6 +1592,18 @@ class TileLikeObject(SizeMixin, PixelSizeMixin):
             x, y = y, x
         return x, y
 
+    @property
+    def pixel_size(self):
+        tileset_tile = self.tileset_tile
+        if tileset_tile:
+            ts_size = tileset_tile.pixel_size
+            if self.flipped_diagonally:
+                return ts_size[1], ts_size[0]
+            else:
+                return ts_size
+        else:
+            return 0, 0
+
     def get_pixel(self, x, y):
         """Get the pixel at the given x, y coordinates.
 
@@ -1577,42 +1647,6 @@ class TileLikeObject(SizeMixin, PixelSizeMixin):
     def vflip(self):
         """Flip the tile vertically"""
         self.flipped_vertically = not self.flipped_vertically
-
-    @property
-    def size(self):
-        px_self = self.pixel_size
-        px_parent = self.map.tile_size
-        return px_self[0] / px_parent[0], px_self[1] / px_parent[1]
-    @size.setter
-    def size(self, value):
-        px_parent = self.map.tile_size
-        self.pixel_size = value[0] * px_parent[0], value[1] * px_parent[1]
-
-    @property
-    def pixel_size(self):
-        tileset_tile = self.tileset_tile
-        if tileset_tile:
-            ts_size = tileset_tile.pixel_size
-            if self.flipped_diagonally:
-                return ts_size[1], ts_size[0]
-            else:
-                return ts_size
-        else:
-            return 0, 0
-
-    @property
-    def pixel_x(self):
-        return self.pixel_pos[0]
-    @pixel_x.setter
-    def pixel_x(self, value):
-        self.pixel_pos = value, self.pixel_pos[1]
-
-    @property
-    def pixel_y(self):
-        return self.pixel_pos[1]
-    @pixel_y.setter
-    def pixel_y(self, value):
-        self.pixel_pos = self.pixel_pos[0], value
 
 
 class MapTile(TileLikeObject):
@@ -1759,7 +1793,7 @@ class ObjectLayer(Layer, NamedElementList):
         """Yield all tile objects in this layer, in order.
         """
         for obj in self:
-            if obj.gid:
+            if obj.objtype == 'tile':
                 yield obj
 
     def all_objects(self):
@@ -1806,8 +1840,10 @@ class ObjectLayer(Layer, NamedElementList):
         return self
 
 
-class MapObject(TileLikeObject, SizeMixin):
+class MapObject(PixelPosMixin, LayerElementMixin):
     """A map object: something that's not placed on the fixed grid
+
+    Has several subclasses.
 
     Can be either a "tile object", which has an associated tile much like a
     map-tile, or a regular (non-tile) object that has a settable size.
@@ -1821,6 +1857,150 @@ class MapObject(TileLikeObject, SizeMixin):
         .. attribute:: pixel_pos
 
             The pixel coordinates
+
+        .. attribute:: pixel_size
+
+            Size of this object, as a (width, height) tuple, in pixels.
+
+            Only one of ``pixel_size`` and ``size`` may be specified.
+
+        .. attribute:: size
+
+            Size of this object, as a (width, height) tuple, in units of map
+            tiles.
+
+        .. attribute:: name
+
+            Name of the object. A string (or unicode)
+
+        .. attribute:: type
+
+            Type of the object. A string (or unicode). No semantics attached.
+
+    Other attributes:
+
+        .. attribute:: objtype
+
+            Type of the object: ``'rectangle'``, ``'tile'`` or ``'ellipse'``
+
+        .. attribute:: properties
+
+            Dict of string (or unicode) keys & values for custom data
+
+        .. attribute:: pos
+
+            Position of the object in tile coordinates, as a (x, y) float tuple
+
+        .. attribute:: map
+
+            The map associated with this object
+
+    Unpacked position attributes:
+
+        .. attribute:: x
+        .. attribute:: y
+        .. attribute:: pixel_x
+        .. attribute:: pixel_y
+    """
+    def __init__(self, layer, pixel_pos, name=None, type=None):
+        self.layer = layer
+        self.pixel_pos = pixel_pos
+        self.name = name
+        self.type = type
+        self.properties = {}
+
+    @property
+    def pos(self):
+        return (self.pixel_pos[0] / self.layer.map.tile_width,
+                self.pixel_pos[1] / self.layer.map.tile_height - 1)
+    @pos.setter
+    def pos(self, value):
+        x, y = value
+        y += 1
+        self.pixel_pos = (x * self.layer.map.tile_width,
+                y * self.layer.map.tile_height)
+
+    def to_dict(self, y=None):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        if y is None:
+            y = self.pixel_y
+        d = dict(
+                name=self.name or '',
+                type=self.type or '',
+                x=self.pixel_x, y=y,
+                visible=True,
+                properties=self.properties,
+            )
+        return d
+
+    @classmethod
+    def from_dict(cls, dct, layer):
+        """Import from a dict compatible with Tiled's JSON plugin"""
+        if dct.get('ellipse', False):
+            return EllipseObject.from_dict(dct, layer)
+        else:
+            return RectangleObject.from_dict(dct, layer)
+
+
+class SizedObject(TileMixin, MapObject):
+    def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
+            type=None):
+        MapObject.__init__(self, layer, pixel_pos, name, type)
+        if pixel_size:
+            if size:
+                raise ValueError('Cannot specify both size and pixel_size')
+            self.pixel_size = pixel_size
+        elif size:
+            self.size = size
+
+    @property
+    def pixel_size(self):
+        return self._size
+    @pixel_size.setter
+    def pixel_size(self, value):
+        self._size = value
+
+    def to_dict(self, gid=None):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        if gid:
+            y = self.pixel_y
+        else:
+            y = self.pixel_y - self.pixel_height
+        d = super(SizedObject, self).to_dict(y)
+        if gid:
+            pixel_width = pixel_height = 0
+        else:
+            pixel_width = self.pixel_width
+            pixel_height = self.pixel_height
+        d.update(
+                width=pixel_width,
+                height=pixel_height,
+            )
+        return d
+
+    @classmethod
+    def _dict_helper(cls, dct, layer, size=NOT_GIVEN, **kwargs):
+        _assert_item(dct, 'visible', True)
+        if size is NOT_GIVEN:
+            size = dct.pop('width'), dct.pop('height')
+        self = cls(
+                layer=layer,
+                pixel_pos=(dct.pop('x'), dct.pop('y')),
+                pixel_size=size,
+                name=dct.pop('name', None),
+                type=dct.pop('type', None),
+                **kwargs
+            )
+        self.properties.update(dct.pop('properties', {}))
+        return self
+
+
+class RectangleObject(TileLikeObject, SizedObject):
+    """A rectangle object, either blank (sized) or a tile object
+
+    See :class:`MapObject` for inherited members.
+
+    init arguments, which become attributes:
 
         .. attribute:: pixel_size
 
@@ -1840,14 +2020,6 @@ class MapObject(TileLikeObject, SizeMixin):
             Note that the constructor will nly accept one of ``size`` or
             ``pixel_size``, not both at the same time.
 
-        .. attribute:: name
-
-            Name of the object. A string (or unicode)
-
-        .. attribute:: type
-
-            Type of the object. A string (or unicode). No semantics attached.
-
         .. attribute:: value
 
             Value of the tile, if it's a tile object.
@@ -1862,73 +2034,37 @@ class MapObject(TileLikeObject, SizeMixin):
         .. autoattribute:: number
         .. autoattribute:: image
 
-        .. attribute:: properties
+    Unpacked size attributes:
 
-            Properties of the *referenced* tileset-tile
-
-            If that wasn't clear enough: Changing this will change properties
-            of all tiles using this image. Possibly even across more maps if
-            tilesets are shared.
-
-            See :class:`TilesetTile`.
-
-    Other attributes:
-
-        .. attribute:: properties
-
-            Dict of string (or unicode) keys & values for custom data
-
-        .. attribute:: pos
-
-            Position of the object in tile coordinates, as a (x, y) float tuple
-
-        .. attribute:: map
-
-            The map associated with this object
-
-    Unpacked position and size attributes:
-
-        .. attribute:: x
-        .. attribute:: y
-        .. attribute:: pixel_x
-        .. attribute:: pixel_y
         .. attribute:: width
         .. attribute:: height
         .. attribute:: pixel_width
         .. attribute:: pixel_height
     """
+
     def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
             type=None, value=0):
+        TileLikeObject.__init__(self)
         self.layer = layer
-        self.pixel_pos = pixel_pos
-        self.name = name
-        self.type = type
         self.value = value
-        if pixel_size:
-            if size:
-                raise ValueError('Cannot specify both size and pixel_size')
-            self.pixel_size = pixel_size
-        elif size:
-            self.size = size
-        elif not value:
-            raise ValueError('Size must be given for non-tile objects')
-        self.properties = {}
+        SizedObject.__init__(
+            self, layer, pixel_pos, size, pixel_size, name, type)
+
+    def __nonzero__(self):
+        return True
+    __bool__ = __nonzero__
 
     @property
-    def pos(self):
-        return (self.pixel_pos[0] / self.layer.map.tile_width,
-                self.pixel_pos[1] / self.layer.map.tile_height - 1)
-    @pos.setter
-    def pos(self, value):
-        x, y = value
-        y += 1
-        self.pixel_pos = (x * self.layer.map.tile_width,
-                y * self.layer.map.tile_height)
+    def objtype(self):
+        if self.value:
+            return 'tile'
+        else:
+            return 'rectangle'
 
     @property
     def pixel_size(self):
         if self.gid:
-            return super(MapObject, self).pixel_size
+            return super(RectangleObject, self).pixel_size
         else:
             return self._size
     @pixel_size.setter
@@ -1939,50 +2075,66 @@ class MapObject(TileLikeObject, SizeMixin):
         else:
             self._size = value
 
-    def to_dict(self):
-        """Export to a dict compatible with Tiled's JSON plugin"""
-        if self.gid:
-            pixel_width = pixel_height = 0
-        else:
-            pixel_width = self.pixel_width
-            pixel_height = self.pixel_height
-        if self.gid:
-            y = self.pixel_y
-        else:
-            y = self.pixel_y - self.pixel_height
-        d = dict(
-                name=self.name or '',
-                type=self.type or '',
-                x=self.pixel_x, y=y,
-                width=pixel_width,
-                height=pixel_height,
-                visible=True,
-                properties=self.properties,
-            )
-        if self.value:
-            d['gid'] = self.value
-        return d
-
     @_from_dict_method
     def from_dict(cls, dct, layer):
-        """Import from a dict compatible with Tiled's JSON plugin"""
-        _assert_item(dct, 'visible', True)
         gid = dct.pop('gid', 0)
         if gid:
             size = None
             dct.pop('width')
             dct.pop('height')
-            y = dct.pop('y')
         else:
             size = dct.pop('width'), dct.pop('height')
-            y = dct.pop('y') + size[1]
-        self = cls(
-                layer=layer,
-                pixel_pos=(dct.pop('x'), y),
-                pixel_size=size,
-                name=dct.pop('name', None),
-                type=dct.pop('type', None),
-                value=gid,
-            )
-        self.properties.update(dct.pop('properties', {}))
-        return self
+            dct['y'] = dct['y'] + size[1]
+        return super(RectangleObject, cls)._dict_helper(
+            dct, layer, size, value=gid)
+
+    def to_dict(self):
+        d = super(RectangleObject, self).to_dict(self.gid)
+        if self.value:
+            d['gid'] = self.value
+        return d
+
+
+class EllipseObject(SizedObject):
+    """An ellipse object
+
+    init arguments, which become attributes:
+
+        .. attribute:: pixel_size
+
+            Size of this object, as a (width, height) tuple, in pixels.
+            Must be specified for non-tile objects, and must *not* be specified
+            for tile objects (unless the size matches the tile).
+
+            Similar restrictions apply to setting the property (and ``width`` &
+            ``height``).
+
+        .. attribute:: size
+
+            Size of this object, as a (width, height) tuple, in units of map
+            tiles.
+
+            Shares setting restrictions with ``pixel_size``.
+            Note that the constructor will nly accept one of ``size`` or
+            ``pixel_size``, not both at the same time.
+
+    Unpacked size attributes:
+
+        .. attribute:: width
+        .. attribute:: height
+        .. attribute:: pixel_width
+        .. attribute:: pixel_height
+    """
+
+    objtype = 'ellipse'
+    @_from_dict_method
+    def from_dict(cls, dct, layer):
+        assert dct.pop('ellipse')
+        size = dct.pop('width'), dct.pop('height')
+        dct['y'] = dct['y'] + size[1]
+        return super(EllipseObject, cls)._dict_helper(dct, layer, size)
+
+    def to_dict(self):
+        result = super(EllipseObject, self).to_dict()
+        result['ellipse'] = True
+        return result

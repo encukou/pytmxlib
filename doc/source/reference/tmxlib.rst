@@ -157,17 +157,30 @@ MapObject
 
     Methods:
 
-        .. automethod:: tile_to_image_coordinates
-        .. automethod:: get_pixel
-        .. automethod:: __nonzero__
         .. automethod:: to_dict
         .. automethod:: from_dict
 
-    Flipping:
+RectangleObject
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: tmxlib.RectangleObject
+
+    Methods:
+
+        .. automethod:: tile_to_image_coordinates
+        .. automethod:: get_pixel
+
+    Tile flipping:
 
         .. automethod:: vflip
         .. automethod:: hflip
         .. automethod:: rotate
+
+EllipseObject
+~~~~~~~~~~~~~
+
+.. autoclass:: tmxlib.EllipseObject
+
 
 Lists with named elements
 -------------------------
@@ -235,7 +248,7 @@ ImageRegion
 
 
 Exceptions
-------
+----------
 
 .. autoclass:: tmxlib.UsedTilesetError
 .. autoclass:: tmxlib.TilesetNotInMapError

@@ -69,6 +69,8 @@ map_filenames = [
             output_filename=None),
         dict(filename='imagelayer.tmx', has_gzip=False,
             output_filename=None),
+        dict(filename='objects.tmx', has_gzip=False,
+            output_filename=None),
     ]
 
 
@@ -852,7 +854,19 @@ def test_layer_nonzero():
 
     layer = map.add_object_layer('Object layer')
     assert not layer
-    layer.append(tmxlib.MapObject(layer, (0, 0), size=(3, 3)))
+    layer.append(tmxlib.RectangleObject(layer, (0, 0), size=(3, 3)))
+    assert layer
+
+    layer[:] = []
+    assert not layer
+
+    layer.append(tmxlib.EllipseObject(layer, (0, 0), size=(3, 3)))
+    assert layer
+
+    layer[:] = []
+    assert not layer
+
+    layer.append(tmxlib.RectangleObject(layer, (0, 0), value=4))
     assert layer
 
 
