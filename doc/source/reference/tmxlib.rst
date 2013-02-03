@@ -4,267 +4,36 @@
 tmxlib Module Reference
 =======================
 
-The main module contains the most important classes.
-
-Map
----
-
-.. autoclass:: tmxlib.Map
-
-    Loading and saving (see :class:`tmxlib.fileio.ReadWriteBase` for more
-    information):
-
-        .. classmethod:: open(filename, shared=False)
-        .. classmethod:: load(string)
-        .. method:: save(filename)
-        .. method:: dump(string)
-        .. automethod:: to_dict
-        .. automethod:: from_dict
-
-    Methods:
-
-        .. automethod:: add_layer
-        .. automethod:: add_tile_layer
-        .. automethod:: add_object_layer
-        .. automethod:: add_image_layer
-        .. automethod:: all_tiles
-        .. automethod:: all_objects
-        .. automethod:: get_tiles
-
-        .. automethod:: check_consistency
-
-Tileset
--------
-
-.. autoclass:: tmxlib.Tileset
-
-    Loading and saving (see :class:`tmxlib.fileio.ReadWriteBase` for more
-    information):
-
-        .. classmethod:: open(filename, shared=False)
-        .. classmethod:: load(string)
-        .. method:: save(filename)
-        .. method:: dump(string)
-        .. automethod:: to_dict
-        .. automethod:: from_dict
-
-    List-like access:
-
-        .. automethod:: __getitem__
-        .. automethod:: __len__
-        .. automethod:: __iter__
-
-    Overridable methods:
-
-        .. automethod:: tile_image
-
-    GID calculation methods:
-
-        .. note::
-            :class:`TilesetList` depends on the specific GID calculation
-            algorithm provided by these methods to renumber a map's tiles when
-            tilesets are moved around. Don't override these unless your
-            subclass is not used with vanilla TilesetLists.
-
-        .. automethod:: first_gid
-        .. automethod:: end_gid
-
-ImageTileset
-~~~~~~~~~~~~
-
-.. autoclass:: tmxlib.ImageTileset
-
-    See :class:`tmxlib.Tileset` for tileset methods.
-
-TilesetTile
------------
-
-.. autoclass:: tmxlib.TilesetTile
-
-    Methods:
-
-        .. automethod:: gid
-        .. automethod:: get_pixel
-
-Layer
------
-
-.. autoclass:: tmxlib.Layer
-
-    Methods:
-
-        .. automethod:: all_objects
-        .. automethod:: all_tiles
-        .. automethod:: to_dict
-        .. automethod:: from_dict
-
-TileLayer
-~~~~~~~~~
-
-.. autoclass:: tmxlib.TileLayer
-
-    Methods:
-
-        .. automethod:: all_objects
-        .. automethod:: all_tiles
-
-    Tile access:
-
-        .. automethod:: __getitem__
-        .. automethod:: __setitem__
-
-    Methods to be overridden in subclasses:
-
-        .. automethod:: value_at
-        .. automethod:: set_value_at
-
-ObjectLayer
-~~~~~~~~~~~
-
-.. autoclass:: tmxlib.ObjectLayer
-
-    Methods:
-
-        .. automethod:: all_objects
-        .. automethod:: all_tiles
-
-ImageLayer
-~~~~~~~~~~~
-
-.. autoclass:: tmxlib.ImageLayer
-
-MapTile
--------
-
-.. autoclass:: tmxlib.MapTile
-
-    Methods:
-
-        .. automethod:: tile_to_image_coordinates
-        .. automethod:: get_pixel
-        .. automethod:: __nonzero__
-
-    Flipping:
-
-        .. automethod:: vflip
-        .. automethod:: hflip
-        .. automethod:: rotate
-
-MapObject
----------
-
-.. autoclass:: tmxlib.MapObject
-
-    Methods:
-
-        .. automethod:: to_dict
-        .. automethod:: from_dict
-
-RectangleObject
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: tmxlib.RectangleObject
-
-    Methods:
-
-        .. automethod:: tile_to_image_coordinates
-        .. automethod:: get_pixel
-
-    Tile flipping:
-
-        .. automethod:: vflip
-        .. automethod:: hflip
-        .. automethod:: rotate
-
-EllipseObject
-~~~~~~~~~~~~~
-
-.. autoclass:: tmxlib.EllipseObject
-
-PolygonObject
-~~~~~~~~~~~~~
-
-.. autoclass:: tmxlib.PolygonObject
-
-PolylineObject
-~~~~~~~~~~~~~~
-
-.. autoclass:: tmxlib.PolylineObject
-
-
-Lists with named elements
--------------------------
-
-NamedElementList
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: tmxlib.NamedElementList
-
-    .. automethod:: get
-    .. automethod:: insert
-    .. automethod:: insert_after
-    .. automethod:: move
-
-    Hooks for subclasses:
-
-        .. automethod:: modification_context
-        .. automethod:: retrieved_value
-        .. automethod:: stored_value
-
-LayerList
-~~~~~~~~~
-
-.. autoclass:: tmxlib.LayerList
-
-    See :class:`~tmxlib.NamedElementList` for LayerList's methods.
-
-TilesetList
-~~~~~~~~~~~
-
-.. autoclass:: tmxlib.TilesetList
-
-    See :class:`~tmxlib.NamedElementList` for TilesetList's methods.
-
-    .. automethod:: modification_context
-
-Images
-------
-
-Image
-~~~~~
-
-.. autoclass:: tmxlib.Image
-
-    .. automethod:: get_pixel
-    .. automethod:: set_pixel
-
-    Methods interesting for subclassers:
-
-        .. automethod:: load_image
-
-    .. note::
-        It's currently not possible to save modified images.
-
-ImageRegion
-~~~~~~~~~~~
-
-.. autoclass:: tmxlib.ImageRegion
-
-    Except for the constructor and attributes, `ImageRegion` supports the
-    same external API as :class:`Image`:
-
-        .. method:: get_pixel(x, y)
-        .. method:: set_pixel(x, y, value)
-
-
-Exceptions
-----------
-
-.. autoclass:: tmxlib.UsedTilesetError
-.. autoclass:: tmxlib.TilesetNotInMapError
-
+The main module exports the most important classes directly:
+
+-
+    :class:`~tmxlib.map.Map`, the main object
+-
+    Layer objects: :class:`~tmxlib.layer.ImageLayer`,
+    :class:`~tmxlib.layer.ObjectLayer`, and
+    :class:`~tmxlib.layer.TileLayer`
+-
+    :class:`~tmxlib.tile.MapTile`
+-
+    :class:`~tmxlib.tileset.ImageTileset`, the only kind of tileset so far, and
+    :class:`~tmxlib.tileset.TilesetTile`
+-
+    Map object classes: :class:`~tmxlib.mapobject.PolygonObject`,
+    :class:`~tmxlib.mapobject.PolylineObject`,
+    :class:`~tmxlib.mapobject.RectangleObject`, and
+    :class:`~tmxlib.mapobject.EllipseObject`
+-
+    Exceptions, :class:`~tmxlib.helpers.UsedTilesetError` and
+    :class:`~tmxlib.helpers.TilesetNotInMapError`
+
+See submodule documentation for more details:
 
 .. toctree::
-    :hidden:
-
+    map
+    layer
+    tile
+    tileset
+    mapobject
+    image
+    helpers
     hidden

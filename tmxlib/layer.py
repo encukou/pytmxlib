@@ -4,10 +4,10 @@ from __future__ import division
 
 import array
 
-from tmxlib import helpers, bases, tileset, tile, mapobject, image
+from tmxlib import helpers, tileset, tile, mapobject, image
 
 
-class LayerList(bases.NamedElementList):
+class LayerList(helpers.NamedElementList):
     """A list of layers.
 
     Allows indexing by name, and can only contain layers of a single map.
@@ -294,12 +294,12 @@ class ImageLayer(Layer):
         return self
 
 
-class ObjectLayer(Layer, bases.NamedElementList):
+class ObjectLayer(Layer, helpers.NamedElementList):
     """A layer of objects.
 
-    Acts as a :class:`named list <NamedElementList>` of objects. This means
-    semantics similar to layer/tileset lists: indexing by name is possible,
-    where a name references the first object of such name.
+    Acts as a :class:`named list <tmxlib.helpers.NamedElementList>` of objects.
+    This means semantics similar to layer/tileset lists: indexing by name is
+    possible, where a name references the first object of such name.
 
     See :class:`Layer` for the init arguments.
     """

@@ -9,107 +9,107 @@ This page documents such members, so that they can be linked.
 
 .. currentmodule:: tmxlib
 
-class :class:`tmxlib.TileLayer`
+class :class:`tmxlib.layer.TileLayer`
 
     :class:`Layer` methods
 
         .. automethod:: tmxlib.TileLayer.to_dict
         .. automethod:: tmxlib.TileLayer.from_dict
 
-class :class:`tmxlib.ObjectLayer`
+class :class:`tmxlib.layer.ObjectLayer`
 
     :class:`NamedList` methods
 
-        .. automethod:: tmxlib.ObjectLayer.__getitem__
-        .. automethod:: tmxlib.ObjectLayer.__setitem__
-        .. automethod:: tmxlib.ObjectLayer.__contains__
+        .. automethod:: tmxlib.layer.ObjectLayer.__getitem__
+        .. automethod:: tmxlib.layer.ObjectLayer.__setitem__
+        .. automethod:: tmxlib.layer.ObjectLayer.__contains__
 
-        .. automethod:: tmxlib.ObjectLayer.count
-        .. automethod:: tmxlib.ObjectLayer.append
-        .. automethod:: tmxlib.ObjectLayer.extend
-        .. automethod:: tmxlib.ObjectLayer.pop
-        .. automethod:: tmxlib.ObjectLayer.remove
-        .. automethod:: tmxlib.ObjectLayer.reverse
-        .. automethod:: tmxlib.ObjectLayer.insert
-        .. automethod:: tmxlib.ObjectLayer.insert_after
-        .. automethod:: tmxlib.ObjectLayer.move
+        .. automethod:: tmxlib.layer.ObjectLayer.count
+        .. automethod:: tmxlib.layer.ObjectLayer.append
+        .. automethod:: tmxlib.layer.ObjectLayer.extend
+        .. automethod:: tmxlib.layer.ObjectLayer.pop
+        .. automethod:: tmxlib.layer.ObjectLayer.remove
+        .. automethod:: tmxlib.layer.ObjectLayer.reverse
+        .. automethod:: tmxlib.layer.ObjectLayer.insert
+        .. automethod:: tmxlib.layer.ObjectLayer.insert_after
+        .. automethod:: tmxlib.layer.ObjectLayer.move
 
-        .. automethod:: tmxlib.ObjectLayer.retrieved_value
-        .. automethod:: tmxlib.ObjectLayer.stored_value
+        .. automethod:: tmxlib.layer.ObjectLayer.retrieved_value
+        .. automethod:: tmxlib.layer.ObjectLayer.stored_value
 
     :class:`Layer` methods
 
-        .. automethod:: tmxlib.ObjectLayer.to_dict
-        .. automethod:: tmxlib.ObjectLayer.from_dict
+        .. automethod:: tmxlib.layer.ObjectLayer.to_dict
+        .. automethod:: tmxlib.layer.ObjectLayer.from_dict
 
-class :class:`tmxlib.ImageLayer`
+class :class:`tmxlib.layer.ImageLayer`
 
     :class:`Layer` methods
 
         .. automethod:: tmxlib.ImageLayer.to_dict
         .. automethod:: tmxlib.ImageLayer.from_dict
 
-class :class:`tmxlib.LayerList`
+class :class:`tmxlib.layer.LayerList`
 
     :class:`NamedList` methods
 
-        .. automethod:: tmxlib.LayerList.__getitem__
-        .. automethod:: tmxlib.LayerList.__setitem__
-        .. automethod:: tmxlib.LayerList.__contains__
+        .. automethod:: tmxlib.layer.LayerList.__getitem__
+        .. automethod:: tmxlib.layer.LayerList.__setitem__
+        .. automethod:: tmxlib.layer.LayerList.__contains__
 
-        .. automethod:: tmxlib.LayerList.index
-        .. automethod:: tmxlib.LayerList.count
-        .. automethod:: tmxlib.LayerList.append
-        .. automethod:: tmxlib.LayerList.extend
-        .. automethod:: tmxlib.LayerList.pop
-        .. automethod:: tmxlib.LayerList.remove
-        .. automethod:: tmxlib.LayerList.reverse
-        .. automethod:: tmxlib.LayerList.insert
-        .. automethod:: tmxlib.LayerList.insert_after
-        .. automethod:: tmxlib.LayerList.move
+        .. automethod:: tmxlib.layer.LayerList.index
+        .. automethod:: tmxlib.layer.LayerList.count
+        .. automethod:: tmxlib.layer.LayerList.append
+        .. automethod:: tmxlib.layer.LayerList.extend
+        .. automethod:: tmxlib.layer.LayerList.pop
+        .. automethod:: tmxlib.layer.LayerList.remove
+        .. automethod:: tmxlib.layer.LayerList.reverse
+        .. automethod:: tmxlib.layer.LayerList.insert
+        .. automethod:: tmxlib.layer.LayerList.insert_after
+        .. automethod:: tmxlib.layer.LayerList.move
 
-        .. automethod:: tmxlib.LayerList.modification_context
-        .. automethod:: tmxlib.LayerList.retrieved_value
-        .. automethod:: tmxlib.LayerList.stored_value
+        .. automethod:: tmxlib.layer.LayerList.modification_context
+        .. automethod:: tmxlib.layer.LayerList.retrieved_value
+        .. automethod:: tmxlib.layer.LayerList.stored_value
 
-class :class:`tmxlib.TilesetList`
+class :class:`tmxlib.tileset.TilesetList`
 
     :class:`NamedList` methods
 
-        .. automethod:: tmxlib.TilesetList.__getitem__
-        .. automethod:: tmxlib.TilesetList.__setitem__
-        .. automethod:: tmxlib.TilesetList.__contains__
+        .. automethod:: tmxlib.tileset.TilesetList.__getitem__
+        .. automethod:: tmxlib.tileset.TilesetList.__setitem__
+        .. automethod:: tmxlib.tileset.TilesetList.__contains__
 
-        .. automethod:: tmxlib.TilesetList.index
-        .. automethod:: tmxlib.TilesetList.count
-        .. automethod:: tmxlib.TilesetList.append
-        .. automethod:: tmxlib.TilesetList.extend
-        .. automethod:: tmxlib.TilesetList.pop
-        .. automethod:: tmxlib.TilesetList.remove
-        .. automethod:: tmxlib.TilesetList.reverse
-        .. automethod:: tmxlib.TilesetList.insert
-        .. automethod:: tmxlib.TilesetList.insert_after
-        .. automethod:: tmxlib.TilesetList.move
+        .. automethod:: tmxlib.tileset.TilesetList.index
+        .. automethod:: tmxlib.tileset.TilesetList.count
+        .. automethod:: tmxlib.tileset.TilesetList.append
+        .. automethod:: tmxlib.tileset.TilesetList.extend
+        .. automethod:: tmxlib.tileset.TilesetList.pop
+        .. automethod:: tmxlib.tileset.TilesetList.remove
+        .. automethod:: tmxlib.tileset.TilesetList.reverse
+        .. automethod:: tmxlib.tileset.TilesetList.insert
+        .. automethod:: tmxlib.tileset.TilesetList.insert_after
+        .. automethod:: tmxlib.tileset.TilesetList.move
 
-        .. automethod:: tmxlib.TilesetList.retrieved_value
-        .. automethod:: tmxlib.TilesetList.stored_value
+        .. automethod:: tmxlib.tileset.TilesetList.retrieved_value
+        .. automethod:: tmxlib.tileset.TilesetList.stored_value
 
-class :class:`tmxlib.ImageTileset`
+class :class:`tmxlib.tileset.ImageTileset`
 
     Load/save methods (see :class:`tmxlib.fileio.ReadWriteBase`):
 
-        .. automethod:: tmxlib.ImageTileset.open(filename, shared=False)
-        .. automethod:: tmxlib.ImageTileset.load(string)
-        .. automethod:: tmxlib.ImageTileset.save(filename)
-        .. automethod:: tmxlib.ImageTileset.dump(string)
-        .. automethod:: tmxlib.ImageTileset.to_dict
-        .. automethod:: tmxlib.ImageTileset.from_dict
+        .. automethod:: tmxlib.tileset.ImageTileset.open(filename, shared=False)
+        .. automethod:: tmxlib.tileset.ImageTileset.load(string)
+        .. automethod:: tmxlib.tileset.ImageTileset.save(filename)
+        .. automethod:: tmxlib.tileset.ImageTileset.dump(string)
+        .. automethod:: tmxlib.tileset.ImageTileset.to_dict
+        .. automethod:: tmxlib.tileset.ImageTileset.from_dict
 
-    Overridden methods (see :class:`tmxlib.Tileset`):
+    Overridden methods (see :class:`tmxlib.tileset.Tileset`):
 
         .. automethod:: tmxlib.ImageTileset.tile_image
 
-    GID calculation methods (see :class:`tmxlib.Tileset`):
+    GID calculation methods (see :class:`tmxlib.tileset.Tileset`):
 
         .. note::
             :class:`TilesetList` depends on the specific GID calculation
@@ -117,21 +117,19 @@ class :class:`tmxlib.ImageTileset`
             tilesets are moved around. Don't override these unless your
             subclass is not used with vanilla TilesetLists.
 
-        .. automethod:: tmxlib.ImageTileset.first_gid
-        .. automethod:: tmxlib.ImageTileset.end_gid
+        .. automethod:: tmxlib.tileset.ImageTileset.first_gid
+        .. automethod:: tmxlib.tileset.ImageTileset.end_gid
 
-.. autoclass:: tmxlib.ImageBase
-
-class :class:`tmxlib.RectangleObject`
+class :class:`tmxlib.mapobject.RectangleObject`
 
     :class:`MapObject` methods
 
-        .. automethod:: tmxlib.RectangleObject.to_dict
-        .. automethod:: tmxlib.RectangleObject.from_dict
+        .. automethod:: tmxlib.mapobject.RectangleObject.to_dict
+        .. automethod:: tmxlib.mapobject.RectangleObject.from_dict
 
-class :class:`tmxlib.EllipseObject`
+class :class:`tmxlib.mapobject.EllipseObject`
 
     :class:`MapObject` methods
 
-        .. automethod:: tmxlib.EllipseObject.to_dict
-        .. automethod:: tmxlib.EllipseObject.from_dict
+        .. automethod:: tmxlib.mapobject.EllipseObject.to_dict
+        .. automethod:: tmxlib.mapobject.EllipseObject.from_dict

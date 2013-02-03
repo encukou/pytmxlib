@@ -2,18 +2,28 @@
 
 from __future__ import division
 
-from tmxlib import bases, fileio
+from tmxlib import helpers, fileio
 
 
-class ImageBase(bases.SizeMixin):
-    """Provide __getitem__ and __setitem__ for images"""
+class ImageBase(helpers.SizeMixin):
+    """Provide __getitem__ and __setitem__ for images
+
+    Pixel access methods witk with (x, y) pairs for position and (r, g, b, a)
+    tuples for color.
+    """
     def __getitem__(self, pos):
-        """Get the pixel at the specified (x, y) position"""
+        """Get the pixel at the specified (x, y) position
+
+        Proxies to get_pixel.
+        """
         x, y = pos
         return self.get_pixel(x, y)
 
     def __setitem__(self, pos, value):
-        """Set the pixel at the specified (x, y) position"""
+        """Set the pixel at the specified (x, y) position
+
+        Proxies to set_pixel.
+        """
         x, y = pos
         r, g, b, a = value
         return self.set_pixel(x, y, value)

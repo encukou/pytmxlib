@@ -4,13 +4,13 @@
 from __future__ import division
 
 
-from tmxlib import bases, helpers
+from tmxlib import helpers, tile
 
 
 NOT_GIVEN = object()
 
 
-class MapObject(bases.PixelPosMixin, bases.LayerElementMixin):
+class MapObject(helpers.PixelPosMixin, helpers.LayerElementMixin):
     """A map object: something that's not placed on the fixed grid
 
     Has several subclasses.
@@ -156,7 +156,7 @@ class PointBasedObject(MapObject):
 class PolygonObject(PointBasedObject):
     """A polygon object
 
-    See :class:`MapObject` for inherited members.
+    See :class:`~tmxlib.mapobject.MapObject` for inherited members.
 
     Extra init arguments, which become attributes:
 
@@ -176,13 +176,15 @@ class PolygonObject(PointBasedObject):
 class PolylineObject(PointBasedObject):
     """A polygon object
 
-    Behaves just like :class:`PolygonObject`, but is not closed when drawn.
-    Has the same ``points`` attribute/argument as :class:`PolygonObject`.
+    Behaves just like :class:`~tmxlib.mapobject.PolygonObject`, it's not
+    closed when drawn.
+    Has the same ``points`` attribute/argument as
+    :class:`~tmxlib.mapobject.PolygonObject`.
     """
     objtype = 'polyline'
 
 
-class SizedObject(bases.TileMixin, MapObject):
+class SizedObject(helpers.TileMixin, MapObject):
     def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
             type=None):
         MapObject.__init__(self, layer, pixel_pos, name, type)
@@ -230,7 +232,7 @@ class SizedObject(bases.TileMixin, MapObject):
         )
 
 
-class RectangleObject(bases.TileLikeObject, SizedObject):
+class RectangleObject(tile.TileLikeObject, SizedObject):
     """A rectangle object, either blank (sized) or a tile object
 
     See :class:`MapObject` for inherited members.
@@ -259,27 +261,13 @@ class RectangleObject(bases.TileLikeObject, SizedObject):
 
             Value of the tile, if it's a tile object.
 
-            See :class:`MapTile`
-
-    Attributes for accessing to the referenced tile:
-
-        .. autoattribute:: tileset_tile
-
-        .. autoattribute:: tileset
-        .. autoattribute:: number
-        .. autoattribute:: image
-
-    Unpacked size attributes:
-
-        .. attribute:: width
-        .. attribute:: height
-        .. attribute:: pixel_width
-        .. attribute:: pixel_height
+    See :class:`tmxlib.tile.TileLikeObject` for attributes and methods
+    shared with tiles.
     """
 
     def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
             type=None, value=0):
-        bases.TileLikeObject.__init__(self)
+        tile.TileLikeObject.__init__(self)
         self.layer = layer
         self.value = value
         SizedObject.__init__(

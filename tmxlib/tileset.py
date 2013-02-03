@@ -5,10 +5,10 @@ from __future__ import division
 import collections
 import contextlib
 
-from tmxlib import helpers, bases, fileio, tile, image
+from tmxlib import helpers, fileio, tile, image
 
 
-class TilesetList(bases.NamedElementList):
+class TilesetList(helpers.NamedElementList):
     """A list of tilesets.
 
     Allows indexing by name.
@@ -73,7 +73,7 @@ class TilesetList(bases.NamedElementList):
                 tile.gid = gid_map[tile.gid]
 
 
-class TilesetTile(bases.PixelSizeMixin):
+class TilesetTile(helpers.PixelSizeMixin):
     """Reference to a tile within a tileset
 
     init arguents, which become attributes:

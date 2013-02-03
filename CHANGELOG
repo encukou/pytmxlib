@@ -14,6 +14,9 @@ Legend:
         size. Unfortunately, for non-tile objects, this means the y coordinate
         is shifted by the height of the object relative to the value stored in
         the TMX file.
+    ** Major overhaul of module structure. The top-level tmxlib module now
+        exports only the most frequently used classes; the rest is in
+        dedicated submodules.
 
     ! Fix hashes of TilesetTile, improve equality tests
 

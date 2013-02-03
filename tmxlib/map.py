@@ -2,12 +2,12 @@
 
 from __future__ import division
 
-from tmxlib import helpers, bases, fileio, tileset, layer
+from tmxlib import helpers, fileio, tileset, layer
 
 
 class Map(fileio.ReadWriteBase,
-          bases.SizeMixin, bases.TileSizeMixin, bases.PixelSizeMixin):
-    """A tile map. tmxlib's core class
+          helpers.SizeMixin, helpers.TileSizeMixin, helpers.PixelSizeMixin):
+    """A tile map, tmxlib's core class
 
     init arguments, which become attributes:
 
