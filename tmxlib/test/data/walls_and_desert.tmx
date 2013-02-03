@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="40" height="40" tilewidth="32" tileheight="32">
+<map version="1.0" orientation="orthogonal" width="40" height="40" tilewidth="32" tileheight="32" backgroundcolor="#ffdca8">
  <tileset firstgid="1" name="Walls" tilewidth="64" tileheight="64">
   <image source="perspective_walls.png" width="256" height="256"/>
  </tileset>
@@ -8,7 +8,7 @@
  </tileset>
  <layer name="Ground" width="40" height="40">
   <data encoding="base64" compression="zlib">
-   eJztmNkKwjAQRfML2gc3sC7girVa963+/1c5YkNlCG0Sk3GUPhxsICXHO2M7GAkhIo90gRDoeT7HhpvCb8nA61fye2Y1AsbAhIGPihpQBwLk7eOsKTAzYA60gDbQIchiBawNSDz6HQr8NsAJ2H7Rryi/RDNPCr8dQ7878sJ+F/Hq/yuxH+45vC7LC/elCz/V7+CA8pPXZX44V1f57dFa+pjm57u+2BNzzOqny9mBXyOjKfJ3URGB5j7J4kO/UOTzhfyuRXQ096nus/Ebi3y+6AODEoaa+1T3+ew9amKhnnM4ecaEPjazGYXXLfvUeXa+v38SR+frouP3dLpneyn9UoZ+uK+5+dnU932+oPJLDfxwltzyU9Wasx9lfjazGaXfvxAzcPgVcFbc/husalxR8RkP9IUb3g==
+   eJztmPkKgkAQh/cVqj86hOyA7KCy7LC793+qRnJRhkVHc6cpDD5KWNmv34w6uFJKrSzSB1xgYHmfNPqTt+5u8FszOkrNj0qU1QTwgKkAHxMNoAm0kLeNvWbAvAALoAv0AIchiw2wLUBg0S/M8NsBZ2D/Rb+s/AJinhx+B4F+T+SF/a7q3f83Zj/cc/g4Ly/cl1X4ma6DEOWnf+f54Vyryu+IjrVP0fxs1xd7Yk5x/ahcKvBrx3RU8izKokVcp1l+6OeqZL7Q/zULh7jOdF4ZP08l88UQGOUwJq4znWez97jxlXnOkeTpM/qUmc04vO7xN+XemX7+BBXtT4XiFzk947Wcfg+BfrivpfmVqW96vuDyexTww1lKy89Ua8l+nPmVmc04/f4FX4DDr4Cz4no3WNe4poaHFwpJG1Q=
   </data>
  </layer>
  <layer name="Building" width="40" height="40">

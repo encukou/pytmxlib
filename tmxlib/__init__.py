@@ -466,6 +466,10 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
             The orientation of the map (``'orthogonal'``, ``'isometric'``,
             or ``'staggered'``)
 
+        .. attribute:: background_color
+
+            The background color for the map, as a triple of ints (0..255)
+
     Other attributes:
 
         .. attribute:: tilesets
@@ -510,12 +514,13 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
     #   correctly as they can.
     #   And it's not just here...
     def __init__(self, size, tile_size, orientation='orthogonal',
-            base_path=None):
+            background_color=None, base_path=None):
         self.orientation = orientation
         self.size = size
         self.tile_size = tile_size
         self.tilesets = TilesetList(self)
         self.layers = LayerList(self)
+        self.background_color = background_color
         self.properties = {}
         self.base_path = base_path
 
@@ -615,7 +620,7 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
 
         You can use e.g. a JSON or YAML library to write such a dict to a file.
         """
-        return dict(
+        d = dict(
                 height=self.height,
                 width=self.width,
                 tileheight=self.tile_height,
@@ -626,6 +631,10 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
                 layers=[la.to_dict() for la in self.layers],
                 tilesets=[t.to_dict(map=self) for t in self.tilesets],
             )
+        if self.background_color:
+            d['backgroundcolor'] = '#' + fileio.to_hexcolor(
+                self.background_color)
+        return d
 
     @_from_dict_method
     def from_dict(cls, dct):
@@ -640,6 +649,9 @@ class Map(fileio.ReadWriteBase, SizeMixin, TileSizeMixin, PixelSizeMixin):
                 tile_size=(dct.pop('tilewidth'), dct.pop('tileheight')),
                 orientation=dct.pop('orientation', 'orthogonal'),
             )
+        background_color = dct.pop('backgroundcolor', None)
+        if background_color:
+            self.background_color = fileio.from_hexcolor(background_color)
         self.properties = dct.pop('properties')
         self.tilesets = [
                 ImageTileset.from_dict(d) for d in dct.pop('tilesets')]
@@ -882,22 +894,6 @@ class Tileset(fileio.ReadWriteBase):
             'Tileset.from_dict must be implemented in subclasses')
 
 
-def _parse_html_color(color):
-    orig_color = color
-    if color.startswith('#'):
-        color = color[1:]
-    if len(color) == 3:
-        r, g, b = color
-        r = r * 2
-        g = g * 2
-        b = b * 2
-    elif len(color) == 6:
-        r, g, b = color[0:2], color[2:4], color[4:6]
-    else:
-        raise ValueError('Bad CSS color: {0!r}'.format(orig_color))
-    return int(r, 16), int(g, 16), int(b, 16)
-
-
 class ImageTileset(Tileset):
     """A tileset whose tiles form a rectangular grid on a single image.
 
@@ -983,8 +979,7 @@ class ImageTileset(Tileset):
                 tileheight=self.tile_height,
             ))
         if self.image.trans:
-            html_trans = '#{0:02x}{1:02x}{2:02x}'.format(*self.image.trans)
-            d['transparentcolor'] = html_trans
+            d['transparentcolor'] = '#' + fileio.to_hexcolor(self.image.trans)
         return d
 
     @_from_dict_method
@@ -993,7 +988,7 @@ class ImageTileset(Tileset):
         dct.pop('firstgid', None)
         html_trans = dct.pop('transparentcolor', None)
         if html_trans:
-            trans = _parse_html_color(html_trans)
+            trans = fileio.from_hexcolor(html_trans)
         else:
             trans = None
         self = cls(

@@ -174,6 +174,10 @@ class TMXSerializer(object):
         assert root.tag == 'map'
         assert root.attrib.pop('version') == '1.0', 'Bad TMX file version'
 
+        background_color = root.attrib.pop('backgroundcolor', None)
+        if background_color:
+            background_color = from_hexcolor(background_color)
+
         args = dict(
                 size=(int(root.attrib.pop('width')),
                         int(root.attrib.pop('height'))),
@@ -181,6 +185,7 @@ class TMXSerializer(object):
                         int(root.attrib.pop('tileheight'))),
                 orientation=root.attrib.pop('orientation'),
                 base_path=base_path,
+                background_color=background_color,
             )
         assert not root.attrib, 'Unexpected map attributes: %s' % root.attrib
         map = cls(**args)
@@ -214,6 +219,9 @@ class TMXSerializer(object):
                 tilewidth=str(map.tile_width),
                 tileheight=str(map.tile_height),
             ))
+        if map.background_color:
+            elem.attrib['backgroundcolor'] = '#{0}'.format(
+                to_hexcolor(map.background_color))
         self.append_properties(elem, map.properties)
         for tileset in map.tilesets:
             elem.append(self.tileset_to_element(tileset,
@@ -311,7 +319,7 @@ class TMXSerializer(object):
         kwargs = dict()
         trans = elem.attrib.pop('trans', None)
         if trans:
-            kwargs['trans'] = self.from_rgb(trans)
+            kwargs['trans'] = from_hexcolor(trans)
         width = elem.attrib.pop('width', None)
         height = elem.attrib.pop('height', None)
         if width is not None:
@@ -333,7 +341,7 @@ class TMXSerializer(object):
         except (TypeError, IOError):
             pass
         if image.trans:
-            element.attrib['trans'] = self.to_rgb(image.trans)
+            element.attrib['trans'] = to_hexcolor(image.trans)
         return element
 
     @load_method
@@ -609,17 +617,21 @@ class TMXSerializer(object):
                     )))
             parent.append(element)
 
-    def from_rgb(self, string):
-        if string.startswith('#'):
-            string = string[1:]
-        if len(string) == 3:
-            parts = string[0] * 2, string[1] * 2, string[2] * 2
-        elif len(string) == 6:
-            parts = string[0:2], string[2:4], string[4:6]
-        return tuple(ord(binascii.unhexlify(p.encode('ascii'))) for p in parts)
+def from_hexcolor(string):
+    orig_string = string
+    if string.startswith('#'):
+        string = string[1:]
+    if len(string) == 3:
+        parts = string[0] * 2, string[1] * 2, string[2] * 2
+    elif len(string) == 6:
+        parts = string[0:2], string[2:4], string[4:6]
+    else:
+        raise ValueError('Bad CSS color: {0!r}'.format(string))
+    return tuple(ord(binascii.unhexlify(p.encode('ascii'))) for p in parts)
 
-    def to_rgb(self, rgb):
-        return ''.join(hex(p)[2:].ljust(2, '0') for p in rgb)
+
+def to_hexcolor(rgb_triple):
+    return ''.join(hex(p)[2:].ljust(2, '0') for p in rgb_triple)
 
 
 def serializer_getdefault(serializer=None, object=None):
