@@ -209,7 +209,7 @@ class TMXSerializer(object):
                 map.layers.append(self.image_layer_from_element(
                         self.image_layer_class, elem, map, base_path))
             else:
-                assert False, 'Unknown tag %s' % elem.tag
+                raise ValueError('Unknown tag %s' % elem.tag)
         return map
 
     def map_to_element(self, map, base_path):
@@ -275,11 +275,11 @@ class TMXSerializer(object):
                         props = tileset.tile_properties[id]
                         props.update(self.read_properties(subsubelem))
                     else:
-                        assert False, 'Unknown tag %s' % subelem.tag
+                        raise ValueError('Unknown tag %s' % subelem.tag)
             elif subelem.tag == 'properties':
                 tileset.properties.update(self.read_properties(subelem))
             else:
-                assert False, 'Unknown tag %s' % subelem.tag
+                raise ValueError('Unknown tag %s' % subelem.tag)
         assert tileset.image
         return tileset
 
@@ -368,7 +368,7 @@ class TMXSerializer(object):
                     data = base64.b64decode(data)
                     layer.encoding = 'base64'
                 else:
-                    assert False, 'Bad encoding %s' % encoding
+                    raise ValueError('Bad encoding %s' % encoding)
                 compression = subelem.attrib.pop('compression', None)
                 if compression == 'gzip':
                     filelike = io.BytesIO(data)
@@ -380,7 +380,7 @@ class TMXSerializer(object):
                     data = zlib.decompress(data)
                     layer.compression = 'zlib'
                 elif compression:
-                        assert False, (
+                        raise ValueError(
                                 'Bad compression %s' % compression)
                 else:
                     layer.compression = None
@@ -393,7 +393,7 @@ class TMXSerializer(object):
                         zip(*(data[x::4] for x in range(4)))])
                 data_set = True
             else:
-                assert False, 'Unknown tag %s' % subelem.tag
+                raise ValueError('Unknown tag %s' % subelem.tag)
         assert data_set
         return layer
 
@@ -515,6 +515,8 @@ class TMXSerializer(object):
                 obj = cls(**kwargs)
                 obj.properties.update(properties)
                 layer.append(obj)
+            else:
+                raise ValueError('Unknown tag %s' % subelem.tag)
         return layer
 
     def object_layer_to_element(self, layer):
