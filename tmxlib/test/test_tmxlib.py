@@ -4,7 +4,6 @@ from __future__ import division
 import os
 import sys
 import tempfile
-import contextlib
 import json
 
 from tmxlib.fileio import etree

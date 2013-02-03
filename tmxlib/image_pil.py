@@ -6,6 +6,7 @@ import StringIO
 import PIL.Image
 
 import tmxlib
+import tmxlib.image
 
 try:
     PIL.Image.frombuffer
@@ -13,7 +14,7 @@ except AttributeError:
     raise ImportError('Incompatible version of the PIL library')
 
 
-class PilImage(tmxlib.Image):
+class PilImage(tmxlib.image.Image):
     def load_image(self):
         """Load the image from self.data, and set self.size
         """

@@ -1,4 +1,6 @@
 
+from __future__ import division
+
 import os
 import base64
 import zlib
@@ -104,10 +106,10 @@ class TMXSerializer(object):
 
         try:
             from tmxlib import image_pil
-            self.image_class = tmxlib.image_pil.PilImage
+            self.image_class = image_pil.PilImage
         except ImportError:
             from tmxlib import image_png
-            self.image_class = tmxlib.image_png.PngImage
+            self.image_class = image_png.PngImage
 
         self._shared_objects = WeakValueDictionary()
 
