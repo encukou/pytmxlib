@@ -99,6 +99,8 @@ class TMXSerializer(object):
         self.image_layer_class = tmxlib.ImageLayer
         self.rectangle_object_class = tmxlib.RectangleObject
         self.ellipse_object_class = tmxlib.EllipseObject
+        self.polygon_object_class = tmxlib.PolygonObject
+        self.polyline_object_class = tmxlib.PolylineObject
 
         try:
             from tmxlib import image_pil
@@ -492,6 +494,14 @@ class TMXSerializer(object):
                         properties.update(self.read_properties(subsubelem))
                     elif subsubelem.tag == 'ellipse':
                         cls = self.ellipse_object_class
+                    elif subsubelem.tag == 'polygon':
+                        cls = self.polygon_object_class
+                        kwargs['points'] = [[int(x) for x in p.split(',')]
+                            for p in subsubelem.attrib['points'].split()]
+                    elif subsubelem.tag == 'polyline':
+                        cls = self.polyline_object_class
+                        kwargs['points'] = [[int(x) for x in p.split(',')]
+                            for p in subsubelem.attrib['points'].split()]
                 obj = cls(**kwargs)
                 obj.properties.update(properties)
                 layer.append(obj)
@@ -516,17 +526,23 @@ class TMXSerializer(object):
                 attrib['name'] = str(object.name)
             if object.type:
                 attrib['type'] = str(object.type)
-            if object.objtype == 'tile':
-                attrib['gid'] = str(object.value)
-                attrib['y'] = str(object.pixel_y)
-            else:
+            if object.objtype in ('rectangle', 'ellipse'):
                 attrib['y'] = str(object.pixel_y - object.pixel_height)
                 attrib['width'] = str(object.pixel_width)
                 attrib['height'] = str(object.pixel_height)
+            else:
+                attrib['y'] = str(object.pixel_y)
+            if object.objtype == 'tile':
+                attrib['gid'] = str(object.value)
             obj_element = etree.Element('object', attrib=attrib)
             self.append_properties(obj_element, object.properties)
             if object.objtype == 'ellipse':
                 obj_element.append(etree.Element('ellipse'))
+            elif object.objtype in ('polyline', 'polygon'):
+                obj_element.append(etree.Element(object.objtype, attrib={
+                    'points':
+                        ' '.join('{0},{1}'.format(*p) for p in object.points),
+                }))
             element.append(obj_element)
 
         return element

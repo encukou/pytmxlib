@@ -9,5 +9,11 @@
    <ellipse/>
   </object>
   <object name="Signpost" gid="46" x="192" y="224"/>
+  <object name="Banner" x="32" y="160">
+   <polygon points="0,0 64,0 64,96 32,64 0,96"/>
+  </object>
+  <object name="Handle" x="128" y="160">
+   <polyline points="-32,0 64,0 128,0"/>
+  </object>
  </objectgroup>
 </map>

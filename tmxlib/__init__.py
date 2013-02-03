@@ -1938,8 +1938,78 @@ class MapObject(PixelPosMixin, LayerElementMixin):
         """Import from a dict compatible with Tiled's JSON plugin"""
         if dct.get('ellipse', False):
             return EllipseObject.from_dict(dct, layer)
+        elif dct.get('polygon', False):
+            return PolygonObject.from_dict(dct, layer)
+        elif dct.get('polyline', False):
+            return PolylineObject.from_dict(dct, layer)
         else:
             return RectangleObject.from_dict(dct, layer)
+
+    @classmethod
+    def _dict_helper(cls, dct, layer, **kwargs):
+        _assert_item(dct, 'visible', True)
+        self = cls(
+                layer=layer,
+                pixel_pos=(dct.pop('x'), dct.pop('y')),
+                name=dct.pop('name', None),
+                type=dct.pop('type', None),
+                **kwargs
+            )
+        self.properties.update(dct.pop('properties', {}))
+        return self
+
+
+class PointBasedObject(MapObject):
+    def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
+            type=None, points=None):
+        MapObject.__init__(self, layer, pixel_pos, name, type)
+        if not points:
+            self.points = []
+        else:
+            self.points = list(points)
+
+    @_from_dict_method
+    def from_dict(cls, dct, layer):
+        points = [(d['x'], d['y']) for d in dct.pop(cls.objtype)]
+        assert dct.pop('height', 0) == dct.pop('width', 0) == 0
+        return super(PointBasedObject, cls)._dict_helper(
+            dct, layer, points=points)
+
+    def to_dict(self, gid=None):
+        """Export to a dict compatible with Tiled's JSON plugin"""
+        d = super(PointBasedObject, self).to_dict()
+        d['width'] = d['height'] = 0
+        d[self.objtype] = [{'x': x, 'y': y} for x, y in self.points]
+        return d
+
+
+class PolygonObject(PointBasedObject):
+    """A polygon object
+
+    See :class:`MapObject` for inherited members.
+
+    Extra init arguments, which become attributes:
+
+        .. attribute:: points
+
+            Size of this object, as a (width, height) tuple, in pixels.
+            Must be specified for non-tile objects, and must *not* be specified
+            for tile objects (unless the size matches the tile).
+
+            The format is list of iterables:
+            [(x0, y0), (x1, y1), ..., (xn, yn)]
+    """
+
+    objtype = 'polygon'
+
+
+class PolylineObject(PointBasedObject):
+    """A polygon object
+
+    Behaves just like :class:`PolygonObject`, but is not closed when drawn.
+    Has the same ``points`` attribute/argument as :class:`PolygonObject`.
+    """
+    objtype = 'polyline'
 
 
 class SizedObject(TileMixin, MapObject):
@@ -1980,19 +2050,14 @@ class SizedObject(TileMixin, MapObject):
 
     @classmethod
     def _dict_helper(cls, dct, layer, size=NOT_GIVEN, **kwargs):
-        _assert_item(dct, 'visible', True)
         if size is NOT_GIVEN:
             size = dct.pop('width'), dct.pop('height')
-        self = cls(
-                layer=layer,
-                pixel_pos=(dct.pop('x'), dct.pop('y')),
-                pixel_size=size,
-                name=dct.pop('name', None),
-                type=dct.pop('type', None),
-                **kwargs
-            )
-        self.properties.update(dct.pop('properties', {}))
-        return self
+        return super(SizedObject, cls)._dict_helper(
+            dct,
+            layer,
+            pixel_size=size,
+            **kwargs
+        )
 
 
 class RectangleObject(TileLikeObject, SizedObject):
@@ -2000,7 +2065,7 @@ class RectangleObject(TileLikeObject, SizedObject):
 
     See :class:`MapObject` for inherited members.
 
-    init arguments, which become attributes:
+    Extra init arguments, which become attributes:
 
         .. attribute:: pixel_size
 
@@ -2098,7 +2163,7 @@ class RectangleObject(TileLikeObject, SizedObject):
 class EllipseObject(SizedObject):
     """An ellipse object
 
-    init arguments, which become attributes:
+    Extra init arguments, which become attributes:
 
         .. attribute:: pixel_size
 

@@ -181,6 +181,16 @@ EllipseObject
 
 .. autoclass:: tmxlib.EllipseObject
 
+PolygonObject
+~~~~~~~~~~~~~
+
+.. autoclass:: tmxlib.PolygonObject
+
+PolylineObject
+~~~~~~~~~~~~~~
+
+.. autoclass:: tmxlib.PolylineObject
+
 
 Lists with named elements
 -------------------------
