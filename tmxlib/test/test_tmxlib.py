@@ -337,12 +337,22 @@ def test_tileset_tile():
     tile = map.tilesets[0][1]
     assert tile.tileset.name == 'Desert'
     assert tile.pixel_size == (32, 32)
-    assert tile.properties == {}
 
     assert tile.pixel_width == tile.pixel_height == 32
 
+    assert map.tilesets[0][0] is map.tilesets[0][0]
     assert map.tilesets[0][0] == map.tilesets[0][0]
     assert hash(map.tilesets[0][0]) == hash(map.tilesets[0][0])
+    assert map.tilesets[0][0] != map.tilesets[0][9]
+    assert map.tilesets[0][0] != 'not a tile'
+
+    assert tile.properties == {}
+    tile.properties[1] = 2
+    assert tile.properties == {1: 2}
+    tile.properties = {'a': 'b'}
+    assert tile.properties == {'a': 'b'}
+    tile.properties.clear()
+    assert tile.properties == {}
 
 
 def test_map_tile():
@@ -866,6 +876,46 @@ def test_layer_nonzero():
 
     layer.append(tmxlib.RectangleObject(layer, (0, 0), value=4))
     assert layer
+
+
+def test_terrains():
+    map = desert()
+    tileset = map.tilesets[0]
+    assert [t.name for t in tileset.terrains] == [
+            'Desert',
+            'Brick',
+            'Cobblestone',
+            'Dirt',
+        ]
+    assert [t.tile for t in tileset.terrains] == [
+            tileset[29],
+            tileset[9],
+            tileset[33],
+            tileset[14],
+        ]
+    assert tuple(tileset[0].terrains) == (
+        tileset.terrains[0],
+        tileset.terrains[0],
+        tileset.terrains[0],
+        tileset.terrains[1],
+    )
+    assert tuple(tileset[11].terrains) == (
+        tileset.terrains[3],
+        tileset.terrains[0],
+        tileset.terrains[3],
+        tileset.terrains[3],
+    )
+    tileset[0].terrain_indices = [1, 2, 3, 4]
+    assert tuple(tileset[0].terrains) == (
+        tileset.terrains[1],
+        tileset.terrains[2],
+        tileset.terrains[3],
+        None,
+    )
+    assert tileset[0].probability is None
+    assert tileset[30].probability == 0.5
+    tileset[30].probability = 0
+    assert tileset[30].probability == 0
 
 
 def test_tile_and_object_attr_equivalence():

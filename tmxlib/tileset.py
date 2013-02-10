@@ -188,7 +188,7 @@ class TilesetTile(helpers.PixelSizeMixin):
         result = []
         for index in self.terrain_indices:
             try:
-                result.append(self.terrains[index])
+                result.append(self.tileset.terrains[index])
             except (IndexError, KeyError):
                 result.append(None)
         return tuple(result)
