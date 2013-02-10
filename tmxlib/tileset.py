@@ -5,7 +5,7 @@ from __future__ import division
 import collections
 import contextlib
 
-from tmxlib import helpers, fileio, tile, image
+from tmxlib import helpers, fileio, tile, image, terrain
 
 
 class TilesetList(helpers.NamedElementList):
@@ -101,6 +101,15 @@ class TilesetTile(helpers.PixelSizeMixin):
 
             Image this tile uses. Most often this will be a
             :class:`region <ImageRegion>` of the tileset's image.
+
+        .. attribute:: terrain_indices
+
+            Indices to the terrain list
+
+        .. attribute:: probability
+
+            The probability that this tile will be chosen among others with the
+            same terrain information. May be None.
     """
     def __init__(self, tileset, number):
         self.tileset = tileset
@@ -120,7 +129,30 @@ class TilesetTile(helpers.PixelSizeMixin):
 
     @property
     def properties(self):
-        return self.tileset.tile_properties[self.number]
+        return self.tileset.tile_attributes[self.number].setdefault(
+            'properties', {})
+
+    @properties.setter
+    def properties(self, v):
+        self.tileset.tile_attributes[self.number]['properties'] = v
+
+    @property
+    def probability(self):
+        return self.tileset.tile_attributes[self.number].setdefault(
+            'probability', None)
+
+    @probability.setter
+    def probability(self, v):
+        self.tileset.tile_attributes[self.number]['probability'] = v
+
+    @property
+    def terrain_indices(self):
+        return self.tileset.tile_attributes[self.number].setdefault(
+            'terrain_indices', [])
+
+    @terrain_indices.setter
+    def terrain_indices(self, v):
+        self.tileset.tile_attributes[self.number]['terrain_indices'] = v
 
     def __eq__(self, other):
         try:
@@ -150,6 +182,16 @@ class TilesetTile(helpers.PixelSizeMixin):
         Pixels are returned as RGBA 4-tuples.
         """
         return self.image.get_pixel(x, y)
+
+    @property
+    def terrains(self):
+        result = []
+        for index in self.terrain_indices:
+            try:
+                result.append(self.terrains[index])
+            except (IndexError, KeyError):
+                result.append(None)
+        return tuple(result)
 
 
 class Tileset(fileio.ReadWriteBase):
@@ -214,6 +256,9 @@ class Tileset(fileio.ReadWriteBase):
         self.tile_size = tile_size
         self.source = source
         self.properties = {}
+        self.terrains = terrain.TerrainList()
+        self.tiles = {}
+        self.tile_attributes = collections.defaultdict(dict)
 
     def __getitem__(self, n):
         """Get tileset tile with the given number.
@@ -221,9 +266,13 @@ class Tileset(fileio.ReadWriteBase):
         Supports negative indices by wrapping around, as one would expect.
         """
         if n >= 0:
-            return TilesetTile(self, n)
+            try:
+                tile = self.tiles[n]
+            except KeyError:
+                tile = self.tiles[n] = TilesetTile(self, n)
+            return tile
         else:
-            return TilesetTile(self, len(self) + n)
+            return self[len(self) + n]
 
     def __len__(self):
         """Return the number of tiles in this tileset.
@@ -348,7 +397,6 @@ class ImageTileset(Tileset):
             source=None, base_path=None):
         super(ImageTileset, self).__init__(name, tile_size, source)
         self.image = image
-        self.tile_properties = collections.defaultdict(dict)
         self.margin = margin
         self.spacing = spacing
         self.base_path = base_path

@@ -268,14 +268,38 @@ class TMXSerializer(object):
                 assert tileset.image is None
                 tileset.image = self.image_from_element(
                         self.image_class, subelem, base_path=base_path)
+            elif subelem.tag == 'terraintypes':
+                for subsubelem in subelem:
+                    if subsubelem.tag == 'terrain':
+                        tileset.terrains.append_new(
+                            name=subsubelem.attrib.pop('name'),
+                            tile=tileset[int(subsubelem.attrib.pop('tile'))],
+                        )
+                        assert not subsubelem.attrib, (
+                            'Unexpected terrain attributes: %s' %
+                            subsubelem.attrib)
+                    else:
+                        raise ValueError('Unknown tag %s' % subsubelem.tag)
             elif subelem.tag == 'tile':
                 id = int(subelem.attrib.pop('id'))
+                terrain = subelem.attrib.pop('terrain', None)
+                if terrain:
+                    tileset.tile_attributes[id]['terrain_indices'] = [
+                        int(n) for n in terrain.split(',')]
+                probability = subelem.attrib.pop('probability', None)
+                if probability:
+                    try:
+                        probability = int(probability)
+                    except ValueError:
+                        probability = float(probability)
+                    tileset.tile_attributes[id]['probability'] = probability
                 for subsubelem in subelem:
                     if subsubelem.tag == 'properties':
-                        props = tileset.tile_properties[id]
+                        props = tileset.tile_attributes[id].setdefault(
+                            'properties' ,{})
                         props.update(self.read_properties(subsubelem))
                     else:
-                        raise ValueError('Unknown tag %s' % subelem.tag)
+                        raise ValueError('Unknown tag %s' % subsubelem.tag)
             elif subelem.tag == 'properties':
                 tileset.properties.update(self.read_properties(subelem))
             else:
@@ -307,12 +331,34 @@ class TMXSerializer(object):
             if tileset.image:
                 image = self.image_to_element(tileset.image, base_path)
                 element.append(image)
-            for tile_no, props in sorted(tileset.tile_properties.items()):
+            if tileset.terrains:
+                terrains_elem = etree.Element('terraintypes')
+                element.append(terrains_elem)
+                for terrain in tileset.terrains:
+                    terrain_elem = etree.Element('terrain', attrib=dict(
+                        name=terrain.name,
+                        tile=str(terrain.tile.number),
+                        ))
+                    terrains_elem.append(terrain_elem)
+            for tile_no, attrs in sorted(tileset.tile_attributes.items()):
+                tile_elem = etree.Element('tile',
+                        attrib=dict(id=str(tile_no)))
+                include = False
+                props = attrs.get('properties', {})
                 if props:
-                    tile_elem = etree.Element('tile',
-                            attrib=dict(id=str(tile_no)))
-                    element.append(tile_elem)
                     self.append_properties(tile_elem, props)
+                    include = True
+                terrains = ','.join(
+                    str(i) for i in attrs.get('terrain_indices', []))
+                if terrains:
+                    tile_elem.attrib['terrain'] = terrains
+                    include = True
+                probability = attrs.get('probability')
+                if probability != None:
+                    tile_elem.attrib['probability'] = str(probability)
+                    include = True
+                if include:
+                    element.append(tile_elem)
             self.append_properties(element, tileset.properties)
             return element
 
