@@ -52,117 +52,61 @@ class Property(property):
     pass
 
 
-class SizeMixin(object):
-    """Provides `width` and `height` properties that get/set a 2D size
+def tuple_mixin(name, full_property_name, subprop_names, doc=None):
+    """Create a class that provides "unpacked" attributes for a tuple attr.
 
-    Subclasses will need a `size` property, a pair of values.
-
-    Note: setting width or height will set size to a new tuple.
+    Example:
+        ``tuple_mixin('PosMixin', 'pos', ['x', 'y'])``
+        has two settable properties ``x`` and ``y``, such that
+        ``self.pos == (self.x, self.y)``.
+        The original property, ``pos`` in this case, must be provided
+        by subclasses.
     """
-    @property
-    def width(self):
-        """Width of this object, i.e. self.size[0]
-        """
-        return self.size[0]
-    @width.setter
-    def width(self, value): self.size = value, self.size[1]
+    if doc is None:
+        doc = '\n'.join(['Provides {names} properties.',
+            '',
+            'Subclasses will need a `{full}` property, a {n}-tuple of values.',
+            '',
+            'Note: setting one of the provided properties will set {full} '
+                'to a new tuple.'
+        ]).format(
+            names=', '.join('`{}`'.format(n) for n in subprop_names),
+            n=len(subprop_names),
+            full=full_property_name,
+        )
+    def make_property(i, name):
+        def getter(self):
+            return getattr(self, full_property_name)[i]
+        def setter(self, value):
+            templist = list(getattr(self, full_property_name))
+            templist[i] = value
+            setattr(self, full_property_name, tuple(templist))
+        return property(
+            getter, setter, doc='self.{}[{}]'.format(full_property_name, i))
+    props = dict((name, make_property(i, name))
+        for i, name in enumerate(subprop_names))
+    props['__doc__'] = doc
+    return type(name, (object,), props)
 
-    @property
-    def height(self):
-        """Height of this object, i.e. self.size[1]
-        """
-        return self.size[1]
-    @height.setter
-    def height(self, value): self.size = self.size[0], value
+TileSizeMixin = tuple_mixin(
+    'TileSizeMixin', 'tile_size', ['tile_width', 'tile_height'])
 
+PixelSizeMixin = tuple_mixin(
+    'PixelSizeMixin', 'pixel_size', ['pixel_width', 'pixel_height'])
+
+PixelPosMixin = tuple_mixin(
+    'PixelPosMixin', 'pixel_pos', ['pixel_x', 'pixel_y'])
+
+PosMixin = tuple_mixin('PosMixin', 'pos', ['x', 'y'])
+
+
+class SizeMixin(tuple_mixin('SizeMixin', 'size', ['width', 'height'])):
     def _wrap_coords(self, x, y):
         if x < 0:
             x += self.width
         if y < 0:
             y += self.height
         return x, y
-
-
-class TileSizeMixin(object):
-    """Provides `tile_width` and `tile_height` properties
-
-    Subclasses will need a `tile_size` property, a pair of values.
-
-    Note: setting tile_width or tile_height will set tile_size to a new tuple.
-    """
-    @property
-    def tile_width(self): return self.tile_size[0]
-    @tile_width.setter
-    def tile_width(self, value): self.tile_size = value, self.tile_size[1]
-
-    @property
-    def tile_height(self): return self.tile_size[1]
-    @tile_height.setter
-    def tile_height(self, value): self.tile_size = self.tile_size[0], value
-
-
-class PixelSizeMixin(object):
-    """Provides `pixel_width` and `pixel_height` properties
-
-    Subclasses will need a `pixel_size` property, a pair of values.
-
-    Note: setting pixel_width/pixel_height will set pixel_size to a new tuple.
-    """
-    @property
-    def pixel_width(self): return self.pixel_size[0]
-    @pixel_width.setter
-    def pixel_width(self, value): self.pixel_size = value, self.pixel_size[1]
-
-    @property
-    def pixel_height(self): return self.pixel_size[1]
-    @pixel_height.setter
-    def pixel_height(self, value): self.pixel_size = self.pixel_size[0], value
-
-
-class PixelPosMixin(object):
-    """Provides `pixel_x` and `pixel_y` properties
-
-    Subclasses will need a `pixel_pos` property, a pair of values.
-
-    Note: setting pixel_x/pixel_y will set pixel_pos to a new tuple.
-    """
-    @property
-    def pixel_x(self):
-        return self.pixel_pos[0]
-    @pixel_x.setter
-    def pixel_x(self, value):
-        self.pixel_pos = value, self.pixel_pos[1]
-
-    @property
-    def pixel_y(self):
-        return self.pixel_pos[1]
-    @pixel_y.setter
-    def pixel_y(self, value):
-        self.pixel_pos = self.pixel_pos[0], value
-
-
-class PosMixin(object):
-    """Provides `x` and `y` properties
-
-    Subclasses will need a `pos` property, a pair of values.
-
-    Note: setting x/y will set pos to a new tuple.
-    """
-    flipped_diagonally = False
-
-    @property
-    def x(self):
-        return self.pos[0]
-    @x.setter
-    def x(self, value):
-        self.pos = value, self.pos[1]
-
-    @property
-    def y(self):
-        return self.pos[1]
-    @y.setter
-    def y(self, value):
-        self.pos = self.pos[0], value
 
 
 class LayerElementMixin(object):

@@ -40,6 +40,7 @@ Dict conversion helpers
 Mixin classes for tuple properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autofunction:: tmxlib.helpers.tuple_mixin
 .. autoclass:: tmxlib.helpers.PosMixin
 .. autoclass:: tmxlib.helpers.SizeMixin
 .. autoclass:: tmxlib.helpers.PixelPosMixin
