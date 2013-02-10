@@ -104,7 +104,13 @@ class TilesetTile(helpers.PixelSizeMixin):
 
         .. attribute:: terrain_indices
 
-            Indices to the terrain list
+            List of indices to the tileset's terrain list for individual
+            corners of the tile. See the TMX documentation for details.
+
+        .. attribute:: terrains
+
+            Tuple of terrains for individual corners of the tile. If no
+            terrain is given, None is used instead.
 
         .. attribute:: probability
 
@@ -239,6 +245,14 @@ class Tileset(fileio.ReadWriteBase):
             properties (`yet <https://github.com/bjorn/tiled/issues/77>`_),
             so editors like Tiled will remove these. (tmxlib saves and loads
             them just fine, however.)
+
+        .. attribute:: terrains
+
+            A :class:`~tmxlib.terrain.TerrainList` of terrains belonging to
+            this tileset.
+            Note that tileset tiles reference these by index, and the indices
+            are currently not updated when the TerrainList is modified.
+            This may change in the future.
 
     Unpacked versions of `tile_size`:
 

@@ -15,6 +15,20 @@ class TerrainList(helpers.NamedElementList):
 
 
 class Terrain(object):
+    """Represents a Tiled terrain
+
+    Init arguments, which become attributes:
+
+        .. attribute:: name
+
+            The name of the terrain
+
+        .. attribute:: tile
+
+            The tile that represents the terrain visually. Should be from the
+            same tileset.
+
+    """
     def __init__(self, name, tile):
         self.name = name
         self.tile = tile

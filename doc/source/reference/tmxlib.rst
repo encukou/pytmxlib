@@ -34,6 +34,7 @@ See submodule documentation for more details:
     tile
     tileset
     mapobject
+    terrain
     image
     helpers
     hidden

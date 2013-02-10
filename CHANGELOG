@@ -20,6 +20,7 @@ Legend:
 
     ! Fix hashes of TilesetTile, improve equality tests
 
+    + Add support for terrain information
     + Add support for background colors of maps
     + Add support for polygon, polyline and ellipse objects
     + Add support for image layers
