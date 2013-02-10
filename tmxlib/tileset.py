@@ -341,12 +341,23 @@ class Tileset(fileio.ReadWriteBase):
             )
         if 'map' in kwargs:
             d['firstgid'] = self.first_gid(kwargs['map'])
-        tileset_properties = {}
+        tile_properties = {}
+        tiles = collections.defaultdict(dict)
         for tile in self:
+            number = str(tile.number)
             if tile.properties:
-                tileset_properties[str(tile.number)] = tile.properties
-        if tileset_properties:
-            d['tileproperties'] = tileset_properties
+                tile_properties[number] = tile.properties
+            if tile.probability is not None:
+                tiles[number]['probability'] = tile.probability
+            if tile.terrain_indices:
+                tiles[number]['terrain'] = list(tile.terrain_indices)
+        if tile_properties:
+            d['tileproperties'] = tile_properties
+        if tiles:
+            d['tiles'] = dict(tiles)
+        if self.terrains:
+            d['terrains'] = [
+                {'name': t.name, 'tile': t.tile.number} for t in self.terrains]
         return d
 
     @classmethod
@@ -466,4 +477,18 @@ class ImageTileset(Tileset):
         self.properties.update(dct.pop('properties', {}))
         for number, properties in dct.pop('tileproperties', {}).items():
             self[int(number)].properties.update(properties)
+        for number, attrs in dct.pop('tiles', {}).items():
+            attrs = dict(attrs)
+            probability = attrs.pop('probability', None)
+            if probability is not None:
+                self[int(number)].probability = probability
+            terrain_indices = attrs.pop('terrain', None)
+            if terrain_indices is not None:
+                self[int(number)].terrain_indices = terrain_indices
+            assert not attrs
+        for terrain in dct.pop('terrains', []):
+            terrain = dict(terrain)
+            self.terrains.append_new(terrain.pop('name'),
+                                     self[int(terrain.pop('tile'))])
+            assert not terrain
         return self

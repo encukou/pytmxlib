@@ -341,7 +341,6 @@ def test_tileset_tile():
 
     assert tile.pixel_width == tile.pixel_height == 32
 
-    assert map.tilesets[0][0] is not map.tilesets[0][0]  # impl. detail
     assert map.tilesets[0][0] == map.tilesets[0][0]
     assert hash(map.tilesets[0][0]) == hash(map.tilesets[0][0])
 
