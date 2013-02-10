@@ -285,7 +285,7 @@ class TMXSerializer(object):
                 terrain = subelem.attrib.pop('terrain', None)
                 if terrain:
                     tileset.tile_attributes[id]['terrain_indices'] = [
-                        int(n) for n in terrain.split(',')]
+                        int(n) if n else -1 for n in terrain.split(',')]
                 probability = subelem.attrib.pop('probability', None)
                 if probability:
                     try:
