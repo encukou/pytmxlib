@@ -200,7 +200,10 @@ class TilesetTile(helpers.PixelSizeMixin):
         return tuple(result)
 
 
-class Tileset(fileio.ReadWriteBase):
+TileOffsetMixin = helpers.tuple_mixin(
+    'TileOffsetMixin', 'tile_offset', ['tile_offset_x', 'tile_offset_y'])
+
+class Tileset(fileio.ReadWriteBase, TileOffsetMixin):
     """Base class for a tileset: bank of tiles a map can use.
 
     There are two kinds of tilesets: external and internal.
@@ -254,10 +257,17 @@ class Tileset(fileio.ReadWriteBase):
             are currently not updated when the TerrainList is modified.
             This may change in the future.
 
-    Unpacked versions of `tile_size`:
+        .. attribute:: tile_offset
+
+            An offset in pixels to be applied when drawing a tile from this
+            tileset.
+
+    Unpacked versions of tuple attributes:
 
         .. attribute:: tile_width
         .. attribute:: tile_height
+        .. attribute:: tile_offset_x
+        .. attribute:: tile_offset_y
 
     """
     # XXX: When Serializers are official, include note for shared=True: (This
@@ -273,6 +283,7 @@ class Tileset(fileio.ReadWriteBase):
         self.terrains = terrain.TerrainList()
         self.tiles = {}
         self.tile_attributes = collections.defaultdict(dict)
+        self.tile_offset = 0, 0
 
     def __getitem__(self, n):
         """Get tileset tile with the given number.
@@ -372,6 +383,9 @@ class Tileset(fileio.ReadWriteBase):
         if self.terrains:
             d['terrains'] = [
                 {'name': t.name, 'tile': t.tile.number} for t in self.terrains]
+        if any(self.tile_offset):
+            d['tileoffset'] = {
+                'x': self.tile_offset_x, 'y': self.tile_offset_y}
         return d
 
     @classmethod
@@ -505,4 +519,7 @@ class ImageTileset(Tileset):
             self.terrains.append_new(terrain.pop('name'),
                                      self[int(terrain.pop('tile'))])
             assert not terrain
+        tileoffset = dct.pop('tileoffset', None)
+        if tileoffset:
+            self.tile_offset = tileoffset['x'], tileoffset['y']
         return self

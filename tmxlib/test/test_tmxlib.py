@@ -70,6 +70,9 @@ map_filenames = [
             output_filename=None),
         dict(filename='objects.tmx', has_gzip=False,
             output_filename=None),
+        dict(filename='isometric_grass_and_water.tmx', has_gzip=False,
+            # NOTE: the image for this map's tileset is intentionally missing
+            output_filename=None),
     ]
 
 

@@ -302,6 +302,9 @@ class TMXSerializer(object):
                         raise ValueError('Unknown tag %s' % subsubelem.tag)
             elif subelem.tag == 'properties':
                 tileset.properties.update(self.read_properties(subelem))
+            elif subelem.tag == 'tileoffset':
+                tileset.tile_offset = (
+                    int(subelem.attrib['x']), int(subelem.attrib['y']))
             else:
                 raise ValueError('Unknown tag %s' % subelem.tag)
         assert tileset.image
@@ -328,6 +331,11 @@ class TMXSerializer(object):
                 element.attrib['spacing'] = str(tileset.spacing)
             if tileset.margin:
                 element.attrib['margin'] = str(tileset.margin)
+            if any(tileset.tile_offset):
+                offset_elem = etree.Element('tileoffset',
+                        attrib={'x': str(tileset.tile_offset_x),
+                                'y': str(tileset.tile_offset_y)})
+                element.append(offset_elem)
             if tileset.image:
                 image = self.image_to_element(tileset.image, base_path)
                 element.append(image)
