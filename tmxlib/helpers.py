@@ -30,10 +30,10 @@ def from_dict_method(func):
         dct = dict(dct)
         result = func(cls, dct, *args, **kwargs)
         if dct:
+            message = 'Loading {0}: Data dictionary has unknown elements: {1}'
             raise ValueError(
-                'Loading {}: Data dictionary has unknown elements: {}'.format(
-                    cls.__name__,
-                    ', '.join(str(k) for k in dct.keys())))
+                message.format(cls.__name__,
+                               ', '.join(str(k) for k in dct.keys())))
         return result
     return _wrapped
 
@@ -42,7 +42,7 @@ def assert_item(dct, key, expected_value):
     """Asserts that ``dct[key] == expected_value``"""
     actual_value = dct.pop(key, expected_value)
     if actual_value != expected_value:
-        raise ValueError('bad value: {} = {}; should be {}'.format(
+        raise ValueError('bad value: {0} = {1}; should be {2}'.format(
             key, actual_value, expected_value))
 
 
@@ -70,7 +70,7 @@ def tuple_mixin(name, full_property_name, subprop_names, doc=None):
             'Note: setting one of the provided properties will set {full} '
                 'to a new tuple.'
         ]).format(
-            names=', '.join('`{}`'.format(n) for n in subprop_names),
+            names=', '.join('`{0}`'.format(n) for n in subprop_names),
             n=len(subprop_names),
             full=full_property_name,
         )
@@ -82,7 +82,7 @@ def tuple_mixin(name, full_property_name, subprop_names, doc=None):
             templist[i] = value
             setattr(self, full_property_name, tuple(templist))
         return property(
-            getter, setter, doc='self.{}[{}]'.format(full_property_name, i))
+            getter, setter, doc='self.{0}[{1}]'.format(full_property_name, i))
     props = dict((name, make_property(i, name))
         for i, name in enumerate(subprop_names))
     props['__doc__'] = doc

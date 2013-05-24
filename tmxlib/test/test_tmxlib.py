@@ -105,7 +105,7 @@ def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
         assert isinstance(b, (list, tuple))
         if len(a) != len(b):
             try:
-                raise AssertionError('Differing elements: {}'.format(
+                raise AssertionError('Differing elements: {0}'.format(
                     list(set(a) ^ set(b))))
             except TypeError:
                 assert a == b
@@ -113,7 +113,7 @@ def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
             try:
                 assert_json_safe_almost_equal(aa, bb, epsilon)
             except:
-                print('in element {}'.format(i))
+                print('in element {0}'.format(i))
                 raise
     elif isinstance(a, dict):
         assert isinstance(b, dict)
