@@ -516,9 +516,13 @@ class TMXSerializer(object):
 
     @load_method
     def object_layer_from_element(self, cls, elem, map):
+        color = elem.attrib.pop('color', None)
+        if color:
+            color = from_hexcolor(color)
         layer = cls(map, elem.attrib.pop('name'),
                 opacity=float(elem.attrib.pop('opacity', 1)),
-                visible=bool(int(elem.attrib.pop('visible', 1))))
+                visible=bool(int(elem.attrib.pop('visible', 1))),
+                color=color)
         layer_size = (int(elem.attrib.pop('width')),
                 int(elem.attrib.pop('height')))
         assert layer_size == map.size
@@ -583,6 +587,8 @@ class TMXSerializer(object):
             element.attrib['visible'] = '0'
         if layer.opacity != 1:
             element.attrib['opacity'] = str(round(layer.opacity, 5))
+        if layer.color:
+            element.attrib['color'] = '#' + to_hexcolor(layer.color)
 
         self.append_properties(element, layer.properties)
 

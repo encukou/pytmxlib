@@ -25,6 +25,7 @@ Legend:
     + Add support for background colors of maps
     + Add support for polygon, polyline and ellipse objects
     + Add support for image layers
+    + Add support for color of tile layers
     + Maps get add_tile_layer, add_object_layer, add_image_layer helpers
     + Support testing for empty layers with bool(layer)
     + Support for export/import to/from a dict compatible with Tiled's

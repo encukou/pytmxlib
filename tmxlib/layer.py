@@ -4,7 +4,7 @@ from __future__ import division
 
 import array
 
-from tmxlib import helpers, tileset, tile, mapobject, image
+from tmxlib import helpers, tileset, tile, mapobject, image, fileio
 
 
 class LayerList(helpers.NamedElementList):
@@ -301,12 +301,20 @@ class ObjectLayer(Layer, helpers.NamedElementList):
     This means semantics similar to layer/tileset lists: indexing by name is
     possible, where a name references the first object of such name.
 
-    See :class:`Layer` for the init arguments.
+    See :class:`Layer` for inherited init arguments.
+
+    ObjectLayer-specific init arguments, which become attributes:
+
+        .. attribute:: color
+
+            The intended color of objects in this layer, as a triple of
+            floats (0..1)
     """
-    def __init__(self, map, name, visible=True, opacity=1):
+    def __init__(self, map, name, visible=True, opacity=1, color=None):
         super(ObjectLayer, self).__init__(map=map, name=name,
                 visible=visible, opacity=opacity)
         self.type = 'objects'
+        self.color = color
 
     def all_tiles(self):
         """Yield all tile objects in this layer, in order.
@@ -337,6 +345,8 @@ class ObjectLayer(Layer, helpers.NamedElementList):
                 type='objectgroup',
                 objects=[o.to_dict() for o in self]
             ))
+        if self.color:
+            d['color'] = '#' + fileio.to_hexcolor(self.color)
         return d
 
     @helpers.from_dict_method
@@ -347,11 +357,15 @@ class ObjectLayer(Layer, helpers.NamedElementList):
         helpers.assert_item(dct, 'height', map.height)
         helpers.assert_item(dct, 'x', 0)
         helpers.assert_item(dct, 'y', 0)
+        color = dct.pop('color', None)
+        if color:
+            color = fileio.from_hexcolor(color)
         self = cls(
                 map=map,
                 name=dct.pop('name'),
                 visible=dct.pop('visible', True),
                 opacity=dct.pop('opacity', 1),
+                color=color,
             )
         self.properties.update(dct.pop('properties', {}))
         for obj in dct.pop('objects', {}):

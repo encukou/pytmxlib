@@ -1,6 +1,7 @@
 { "height":8,
  "layers":[
         {
+         "color":"#ff0000",
          "height":8,
          "name":"Objects",
          "objects":[

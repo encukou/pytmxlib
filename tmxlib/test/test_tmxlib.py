@@ -678,6 +678,14 @@ def test_map_background_color():
     assert map.background_color == (1, 220 / 255, 168 / 255)
 
 
+def test_object_layer_color():
+    map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
+    assert map.layers['Objects'].color is None
+
+    map = tmxlib.Map.open(get_test_filename('objects.tmx'))
+    assert map.layers['Objects'].color == (1, 0, 0)
+
+
 def test_get_pixel():
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
 
