@@ -26,7 +26,7 @@ class Map(fileio.ReadWriteBase,
 
         .. attribute:: background_color
 
-            The background color for the map, as a triple of ints (0..255)
+            The background color for the map, as a triple of floats (0..1)
 
     Other attributes:
 

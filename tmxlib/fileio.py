@@ -685,11 +685,13 @@ def from_hexcolor(string):
         parts = string[0:2], string[2:4], string[4:6]
     else:
         raise ValueError('Bad CSS color: {0!r}'.format(string))
-    return tuple(ord(binascii.unhexlify(p.encode('ascii'))) for p in parts)
+    return tuple(ord(binascii.unhexlify(p.encode('ascii'))) / 255
+                 for p in parts)
 
 
 def to_hexcolor(rgb_triple):
-    return ''.join(hex(p)[2:].ljust(2, '0') for p in rgb_triple)
+    return ''.join(hex(int(round(p * 255)))[2:].ljust(2, '0')
+                   for p in rgb_triple)
 
 
 def serializer_getdefault(serializer=None, object=None):
