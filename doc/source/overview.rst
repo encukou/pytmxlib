@@ -4,7 +4,7 @@
     import tmxlib
     import os
     dir = os.path.dirname(tmxlib.__file__)
-    filename = os.path.join(dir, 'test', 'data', 'desert.tmx')
+    filename = os.path.join(dir, '..', 'tmxlib_test', 'data', 'desert.tmx')
     map = tmxlib.Map.open(filename)
 
 Overview
