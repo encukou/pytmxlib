@@ -16,13 +16,13 @@ image_classes = []
 try:
     from tmxlib import image_pil
     image_classes.append(image_pil.PilImage)
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 try:
     from tmxlib import image_png
     image_classes.append(image_png.PngImage)
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 preferred_image_class = image_classes[0]

@@ -52,7 +52,7 @@ class ImageBase(helpers.SizeMixin):
             right, bottom = self._wrap_coords(
                 self.width if right is None else right,
                 self.height if bottom is None else bottom)
-            return ImageRegion(self, (top, left), (right - left, bottom - top))
+            return ImageRegion(self, (left, top), (right - left, bottom - top))
 
 
 class Image(ImageBase, fileio.ReadWriteBase):

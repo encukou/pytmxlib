@@ -10,7 +10,7 @@ import tmxlib.image_base
 
 try:
     Image.frombuffer
-except AttributeError:
+except AttributeError:  # pragma: no cover
     raise ImportError('Incompatible version of the PIL library')
 
 
@@ -19,7 +19,7 @@ class PilImage(tmxlib.image_base.Image):
         """Load the image from self.data, and set self.size
         """
         try:
-            self._image_data
+            self._pil_image
             return self.size
         except AttributeError:
             self._pil_image = Image.open(StringIO.StringIO(self.data))

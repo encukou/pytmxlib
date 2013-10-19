@@ -1,11 +1,12 @@
 from __future__ import division
 
 import os
-import sys
+import warnings
 
 import pytest
 
 import tmxlib
+import tmxlib.image_base
 from tmxlib_test import get_test_filename, file_contents, assert_color_tuple_eq
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
@@ -121,3 +122,85 @@ def test_trans(image_class, basic_color):
     image = image_class(source=filename, trans=basic_color)
     assert image.trans == basic_color
     assert image[:5, :5].trans == basic_color
+
+
+class _KeyMaker(object):
+    def __getitem__(self, key):
+        return key
+mk_key = _KeyMaker()
+
+@pytest.mark.parametrize("key", [
+    mk_key[1],
+    mk_key[:],
+    mk_key[1, :],
+    mk_key[:, 1],
+])
+def test_bad_slices_typeerror(colorcorners_image, key):
+    with pytest.raises(TypeError):
+        colorcorners_image[key]
+
+
+@pytest.mark.parametrize("key", [
+    mk_key[1, 2, 3],
+    mk_key[:, :, :],
+    mk_key[::2, :],
+    mk_key[:, ::2],
+])
+def test_bad_slices_valueerror(colorcorners_image, key):
+    with pytest.raises(ValueError):
+        colorcorners_image[key]
+
+
+@pytest.mark.parametrize("key", [
+    mk_key[0:0, 0:0],
+    mk_key[0:0, :],
+    mk_key[:, 0:0],
+    mk_key[-1:-2, -1:-2],
+    mk_key[-1:-2, :],
+    mk_key[:, -1:-2],
+])
+def test_empty_slices(colorcorners_image, key):
+    with pytest.raises(ValueError):
+        colorcorners_image[key][0, 0]
+
+
+@pytest.mark.parametrize("x", tuple(range(0, 16, 5)))
+@pytest.mark.parametrize("y", tuple(range(0, 16, 5)))
+def test_region_pixel(colorcorners_image, x, y):
+    expected = colorcorners_image[x, y]
+    region = colorcorners_image[x:x + 1, y:y + 1]
+    assert region.size == (region.width, region.height) == (1, 1)
+    assert region[0, 0] == expected
+    assert colorcorners_image[x:, y:][0, 0] == expected
+    assert colorcorners_image[:, :][x, y] == expected
+    region = colorcorners_image[:, :]
+    region.x = x
+    region.y = y
+    assert region[0, 0] == expected
+
+
+def test_region_image_get_deprecated(colorcorners_image, recwarn):
+    warnings.simplefilter("always")
+    region = colorcorners_image[1:, 1:]
+    assert isinstance(region, tmxlib.image_base.ImageRegion)
+    assert region.image == region.parent
+    recwarn.pop(DeprecationWarning)
+
+
+def test_region_image_set_deprecated(colorcorners_image, recwarn):
+    warnings.simplefilter("always")
+    region = colorcorners_image[1:, 1:]
+    assert isinstance(region, tmxlib.image_base.ImageRegion)
+    region.image = None
+    recwarn.pop(DeprecationWarning)
+    assert region.parent == None
+
+
+def test_region_hierarchy(colorcorners_image):
+    region1 = colorcorners_image[1:, 1:]
+    region2 = region1[1:, 1:]
+    region3 = region2[1:, 1:]
+    assert region1.parent is colorcorners_image
+    assert region2.parent is region1
+    assert region3.parent is region2
+    assert region3[0, 0] == colorcorners_image[3, 3]
