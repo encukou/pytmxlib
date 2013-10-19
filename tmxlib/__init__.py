@@ -12,6 +12,7 @@ from tmxlib.tile import MapTile
 from tmxlib.layer import ImageLayer, ObjectLayer, TileLayer
 from tmxlib.mapobject import (PolygonObject, PolylineObject, RectangleObject,
                               EllipseObject)
+from tmxlib import image
 
 
 __version__ = '0.1.0'

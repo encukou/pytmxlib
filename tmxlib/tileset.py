@@ -494,10 +494,10 @@ class ImageTileset(Tileset):
         self = cls(
                 name=dct.pop('name'),
                 tile_size=(dct.pop('tilewidth'), dct.pop('tileheight')),
-                image=image.Image(
+                image=image.open(
+                        dct.pop('image'),
                         size=(dct.pop('imagewidth'), dct.pop('imageheight')),
-                        source=dct.pop('image'),
-                        trans = trans,
+                        trans=trans,
                     ),
                 margin=dct.pop('margin', 0),
                 spacing=dct.pop('spacing', 0),

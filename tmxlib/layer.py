@@ -288,7 +288,7 @@ class ImageLayer(Layer):
                 name=dct.pop('name'),
                 visible=dct.pop('visible', True),
                 opacity=dct.pop('opacity', 1),
-                image=image.Image(source=dct.pop('image')),
+                image=image.open(dct.pop('image')),
             )
         self.properties.update(dct.pop('properties', {}))
         return self

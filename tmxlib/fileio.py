@@ -103,13 +103,7 @@ class TMXSerializer(object):
         self.ellipse_object_class = tmxlib.EllipseObject
         self.polygon_object_class = tmxlib.PolygonObject
         self.polyline_object_class = tmxlib.PolylineObject
-
-        try:
-            from tmxlib import image_pil
-            self.image_class = image_pil.PilImage
-        except ImportError:
-            from tmxlib import image_png
-            self.image_class = image_png.PngImage
+        self.image_class = tmxlib.image.preferred_image_class
 
         self._shared_objects = WeakValueDictionary()
 

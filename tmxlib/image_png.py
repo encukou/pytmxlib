@@ -6,10 +6,10 @@ from array import array
 import png
 
 import tmxlib
-import tmxlib.image
+import tmxlib.image_base
 
 
-class PngImage(tmxlib.image.Image):
+class PngImage(tmxlib.image_base.Image):
     def load_image(self):
         """Load the image from self.data, and set self.size
         """

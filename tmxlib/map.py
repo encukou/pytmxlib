@@ -137,10 +137,10 @@ class Map(fileio.ReadWriteBase,
 
         See add_layer
         """
-        layer = self.add_layer(
+        new_layer = self.add_layer(
             name, before, after, layer_class=layer.ImageLayer)
-        layer.image = image
-        return layer
+        new_layer.image = image
+        return new_layer
 
     def all_tiles(self):
         """Yield all tiles in the map, including tile objects

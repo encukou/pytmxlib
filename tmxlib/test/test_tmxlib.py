@@ -638,16 +638,28 @@ def test_shared_tilesets():
     assert map1.tilesets[0] is map2.tilesets[0]
 
 
-def test_autoadd_tileset():
-    map = desert()
+def test_autoadd_tileset(desert):
     tileset = tmxlib.ImageTileset.open(
             get_test_filename('perspective_walls.tsx'))
 
-    assert tileset not in map.tilesets
+    assert tileset not in desert.tilesets
 
-    map.layers[0][0, 0] = tileset[0]
+    desert.layers[0][0, 0] = tileset[0]
 
-    assert tileset in map.tilesets
+    assert tileset in desert.tilesets
+
+
+def test_add_image_layer(desert):
+    image = tmxlib.image.open(get_test_filename('colorcorners.png'))
+    desert.add_image_layer('image', image)
+    assert desert.layers['image'].image.source.endswith('colorcorners.png')
+    assert desert.layers['image']
+
+def test_image_layer(desert):
+    layer = tmxlib.layer.ImageLayer(desert, 'image')
+    assert not layer
+    layer.image = tmxlib.image.open(get_test_filename('colorcorners.png'))
+    assert layer
 
 
 def test_flipping():
