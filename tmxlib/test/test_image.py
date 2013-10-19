@@ -1,20 +1,24 @@
 from __future__ import division
 
 import os
+import sys
 
 import pytest
 
 import tmxlib
-from tmxlib import image_png
-from tmxlib import image_pil
 from tmxlib.test import get_test_filename, file_contents, assert_color_tuple_eq
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
+if os.environ.get('PYTMXLIB_TEST_SKIP_IMAGE'):  # pragma: no cover
+    @pytest.fixture
+    def image_class(request):
+        raise pytest.skip('Not testing images')
+else:
+    @pytest.fixture(params=tmxlib.image.image_classes)
+    def image_class(request):
+        return request.param
 
-@pytest.fixture(params=[image_png.PngImage, image_pil.PilImage])
-def image_class(request):
-    return request.param
 
 @pytest.fixture
 def colorcorners_image(image_class):

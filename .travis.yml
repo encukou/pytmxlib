@@ -10,9 +10,13 @@ install:
   - python setup.py develop
   - '[ "$USE_LXML" = "yes" ] && sudo apt-get install python-lxml; :'
   - '[ "$USE_PIL" = "yes" ] && sudo apt-get install python-imaging; :'
-  - pip install pytest-cov
+  - pip install pytest-cov --use-mirrors
+  - pip install coveralls --use-mirrors
 env:
-  - USE_LXML=no  USE_PIL=no
-  - USE_LXML=yes USE_PIL=no
-  - USE_LXML=yes USE_PIL=yes
-script: py.test
+  - USE_LXML=no  USE_PIL=no  PYTMXLIB_TEST_SKIP_IMAGE=yes
+  - USE_LXML=yes USE_PIL=no  PYTMXLIB_TEST_SKIP_IMAGE=yes
+  - USE_LXML=yes USE_PIL=yes PYTMXLIB_TEST_COVERALLS=yes
+script:
+  - py.test -v
+after_success:
+  - '[ "$PYTMXLIB_TEST_COVERALLS" = "yes" ] && coveralls'
