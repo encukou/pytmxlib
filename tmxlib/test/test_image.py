@@ -16,8 +16,14 @@ base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 def image_class(request):
     return request.param
 
+@pytest.fixture
+def colorcorners_image(image_class):
+    filename = get_test_filename('colorcorners.png')
+    data = file_contents(filename)
+    return image_class(data=data, source=filename)
 
-def test_get_pixel():
+
+def test_map_get_pixel():
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
 
     pixel_value = 255 / 255, 208 / 255, 148 / 255, 1
@@ -85,8 +91,17 @@ def test_get_pixel():
     assert_color_tuple_eq(tile.get_pixel(-1, -1), top_left)
 
 
-def test_load(image_class):
-    filename = get_test_filename('colorcorners.png')
-    data = file_contents(filename)
-    image = image_class(data=data, source=filename)
-    assert image
+@pytest.fixture(params=[((0, 0), (1, 0, 0, 1)),
+                        ((0, 15), (0, 0, 1, 1)),
+                        ((15, 0), (1, 1, 0, 1)),
+                        ((15, 15), (0, 1, 0, 1))])
+def expected_pixel(request):
+    return request.param
+
+def test_get_pixel(colorcorners_image, expected_pixel):
+    coords, color = expected_pixel
+    assert colorcorners_image.get_pixel(*coords) == color
+
+def test_load_image(colorcorners_image):
+    assert colorcorners_image.load_image() == (16, 16)
+    assert colorcorners_image.load_image() == (16, 16)

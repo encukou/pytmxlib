@@ -3,13 +3,13 @@ from __future__ import division
 
 import StringIO
 
-import PIL.Image
+from PIL import Image
 
 import tmxlib
 import tmxlib.image
 
 try:
-    PIL.Image.frombuffer
+    Image.frombuffer
 except AttributeError:
     raise ImportError('Incompatible version of the PIL library')
 
@@ -22,7 +22,7 @@ class PilImage(tmxlib.image.Image):
             self._image_data
             return self.size
         except AttributeError:
-            self._pil_image = PIL.Image.open(StringIO.StringIO(self.data))
+            self._pil_image = Image.open(StringIO.StringIO(self.data))
             self._pil_image = self._pil_image.convert('RGBA')
             w, h = self._pil_image.size
             if self._size:

@@ -131,12 +131,9 @@ class MapObject(helpers.PixelPosMixin, helpers.LayerElementMixin):
 
 class PointBasedObject(MapObject):
     def __init__(self, layer, pixel_pos, size=None, pixel_size=None, name=None,
-            type=None, points=None):
+            type=None, points=()):
         MapObject.__init__(self, layer, pixel_pos, name, type)
-        if not points:
-            self.points = []
-        else:
-            self.points = list(points)
+        self.points = list(points)
 
     @helpers.from_dict_method
     def from_dict(cls, dct, layer):
@@ -221,9 +218,7 @@ class SizedObject(helpers.TileMixin, MapObject):
         return d
 
     @classmethod
-    def _dict_helper(cls, dct, layer, size=NOT_GIVEN, **kwargs):
-        if size is NOT_GIVEN:
-            size = dct.pop('width'), dct.pop('height')
+    def _dict_helper(cls, dct, layer, size, **kwargs):
         return super(SizedObject, cls)._dict_helper(
             dct,
             layer,

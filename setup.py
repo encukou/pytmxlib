@@ -46,6 +46,10 @@ setup(
 
     package_data={'tmxlib': ['test/data/*']},
     zip_safe=False,
+
+    extras_require={
+        'test': test_requirements,
+    },
 )
 
 try:

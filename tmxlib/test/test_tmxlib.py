@@ -12,8 +12,7 @@ import pytest
 import tmxlib
 from tmxlib.fileio import etree
 from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
-from tmxlib.test import desert, params, get_test_filename, file_contents
-from tmxlib.test import base_path
+from tmxlib.test import desert, get_test_filename, file_contents, base_path
 
 make_test_map_data = collections.namedtuple(
     'TestMapData',
@@ -775,15 +774,16 @@ def test_layer_nonzero():
     assert layer
 
 
-def test_terrains():
-    map = desert()
-    tileset = map.tilesets[0]
+def test_terrains(desert):
+    tileset = desert.tilesets[0]
     assert [t.name for t in tileset.terrains] == [
             'Desert',
             'Brick',
             'Cobblestone',
             'Dirt',
         ]
+    for t in tileset.terrains:
+        assert t.tileset is tileset
     assert [t.tile for t in tileset.terrains] == [
             tileset[29],
             tileset[9],
