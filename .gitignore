@@ -1,4 +1,5 @@
 /build/
+/dist/
 /*.tmx
 *.pyc
 /*.egg-info/
