@@ -15,7 +15,7 @@ from tmxlib.mapobject import (PolygonObject, PolylineObject, RectangleObject,
 from tmxlib import image
 
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 __copyright__ = "Copyright 2011, Petr Viktorin"
 __author__ = 'Petr Viktorin'
