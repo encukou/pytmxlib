@@ -1,4 +1,7 @@
-"""Base Image classes"""
+"""Image base classes
+---------------------
+
+"""
 
 from __future__ import division
 
@@ -30,6 +33,11 @@ class ImageBase(helpers.SizeMixin):
 
 class Image(ImageBase, fileio.ReadWriteBase):
     """An image. Conceptually, an 2D array of pixels.
+
+    .. note::
+        This is an abstract base class.
+        Use :func:`tmxlib.image.open` or
+        :data:`tmxlib.image.preferred_image_class` to get a usable subclass.
 
     init arguments that become attributes:
 

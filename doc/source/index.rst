@@ -28,15 +28,15 @@ To install system-wide, leave out the ``--user`` option.
 If you can't find pip on your system, look around.
 In Fedora, it's named ``pip-python`` and lives in the ``python-pip`` package.
 
-Optionally, also install the lxml_ and PIL_ packages to speed up XML and image
-handling, respectively.
+Optionally, also install the lxml_ and Pillow_ packages to speed up XML and
+image handling, respectively.
 Linux distributions are likely to have them (in Fedora,
 ``yum install python-lxml python-imaging``).
 If you can't find them, use pip to get them.
 
 .. _pip: http://pypi.python.org/pypi/pip
 .. _lxml: http://lxml.de/
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://pypi.python.org/pypi/Pillow/2.2.1
 
 Development
 ===========
@@ -55,12 +55,16 @@ To run tests, ``pip install pytest-cov``, and run ``py.test``.
 Tests can be run using tox_, to ensure cross-Python compatibility. Make sure
 you have all supported Pythons (2.6, 2.7, 3.1, 3.2) installed, and run ``tox``.
 
-Nowadays we use Travis CI to run tests after each commit: |ci-status|
-(Note that a failing build may be due to a Travis bug).
+Nowadays we use Travis CI and Coveralls to run tests after each commit:
+|ci-status| |coveralls-badge|
 
 .. |ci-status| image:: https://secure.travis-ci.org/encukou/pytmxlib.png?branch=master
     :alt: (Link to Travis CI)
     :target: http://travis-ci.org/encukou/pytmxlib
+
+.. |coveralls-badge| image:: https://coveralls.io/repos/encukou/pytmxlib/badge.png?branch=tests
+    :alt: (Link to Coveralls)
+    :target: https://coveralls.io/r/encukou/pytmxlib?branch=tests
 
 Documentation
 -------------

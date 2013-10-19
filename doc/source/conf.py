@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'tmxlib'
-copyright = u'2011, Petr Viktorin'
+copyright = u'2011-2013, Petr Viktorin'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
