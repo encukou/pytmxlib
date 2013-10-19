@@ -40,7 +40,6 @@ Image
 .. autoclass:: tmxlib.image_base.Image
 
     .. automethod:: get_pixel
-    .. automethod:: set_pixel
 
     Methods interesting for subclassers:
 
@@ -58,4 +57,3 @@ ImageRegion
     same external API as :class:`Image`:
 
         .. automethod:: get_pixel
-        .. automethod:: set_pixel

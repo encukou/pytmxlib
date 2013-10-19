@@ -37,13 +37,3 @@ class PngImage(tmxlib.image_base.Image):
     def get_pixel(self, x, y):
         x, y = self._wrap_coords(x, y)
         return tuple(v / 255 for v in self.image_data[y][x * 4:(x + 1) * 4])
-
-    def set_pixel(self, x, y, value):
-        x, y = self._wrap_coords(x, y)
-        value = (int(round(v * 255)) for v in value)
-        row_data = self.image_data[y]
-        if isinstance(row_data, list):
-            row_data[x * 4:(x + 1) * 4] = value
-        else:
-            row_data[x * 4:(x + 1) * 4] = array(row_data.typecode, value)
-        self.dirty = True

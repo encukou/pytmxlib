@@ -42,9 +42,3 @@ class PilImage(tmxlib.image_base.Image):
     def get_pixel(self, x, y):
         x, y = self._wrap_coords(x, y)
         return tuple(v / 255 for v in self.pil_image.getpixel((x, y)))
-
-    def set_pixel(self, x, y, value):
-        x, y = self._wrap_coords(x, y)
-        value = tuple(int(round(v * 255)) for v in value)
-        self.pil_image.putpixel((x, y), value)
-        self.dirty = True

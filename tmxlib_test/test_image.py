@@ -40,13 +40,6 @@ def test_map_get_pixel():
 
     assert map.tilesets[0].image.data
 
-    expected = 0.5, 0.6, 0.7, 0
-    map.tilesets['Desert'][0].image[0, 0] = expected
-    value = map.tilesets['Desert'][0].image[0, 0]
-    assert len(value) == len(expected)
-    for a, b in zip(value, expected):
-        assert abs(a - b) < (1 / 256)
-
     empty_tile = map.layers['Building'][0, 0]
     assert not empty_tile
     assert empty_tile.get_pixel(0, 0) == (0, 0, 0, 0)

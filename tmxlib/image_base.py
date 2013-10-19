@@ -54,15 +54,6 @@ class ImageBase(helpers.SizeMixin):
                 self.height if bottom is None else bottom)
             return ImageRegion(self, (top, left), (right - left, bottom - top))
 
-    def __setitem__(self, pos, value):
-        """Set the pixel at the specified (x, y) position
-
-        Proxies to set_pixel.
-        """
-        x, y = pos
-        r, g, b, a = value
-        return self.set_pixel(x, y, value)
-
 
 class Image(ImageBase, fileio.ReadWriteBase):
     """An image. Conceptually, an 2D array of pixels.
@@ -94,9 +85,8 @@ class Image(ImageBase, fileio.ReadWriteBase):
 
             A color key used for transparency (currently not implemented)
 
-    Images support indexing (``img[x, y]``) as a shortcut for the get_pixel
-    and set_pixel methods.
-
+    Images support indexing (``img[x, y]``); see
+    :meth:`tmxlib.image_base.ImageBase.__getitem__`
     """
     # XXX: Make `trans` actually work
     # XXX: Make modifying and saving images work
@@ -143,13 +133,6 @@ class Image(ImageBase, fileio.ReadWriteBase):
 
     def get_pixel(self, x, y):
         """Get the color of the pixel at position (x, y) as a RGBA 4-tuple.
-
-        Supports negative indices by wrapping around in the obvious way.
-        """
-        raise TypeError('Image data not available')
-
-    def set_pixel(self, x, y, value):
-        """Set the color of the pixel at position (x, y) to a RGBA 4-tuple
 
         Supports negative indices by wrapping around in the obvious way.
         """
@@ -218,13 +201,3 @@ class ImageRegion(ImageBase):
         if not (0 <= y < self.height):
             raise ValueError('y coordinate out of bounds')
         return self.parent.get_pixel(x + self.x, y + self.y)
-
-    def set_pixel(self, x, y, value):
-        """Set the color of the pixel at position (x, y) to a RGBA 4-tuple
-
-        Supports negative indices by wrapping around in the obvious way.
-        """
-        x, y = self._wrap_coords(x, y)
-        assert 0 <= x < self.width
-        assert 0 <= y < self.height
-        self.parent.set_pixel(x + self.x, y + self.y, value)
