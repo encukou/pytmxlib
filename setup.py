@@ -14,6 +14,10 @@ test_requirements = [
     'pillow',
 ]
 
+test_requirements = [
+    'six',
+    'pypng>=0.0.14',
+]
 
 setup(
     name='tmxlib',
@@ -42,13 +46,12 @@ setup(
     setup_requires=[],
     tests_require=test_requirements,
     packages=find_packages(exclude=['.tox', '*.egg', 'build']),
-    test_suite='tmxlib.test.run',
 
-    package_data={'tmxlib': ['test/data/*']},
     zip_safe=False,
 
     extras_require={
         'test': test_requirements,
+        'canvas': ['numpy'],
     },
 )
 
