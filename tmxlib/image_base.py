@@ -180,8 +180,10 @@ class ImageRegion(ImageBase):
         Supports negative indices by wrapping around in the obvious way.
         """
         x, y = self._wrap_coords(x, y)
-        assert 0 <= x < self.width
-        assert 0 <= y < self.height
+        if not (0 <= x < self.width):
+            raise ValueError('x coordinate out of bounds')
+        if not (0 <= y < self.height):
+            raise ValueError('y coordinate out of bounds')
         return self.parent.get_pixel(x + self.x, y + self.y)
 
     def set_pixel(self, x, y, value):
