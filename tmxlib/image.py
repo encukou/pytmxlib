@@ -9,7 +9,7 @@ from tmxlib.image_base import ImageRegion
 try:
     from tmxlib import image_pil
     preferred_image_class = image_pil.PilImage
-except ImportError:
+except ImportError:  # pragma: no cover
     from tmxlib import image_png
     preferred_image_class = image_png.PngImage
 

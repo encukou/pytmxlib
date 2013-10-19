@@ -91,10 +91,15 @@ def test_map_get_pixel():
     assert_color_tuple_eq(tile.get_pixel(-1, -1), top_left)
 
 
-@pytest.fixture(params=[((0, 0), (1, 0, 0, 1)),
-                        ((0, 15), (0, 0, 1, 1)),
-                        ((15, 0), (1, 1, 0, 1)),
-                        ((15, 15), (0, 1, 0, 1))])
+@pytest.fixture(params=[
+    ((0, 0), (1, 0, 0, 1)),
+    ((0, 15), (0, 0, 1, 1)),
+    ((15, 0), (1, 1, 0, 1)),
+    ((15, 15), (0, 1, 0, 1)),
+    ((0, -1), (0, 0, 1, 1)),
+    ((-1, 0), (1, 1, 0, 1)),
+    ((-1, -1), (0, 1, 0, 1)),
+])
 def expected_pixel(request):
     return request.param
 
