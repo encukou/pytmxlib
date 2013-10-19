@@ -12,7 +12,7 @@ import pytest
 import tmxlib
 from tmxlib.fileio import etree
 from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
-from tmxlib.test import desert, get_test_filename, file_contents, base_path
+from tmxlib_test import desert, get_test_filename, file_contents, base_path
 
 make_test_map_data = collections.namedtuple(
     'TestMapData',
@@ -866,7 +866,8 @@ def test_tile_and_object_attr_equivalence():
             assert_equal_attr('layer', tile, tileobj)
 
 
-tiled_example_base = get_test_filename('tiled/examples')
+tiled_example_base = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'tiled', 'examples')
 if os.path.exists(tiled_example_base):
 
     @pytest.fixture(params=[os.path.join(tiled_example_base, path)

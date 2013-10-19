@@ -6,7 +6,7 @@ import sys
 import pytest
 
 import tmxlib
-from tmxlib.test import get_test_filename, file_contents, assert_color_tuple_eq
+from tmxlib_test import get_test_filename, file_contents, assert_color_tuple_eq
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
