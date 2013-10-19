@@ -5,7 +5,7 @@ Legend:
     - Other change (performance, docs, etc)
 
 
-0.2 [unreleased]
+0.2 [2013-10-19]
     ** Pixel measurements have been moved to pixel_size, pixel_width,
         pixel_height (and pixel_pos, ~_x, ~_y) attributes.
         The size, width and height attributes of MapTile and MapObject
