@@ -190,6 +190,10 @@ class ImageRegion(ImageBase):
     def y(self, value):
         self.top_left = self.top_left[0], value
 
+    @property
+    def trans(self):
+        return self.parent.trans
+
     def get_pixel(self, x, y):
         """Get the color of the pixel at position (x, y) as a RGBA 4-tuple.
 

@@ -100,10 +100,24 @@ def test_map_get_pixel():
 def expected_pixel(request):
     return request.param
 
+
 def test_get_pixel(colorcorners_image, expected_pixel):
     coords, color = expected_pixel
     assert colorcorners_image.get_pixel(*coords) == color
 
+
 def test_load_image(colorcorners_image):
     assert colorcorners_image.load_image() == (16, 16)
     assert colorcorners_image.load_image() == (16, 16)
+
+
+@pytest.fixture(params=[(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+def basic_color(request):
+    return request.param
+
+
+def test_trans(image_class, basic_color):
+    filename = get_test_filename('colorcorners.png')
+    image = image_class(source=filename, trans=basic_color)
+    assert image.trans == basic_color
+    assert image[:5, :5].trans == basic_color
