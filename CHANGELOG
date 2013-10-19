@@ -5,6 +5,10 @@ Legend:
     - Other change (performance, docs, etc)
 
 
+0.3 [unreleased]
+    - Renamed ImageRegion.image to .parent; the former is a deprecated alias
+
+
 0.2 [2013-10-19]
     ** Pixel measurements have been moved to pixel_size, pixel_width,
         pixel_height (and pixel_pos, ~_x, ~_y) attributes.

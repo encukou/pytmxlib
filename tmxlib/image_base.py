@@ -128,7 +128,7 @@ class ImageRegion(ImageBase):
 
     init arguments that become attributes:
 
-        .. attribute:: image
+        .. attribute:: parent
 
             The "parent" image
 
@@ -142,10 +142,21 @@ class ImageRegion(ImageBase):
             The size of the region.
             Will also available as ``width`` and ``height`` attributes.
     """
-    def __init__(self, image, top_left, size):
-        self.image = image
-        self.top_left = x, y = top_left
+    def __init__(self, parent, top_left, size):
+        self.parent = parent
+        self.top_left = top_left
         self.size = size
+
+    @property
+    def image(self):
+        warnings.warn("ImageRegion.image is deprecated; use parent instead",
+                      category=DeprecationWarning)
+        return self.parent
+    @image.setter
+    def image(self, value):
+        warnings.warn("ImageRegion.image is deprecated; use parent instead",
+                      category=DeprecationWarning)
+        self.parent = value
 
     @property
     def x(self):
@@ -171,7 +182,7 @@ class ImageRegion(ImageBase):
         x, y = self._wrap_coords(x, y)
         assert 0 <= x < self.width
         assert 0 <= y < self.height
-        return self.image.get_pixel(x + self.x, y + self.y)
+        return self.parent.get_pixel(x + self.x, y + self.y)
 
     def set_pixel(self, x, y, value):
         """Set the color of the pixel at position (x, y) to a RGBA 4-tuple
@@ -181,4 +192,4 @@ class ImageRegion(ImageBase):
         x, y = self._wrap_coords(x, y)
         assert 0 <= x < self.width
         assert 0 <= y < self.height
-        self.image.set_pixel(x + self.x, y + self.y, value)
+        self.parent.set_pixel(x + self.x, y + self.y, value)
