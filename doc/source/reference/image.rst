@@ -27,8 +27,15 @@ The tmxlib.image modules
 
 .. automodule:: tmxlib.image_base
 
+Image Base
+----------
+
+.. autoclass:: tmxlib.image_base.ImageBase
+
+    .. automethod:: __getitem__
+
 Image
-----
+-----
 
 .. autoclass:: tmxlib.image_base.Image
 
@@ -52,6 +59,3 @@ ImageRegion
 
         .. automethod:: get_pixel
         .. automethod:: set_pixel
-
-
-.. autoclass:: tmxlib.image_base.ImageBase

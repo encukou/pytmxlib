@@ -6,6 +6,8 @@ Legend:
 
 
 0.3 [unreleased]
+    + Image slicing now creates ImageRegions
+
     - Renamed ImageRegion.image to .parent; the former is a deprecated alias
 
 

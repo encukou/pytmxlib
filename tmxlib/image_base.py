@@ -5,21 +5,54 @@
 
 from __future__ import division
 
+import warnings
+
 from tmxlib import helpers, fileio
 
-class ImageBase(helpers.SizeMixin):
-    """Provide __getitem__ and __setitem__ for images
 
-    Pixel access methods with (x, y) pairs for position and (r, g, b, a)
-    tuples for color.
+class ImageBase(helpers.SizeMixin):
+    """Image base class
+
+    This defines the basic image API, shared by
+    :class:`~tmxlib.image_base.Image` and
+    :class:`~tmxlib.image_base.ImageRegion`.
+
+    Pixels are represented as (r, g, b, a) float tuples, with components in the
+    range of 0 to 1.
     """
     def __getitem__(self, pos):
-        """Get the pixel at the specified (x, y) position
+        """Get a pixel or region
 
-        Proxies to get_pixel.
+        With a pair of integers, this returns a pixel via
+        :meth:`~tmxlib.image_base.Image.get_pixel`:
+
+        :param pos: pair of integers, (x, y)
+        :return: pixel at (x, y) as a (r, g, b, a) float tuple
+
+        With a pair of slices, returns a sub-image linked to the original:
+
+        :param pos: pair of slices, (left:right, top:bottom)
+        :return: a :class:`~tmxlib.image_base.ImageRegion`
         """
         x, y = pos
-        return self.get_pixel(x, y)
+        try:
+            left = x.start
+            right = x.stop
+            top = y.start
+            bottom = y.stop
+        except AttributeError:
+            return self.get_pixel(x, y)
+        else:
+            for c in x, y:
+                if c.step not in (None, 1):
+                    raise ValueError('step not supported for slicing images')
+            left, top = self._wrap_coords(
+                0 if left is None else left,
+                0 if top is None else top)
+            right, bottom = self._wrap_coords(
+                self.width if right is None else right,
+                self.height if bottom is None else bottom)
+            return ImageRegion(self, (top, left), (right - left, bottom - top))
 
     def __setitem__(self, pos, value):
         """Set the pixel at the specified (x, y) position
