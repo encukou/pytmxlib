@@ -6,6 +6,15 @@ from setuptools import setup, find_packages
 __version__ = '0.1.0'
 
 
+test_requirements = [
+    'pytest',
+    'pytest-cov',
+    'pytest-pep8',
+    'numpy',
+    'pillow',
+]
+
+
 setup(
     name='tmxlib',
     version=__version__,
@@ -31,11 +40,7 @@ setup(
             'pypng>=0.0.14',
         ],
     setup_requires=[],
-    tests_require=[
-            'pytest',
-            'pytest-cov',
-            'pytest-pep8',
-        ],
+    tests_require=test_requirements,
     packages=find_packages(exclude=['.tox', '*.egg', 'build']),
     test_suite='tmxlib.test.run',
 

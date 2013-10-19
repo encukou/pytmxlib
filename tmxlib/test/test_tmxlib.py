@@ -5,75 +5,39 @@ import os
 import sys
 import tempfile
 import json
+import collections
 
-from tmxlib.fileio import etree
-from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
 import pytest
 
 import tmxlib
+from tmxlib.fileio import etree
+from tmxlib.compatibility.formencode_doctest_xml_compare import xml_compare
+from tmxlib.test import desert, params, get_test_filename, file_contents
+from tmxlib.test import base_path
 
+make_test_map_data = collections.namedtuple(
+    'TestMapData',
+    'filename has_gzip out_filename')(None, False, None)._replace
 
-# test support code
-def params(funcarglist):
-    def wrapper(function):
-        function.funcarglist = funcarglist
-        return function
-    return wrapper
-
-
-def assert_color_tuple_eq(value, expected):
-    assert len(value) == len(expected)
-    for a, b in zip(value, expected):
-        if abs(a - b) >= (1 / 256):
-            assert value == expected
-
-
-def pytest_generate_tests(metafunc):
-    for funcargs in getattr(metafunc.function, 'funcarglist', ()):
-        metafunc.addcall(funcargs=funcargs, id=funcargs)
-
-
-def get_test_filename(name):
-    return os.path.join(base_path, name)
-
-
-def file_contents(filename):
-    with open(filename, 'rb') as fileobj:
-        return fileobj.read()
-
-
-def desert():
-    return tmxlib.Map.open(get_test_filename('desert.tmx'))
-
-
-base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-map_filenames = [
-        dict(filename='desert.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='perspective_walls.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='sewers.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='tilebmp-test.tmx', has_gzip=True,
-            output_filename=None),
-        dict(filename='desert_nocompress.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='desert_and_walls.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='sewers_comment.tmx', has_gzip=False,
-            output_filename='sewers.tmx'),
-        dict(filename='walls_and_desert.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='equivcheck.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='imagelayer.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='objects.tmx', has_gzip=False,
-            output_filename=None),
-        dict(filename='isometric_grass_and_water.tmx', has_gzip=False,
+@pytest.fixture(params=[
+        make_test_map_data(filename='desert.tmx'),
+        make_test_map_data(filename='perspective_walls.tmx'),
+        make_test_map_data(filename='sewers.tmx'),
+        make_test_map_data(filename='tilebmp-test.tmx', has_gzip=True),
+        make_test_map_data(filename='desert_nocompress.tmx'),
+        make_test_map_data(filename='desert_and_walls.tmx'),
+        make_test_map_data(filename='sewers_comment.tmx',
+                         out_filename='sewers.tmx'),
+        make_test_map_data(filename='walls_and_desert.tmx'),
+        make_test_map_data(filename='equivcheck.tmx'),
+        make_test_map_data(filename='imagelayer.tmx'),
+        make_test_map_data(filename='objects.tmx'),
+        make_test_map_data(filename='isometric_grass_and_water.tmx'
             # NOTE: the image for this map's tileset is intentionally missing
-            output_filename=None),
-    ]
+            ),
+    ])
+def test_map_data(request):
+    return request.param
 
 
 def assert_xml_compare(a, b):
@@ -137,8 +101,8 @@ def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
 
 
 # actual test code
-@params(map_filenames)
-def test_roundtrip_opensave(filename, has_gzip, output_filename):
+def test_roundtrip_opensave(test_map_data):
+    filename, has_gzip, output_filename = test_map_data
     if has_gzip and sys.version_info < (2, 7):
         raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
 
@@ -162,8 +126,8 @@ def test_roundtrip_opensave(filename, has_gzip, output_filename):
         os.unlink(temporary_file.name)
 
 
-@params(map_filenames)
-def test_roundtrip_readwrite(filename, has_gzip, output_filename):
+def test_roundtrip_readwrite(test_map_data):
+    filename, has_gzip, output_filename = test_map_data
     if has_gzip and sys.version_info < (2, 7):
         raise pytest.skip('Cannot test gzip on Python 2.6: missing mtime arg')
 
@@ -178,8 +142,8 @@ def test_roundtrip_readwrite(filename, has_gzip, output_filename):
     assert_xml_compare(xml, dumped)
 
 
-@params(map_filenames)
-def test_dict_export(filename, has_gzip, output_filename):
+def test_dict_export(test_map_data):
+    filename, has_gzip, output_filename = test_map_data
     xml = file_contents(get_test_filename(filename))
     map = tmxlib.Map.load(xml, base_path=base_path)
     dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
@@ -187,8 +151,8 @@ def test_dict_export(filename, has_gzip, output_filename):
     assert_json_safe_almost_equal(result, dct)
 
 
-@params(map_filenames)
-def test_dict_import(filename, has_gzip, output_filename):
+def test_dict_import(test_map_data):
+    filename, has_gzip, output_filename = test_map_data
     dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
     map = tmxlib.Map.from_dict(dct)
 
@@ -221,14 +185,13 @@ def test_dict_import(filename, has_gzip, output_filename):
     assert_xml_compare(xml, dumped)
 
 
-def test_get_layer_by_name():
-    assert desert().layers['Ground'].name == 'Ground'
+def test_get_layer_by_name(desert):
+    assert desert.layers['Ground'].name == 'Ground'
 
 
-def test_get_layer_by_index():
-    map = desert()
-    assert map.layers[0].name == 'Ground'
-    assert map.layers[0].index == 0
+def test_get_layer_by_index(desert):
+    assert desert.layers[0].name == 'Ground'
+    assert desert.layers[0].index == 0
 
 
 def test_bad_layer_by_name():
@@ -236,83 +199,73 @@ def test_bad_layer_by_name():
         desert().layers['(nonexisting)']
 
 
-def test_layer_get():
-    map = desert()
-    assert map.layers.get(0).name == 'Ground'
-    assert map.layers.get(0).index == 0
-    assert map.layers.get(0) is map.layers[0]
-    assert map.layers.get(0) is map.layers.get('Ground')
+def test_layer_get(desert):
+    assert desert.layers.get(0).name == 'Ground'
+    assert desert.layers.get(0).index == 0
+    assert desert.layers.get(0) is desert.layers[0]
+    assert desert.layers.get(0) is desert.layers.get('Ground')
 
 
-def test_layer_get_default():
-    map = desert()
-    assert map.layers.get(50, 3) == 3
-    assert map.layers.get('bad name') is None
-    assert map.layers.get(-50, 'default') == 'default'
+def test_layer_get_default(desert):
+    assert desert.layers.get(50, 3) == 3
+    assert desert.layers.get('bad name') is None
+    assert desert.layers.get(-50, 'default') == 'default'
 
 
-def test_set_layer_by_name():
-    map = desert()
-    layer = tmxlib.TileLayer(map, 'Ground')
-    map.layers['Ground'] = layer
-    assert map.layers[0] is layer
+def test_set_layer_by_name(desert):
+    layer = tmxlib.TileLayer(desert, 'Ground')
+    desert.layers['Ground'] = layer
+    assert desert.layers[0] is layer
 
 
-def test_del_layer():
-    map = desert()
-    del map.layers['Ground']
-    assert len(map.layers) == 0
+def test_del_layer(desert):
+    del desert.layers['Ground']
+    assert len(desert.layers) == 0
 
 
-def test_layers_contains_name():
-    map = desert()
-    assert 'Ground' in map.layers
-    assert 'Sky' not in map.layers
+def test_layers_contains_name(desert):
+    assert 'Ground' in desert.layers
+    assert 'Sky' not in desert.layers
 
 
-def test_layers_contains_layer():
-    map = desert()
-    assert map.layers[0] in map.layers
-    assert tmxlib.TileLayer(map, 'Ground') not in map.layers
+def test_layers_contains_layer(desert):
+    assert desert.layers[0] in desert.layers
+    assert tmxlib.TileLayer(desert, 'Ground') not in desert.layers
 
 
-def test_explicit_layer_creation():
-    map = desert()
-    data = [0] * (map.width * map.height)
+def test_explicit_layer_creation(desert):
+    data = [0] * (desert.width * desert.height)
     data[5] = 1
-    layer = tmxlib.TileLayer(map, 'New layer', data=data)
+    layer = tmxlib.TileLayer(desert, 'New layer', data=data)
     assert list(layer.data) == data
     with pytest.raises(ValueError):
-        tmxlib.TileLayer(map, 'New layer', data=[1, 2, 3])
+        tmxlib.TileLayer(desert, 'New layer', data=[1, 2, 3])
 
 
-def test_size_get_set():
-    map = desert()
-    assert (map.width, map.height) == map.size == (40, 40)
-    map.width = map.height = 1
-    assert (map.width, map.height) == map.size == (1, 1)
+def test_size_get_set(desert):
+    assert (desert.width, desert.height) == desert.size == (40, 40)
+    desert.width = desert.height = 1
+    assert (desert.width, desert.height) == desert.size == (1, 1)
 
 
-def test_tile_size_get_set():
-    map = desert()
-    assert (map.tile_width, map.tile_height) == map.tile_size == (32, 32)
-    map.tile_width = 1
-    map.tile_height = 2
-    assert (map.tile_width, map.tile_height) == map.tile_size == (1, 2)
+def test_tile_size_get_set(desert):
+    assert (desert.tile_width, desert.tile_height) == desert.tile_size == (32, 32)
+    desert.tile_width = 1
+    desert.tile_height = 2
+    assert (desert.tile_width, desert.tile_height) == desert.tile_size == (1, 2)
 
 
-def test_pixel_size_get_set():
-    map = desert()
-    assert (map.pixel_width, map.pixel_height) == map.pixel_size == (
+def test_pixel_size_get_set(desert):
+    assert (desert.pixel_width, desert.pixel_height) == desert.pixel_size == (
             40 * 32, 40 * 32)
-    map.width = map.height = 2
-    map.tile_width = 3
-    map.tile_height = 4
-    assert (map.pixel_width, map.pixel_height) == map.pixel_size == (6, 8)
+    desert.width = desert.height = 2
+    desert.tile_width = 3
+    desert.tile_height = 4
+    assert (desert.pixel_width, desert.pixel_height) == desert.pixel_size == (6, 8)
 
 
-def test_tileset():
-    tileset = desert().tilesets[0]
+def test_tileset(desert):
+    tileset = desert.tilesets[0]
 
     assert len(tileset) == len(list(tileset))
     assert list(tileset)[0] == tileset[0]
@@ -324,30 +277,28 @@ def test_tileset():
     assert tileset.tile_height == 3
 
 
-def test_tileset_tiles():
-    map = desert()
-    assert map.tilesets[0][0].number == 0
-    assert map.tilesets[0][0].gid(map) == 1
+def test_tileset_tiles(desert):
+    assert desert.tilesets[0][0].number == 0
+    assert desert.tilesets[0][0].gid(desert) == 1
 
-    assert map.tilesets[0][1].number == 1
-    assert map.tilesets[0][1].gid(map) == 2
+    assert desert.tilesets[0][1].number == 1
+    assert desert.tilesets[0][1].gid(desert) == 2
 
-    assert map.tilesets[0][-1].number == len(map.tilesets[0]) - 1
+    assert desert.tilesets[0][-1].number == len(desert.tilesets[0]) - 1
 
 
-def test_tileset_tile():
-    map = desert()
-    tile = map.tilesets[0][1]
+def test_tileset_tile(desert):
+    tile = desert.tilesets[0][1]
     assert tile.tileset.name == 'Desert'
     assert tile.pixel_size == (32, 32)
 
     assert tile.pixel_width == tile.pixel_height == 32
 
-    assert map.tilesets[0][0] is map.tilesets[0][0]
-    assert map.tilesets[0][0] == map.tilesets[0][0]
-    assert hash(map.tilesets[0][0]) == hash(map.tilesets[0][0])
-    assert map.tilesets[0][0] != map.tilesets[0][9]
-    assert map.tilesets[0][0] != 'not a tile'
+    assert desert.tilesets[0][0] is desert.tilesets[0][0]
+    assert desert.tilesets[0][0] == desert.tilesets[0][0]
+    assert hash(desert.tilesets[0][0]) == hash(desert.tilesets[0][0])
+    assert desert.tilesets[0][0] != desert.tilesets[0][9]
+    assert desert.tilesets[0][0] != 'not a tile'
 
     assert tile.properties == {}
     tile.properties[1] = 2
@@ -358,25 +309,24 @@ def test_tileset_tile():
     assert tile.properties == {}
 
 
-def test_map_tile():
-    map = desert()
-    tile = map.layers[0][1, 2]
+def test_map_tile(desert):
+    tile = desert.layers[0][1, 2]
     assert tile.x == 1
     assert tile.y == 2
     assert tile.value == 30
-    assert tile.map is map
-    assert tile.tileset is map.tilesets[0]
-    assert tile.tileset_tile == map.tilesets[0][29]
+    assert tile.map is desert
+    assert tile.tileset is desert.tilesets[0]
+    assert tile.tileset_tile == desert.tilesets[0][29]
     assert tile.size == (1, 1)
     assert tile.pixel_size == (32, 32)
     assert tile.properties == {}
     tile.value == 1
-    map.layers[0].set_value_at((1, 2), 1)
+    desert.layers[0].set_value_at((1, 2), 1)
     assert tile.value == tile.gid == 1
-    assert map.layers[0][1, 2].value == 1
-    map.layers[0][1, 2] = 2
+    assert desert.layers[0][1, 2].value == 1
+    desert.layers[0][1, 2] = 2
     assert tile.value == tile.gid == 2
-    assert map.layers[0][1, 2].value == 2
+    assert desert.layers[0][1, 2].value == 2
 
     tile.gid = 3
     assert tile.value == tile.gid == 3
@@ -421,30 +371,29 @@ def test_map_tile():
     assert tile.flipped_diagonally
     assert tile.gid == 3
 
-    assert map.layers[0][1, 2].value == 0x60000003
+    assert desert.layers[0][1, 2].value == 0x60000003
 
-    map.layers[0][1, 2] = map.tilesets[0][0]
-    assert map.layers[0][1, 2].gid == 1
+    desert.layers[0][1, 2] = desert.tilesets[0][0]
+    assert desert.layers[0][1, 2].gid == 1
 
-    map.layers[0][1, 2] = 0
-    assert not map.layers[0][1, 2]
+    desert.layers[0][1, 2] = 0
+    assert not desert.layers[0][1, 2]
 
-    assert map.layers[0][-1, -1] == 30
-    map.layers[0][-1, -1] = 1
-    assert map.layers[0][-1, -1] == 1
-    map.layers[0][-1, -1].value = 2
-    assert map.layers[0][-1, -1] == 2
-    assert map.layers[0][-1, -1] != 3
-
-
-    assert map.layers[0][0, 0] is not map.layers[0][0, 0]  # implementation detail
-    assert map.layers[0][0, 0] == map.layers[0][0, 0]
-    assert hash(map.layers[0][0, 0]) == hash(map.layers[0][0, 0])
+    assert desert.layers[0][-1, -1] == 30
+    desert.layers[0][-1, -1] = 1
+    assert desert.layers[0][-1, -1] == 1
+    desert.layers[0][-1, -1].value = 2
+    assert desert.layers[0][-1, -1] == 2
+    assert desert.layers[0][-1, -1] != 3
 
 
-def test_map_tiles():
-    map = desert()
-    assert len(list(map.get_tiles(0, 0))) == 1
+    assert desert.layers[0][0, 0] is not desert.layers[0][0, 0]  # implementation detail
+    assert desert.layers[0][0, 0] == desert.layers[0][0, 0]
+    assert hash(desert.layers[0][0, 0]) == hash(desert.layers[0][0, 0])
+
+
+def test_map_tiles(desert):
+    assert len(list(desert.get_tiles(0, 0))) == 1
 
     map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
     tile_list = list(map.get_tiles(0, 0))
@@ -453,9 +402,8 @@ def test_map_tiles():
     assert tile_list[1] == map.layers[1][0, 0]
 
 
-def test_empty_tile():
-    map = desert()
-    layer = map.layers[0] = tmxlib.TileLayer(map, 'Empty')
+def test_empty_tile(desert):
+    layer = desert.layers[0] = tmxlib.TileLayer(desert, 'Empty')
     tile = layer[0, 0]
     assert tile.value == 0
     assert tile.number == 0
@@ -471,97 +419,95 @@ def test_properties():
     assert map.tilesets['Sewers'][0].properties['obstacle'] == '1'
 
 
-def test_layer_list():
-    map = desert()
-    different_map = desert()
-    map.add_layer('Sky')
-    map.add_tile_layer('Underground', before='Ground')
-    map.add_object_layer('Grass', after='Ground')
+def test_layer_list(desert):
+    different_map = tmxlib.Map.open(get_test_filename('desert.tmx'))
+    desert.add_layer('Sky')
+    desert.add_tile_layer('Underground', before='Ground')
+    desert.add_object_layer('Grass', after='Ground')
 
     def check_names(names_string):
         names = names_string.split()
-        assert [l.name for l in map.layers] == names
+        assert [l.name for l in desert.layers] == names
 
     check_names('Underground Ground Grass Sky')
-    assert [l.name for l in map.layers[2:]] == 'Grass Sky'.split()
-    assert [l.name for l in map.layers[:2]] == 'Underground Ground'.split()
-    assert [l.name for l in map.layers[::2]] == 'Underground Grass'.split()
-    assert [l.name for l in map.layers[1::2]] == 'Ground Sky'.split()
-    assert [l.name for l in map.layers[:2:2]] == 'Underground'.split()
-    assert [l.name for l in map.layers[1:3]] == 'Ground Grass'.split()
+    assert [l.name for l in desert.layers[2:]] == 'Grass Sky'.split()
+    assert [l.name for l in desert.layers[:2]] == 'Underground Ground'.split()
+    assert [l.name for l in desert.layers[::2]] == 'Underground Grass'.split()
+    assert [l.name for l in desert.layers[1::2]] == 'Ground Sky'.split()
+    assert [l.name for l in desert.layers[:2:2]] == 'Underground'.split()
+    assert [l.name for l in desert.layers[1:3]] == 'Ground Grass'.split()
 
-    assert [l.name for l in map.layers[-2:]] == 'Grass Sky'.split()
-    assert [l.name for l in map.layers[:-2]] == 'Underground Ground'.split()
-    assert [l.name for l in map.layers[::-2]] == 'Sky Ground'.split()
-    assert [l.name for l in map.layers[-2::-2]] == 'Grass Underground'.split()
-    assert [l.name for l in map.layers[:-2:-2]] == 'Sky'.split()
-    assert [l.name for l in map.layers[-3:-1]] == 'Ground Grass'.split()
+    assert [l.name for l in desert.layers[-2:]] == 'Grass Sky'.split()
+    assert [l.name for l in desert.layers[:-2]] == 'Underground Ground'.split()
+    assert [l.name for l in desert.layers[::-2]] == 'Sky Ground'.split()
+    assert [l.name for l in desert.layers[-2::-2]] == 'Grass Underground'.split()
+    assert [l.name for l in desert.layers[:-2:-2]] == 'Sky'.split()
+    assert [l.name for l in desert.layers[-3:-1]] == 'Ground Grass'.split()
 
-    ground = map.layers[1]
+    ground = desert.layers[1]
     assert ground.name == 'Ground'
 
-    del map.layers[1::2]
+    del desert.layers[1::2]
     check_names('Underground Grass')
-    two_layers = list(map.layers)
+    two_layers = list(desert.layers)
 
-    del map.layers[1]
+    del desert.layers[1]
     check_names('Underground')
 
-    map.layers[0] = ground
+    desert.layers[0] = ground
     check_names('Ground')
 
-    map.layers[1:] = two_layers
+    desert.layers[1:] = two_layers
     check_names('Ground Underground Grass')
 
-    del map.layers[:1]
-    map.layers[1:1] = [ground]
+    del desert.layers[:1]
+    desert.layers[1:1] = [ground]
     check_names('Underground Ground Grass')
 
     with pytest.raises(ValueError):
-        map.layers[0] = different_map.layers[0]
+        desert.layers[0] = different_map.layers[0]
 
-    map.layers.move('Grass', -2)
+    desert.layers.move('Grass', -2)
     check_names('Grass Underground Ground')
-    map.layers.move('Ground', -20)
+    desert.layers.move('Ground', -20)
     check_names('Ground Grass Underground')
-    map.layers.move('Underground', -1)
+    desert.layers.move('Underground', -1)
     check_names('Ground Underground Grass')
-    map.layers.move('Underground', 1)
+    desert.layers.move('Underground', 1)
     check_names('Ground Grass Underground')
-    map.layers.move('Ground', 20)
+    desert.layers.move('Ground', 20)
     check_names('Grass Underground Ground')
-    map.layers.move('Grass', 2)
+    desert.layers.move('Grass', 2)
     check_names('Underground Ground Grass')
 
 
-def test_layer_list_empty():
-    map = desert()
-    ground = map.layers[0]
+def test_layer_list_empty(desert):
+    ground = desert.layers[0]
 
     def check_names(names_string):
         names = names_string.split()
-        assert [l.name for l in map.layers] == names
+        assert [l.name for l in desert.layers] == names
 
-    del map.layers[:]
+    del desert.layers[:]
     check_names('')
 
-    map.add_layer('Sky')
+    desert.add_layer('Sky')
     check_names('Sky')
 
-    del map.layers[:]
-    map.layers.append(ground)
+    del desert.layers[:]
+    desert.layers.append(ground)
     check_names('Ground')
 
-    del map.layers[:]
-    map.layers.insert(0, ground)
+    del desert.layers[:]
+    desert.layers.insert(0, ground)
     check_names('Ground')
 
-    del map.layers[:]
-    map.layers.insert(1, ground)
+    del desert.layers[:]
+    desert.layers.insert(1, ground)
     check_names('Ground')
 
-    del map.layers[:]
-    map.layers.insert(-1, ground)
+    del desert.layers[:]
+    desert.layers.insert(-1, ground)
     check_names('Ground')
 
 
@@ -684,74 +630,6 @@ def test_object_layer_color():
 
     map = tmxlib.Map.open(get_test_filename('objects.tmx'))
     assert map.layers['Objects'].color == (1, 0, 0)
-
-
-def test_get_pixel():
-    map = tmxlib.Map.open(get_test_filename('desert_and_walls.tmx'))
-
-    pixel_value = 255 / 255, 208 / 255, 148 / 255, 1
-
-    assert map.layers['Ground'][0, 0].get_pixel(0, 0) == pixel_value
-    assert map.tilesets['Desert'][0].get_pixel(0, 0) == pixel_value
-
-    assert map.layers['Ground'][0, 0].image[0, 0] == pixel_value
-    assert map.tilesets['Desert'][0].image[0, 0] == pixel_value
-
-    assert map.tilesets[0].image.data
-
-    expected = 0.5, 0.6, 0.7, 0
-    map.tilesets['Desert'][0].image[0, 0] = expected
-    value = map.tilesets['Desert'][0].image[0, 0]
-    assert len(value) == len(expected)
-    for a, b in zip(value, expected):
-        assert abs(a - b) < (1 / 256)
-
-    empty_tile = map.layers['Building'][0, 0]
-    assert not empty_tile
-    assert empty_tile.get_pixel(0, 0) == (0, 0, 0, 0)
-
-    tile = map.layers['Ground'][0, 0]
-
-    top_left = 98 / 255, 88 / 255, 56 / 255, 1
-    top_right = 98 / 255, 88 / 255, 56 / 255, 1
-    bottom_left = 209 / 255, 189 / 255, 158 / 255, 1
-    bottom_right = 162 / 255, 152 / 255, 98 / 255, 1
-
-    tile.value = map.tilesets['Desert'][9]
-    assert_color_tuple_eq(tile.get_pixel(0, 0), top_left)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), top_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_right)
-
-    tile.value = map.tilesets['Desert'][9]
-    tile.flipped_horizontally = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), top_right)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), top_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_left)
-
-    tile.value = map.tilesets['Desert'][9]
-    tile.flipped_vertically = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_left)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), top_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_right)
-
-    tile.value = map.tilesets['Desert'][9]
-    tile.flipped_diagonally = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), top_left)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), top_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), bottom_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), bottom_right)
-
-    tile.value = map.tilesets['Desert'][9]
-    tile.flipped_horizontally = True
-    tile.flipped_vertically = True
-    tile.flipped_diagonally = True
-    assert_color_tuple_eq(tile.get_pixel(0, 0), bottom_right)
-    assert_color_tuple_eq(tile.get_pixel(0, -1), bottom_left)
-    assert_color_tuple_eq(tile.get_pixel(-1, 0), top_right)
-    assert_color_tuple_eq(tile.get_pixel(-1, -1), top_left)
 
 
 def test_shared_tilesets():
@@ -969,21 +847,24 @@ def test_tile_and_object_attr_equivalence():
         for attr_name in (
                 'value', 'gid', 'flipped_horizontally', 'flipped_vertically',
                     'flipped_diagonally',
-                'tileset_tile',
-            ):
+                'tileset_tile'):
             assert_equal_attr(attr_name, tile, tileobj)
 
         with pytest.raises(AssertionError):
             assert_equal_attr('layer', tile, tileobj)
 
 
-tiled_example_base = os.path.join(base_path, 'tiled/examples')
+tiled_example_base = get_test_filename('tiled/examples')
 if os.path.exists(tiled_example_base):
-    @params([{'filename': os.path.join(tiled_example_base, path)}
-             for path in os.listdir(tiled_example_base)
-             if path.endswith('.tmx')])
+
+    @pytest.fixture(params=[os.path.join(tiled_example_base, path)
+                            for path in os.listdir(tiled_example_base)
+                            if path.endswith('.tmx')])
+    def filename(request):
+        return request.param
+
     def test_load_tiled_examples(filename):
-            map = tmxlib.Map.open(filename)
-else:
+        tmxlib.Map.open(filename)
+else:  # pragma: no cover
     def test_load_tiled_examples():
         pytest.skip("Tiled examples not found (run git submodule init/update)")
