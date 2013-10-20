@@ -7,4 +7,4 @@ exclude_lines =
 
 [run]
 omit =
-    tmxlib/compatibility/*
+    tmxlib_tests/compatibility/*
