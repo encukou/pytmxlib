@@ -27,11 +27,15 @@ else:
         return image_classes[request.param]
 
 
-@pytest.fixture
-def colorcorners_image_raw(image_class):
-    filename = get_test_filename('colorcorners.png')
+def load_image(image_class, name):
+    filename = get_test_filename(name)
     data = file_contents(filename)
     return image_class(data=data, source=filename)
+
+
+@pytest.fixture
+def colorcorners_image_raw(image_class):
+    return load_image(image_class, 'colorcorners.png')
 
 
 @pytest.fixture(params=('image', 'region', 'canvas'))
@@ -40,14 +44,15 @@ def colorcorners_image_type(request):
 
 
 @pytest.fixture
-def colorcorners_image(colorcorners_image_raw, colorcorners_image_type):
+def colorcorners_image(image_class, colorcorners_image_type):
     if colorcorners_image_type == 'image':
-        return colorcorners_image_raw
+        return load_image(image_class, 'colorcorners.png')
     if colorcorners_image_type == 'region':
-        return colorcorners_image_raw[:, :]
+        return load_image(image_class, 'colorcorners-mid.png')[8:24, 8:24]
     if colorcorners_image_type == 'canvas':
+        image = load_image(image_class, 'colorcorners.png')
         canvas = canvas_mod().Canvas((16, 16))
-        canvas.draw_image(colorcorners_image_raw)
+        canvas.draw_image(image)
         return canvas
 
 
@@ -229,8 +234,8 @@ def test_region_pixel(colorcorners_image, x, y):
     assert colorcorners_image[:, :][x, y] == expected
 
     region = colorcorners_image[:, :]
-    region.x = x
-    region.y = y
+    region.x += x
+    region.y += y
     assert region[0, 0] == expected
 
 
@@ -265,10 +270,11 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
         assert region3.parent is parent
     assert region3[0, 0] == colorcorners_image[3, 3]
 
-    assert colorcorners_image.top_left == (0, 0)
-    assert region1.top_left == (1, 1)
-    assert region2.top_left == (2, 2)
-    assert region3.top_left == (3, 3)
+    if colorcorners_image_type != 'region':
+        assert colorcorners_image.top_left == (0, 0)
+        assert region1.top_left == (1, 1)
+        assert region2.top_left == (2, 2)
+        assert region3.top_left == (3, 3)
 
     assert colorcorners_image.size == (16, 16)
     assert region1.size == (15, 15)
@@ -296,6 +302,14 @@ def test_canvas_draw_image(colorcorners_image, canvas_mod):
     canvas.draw_image(colorcorners_image, (16, 16))
 
     assert_png_images_equal(canvas, 'colorcorners-x4.png')
+
+
+def test_canvas_draw_overlap(image_class, canvas_mod):
+    canvas = canvas_mod.Canvas((32, 32))
+    canvas.draw_image(load_image(image_class, 'scribble.png'))
+    canvas.draw_image(load_image(image_class, 'colorcorners.png'), (8, 8))
+
+    assert_png_images_equal(canvas, 'colorcorners-mid.png')
 
 
 def test_canvas_draw_image_command(canvas_mod, commands_4cc):
