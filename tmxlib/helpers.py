@@ -40,7 +40,7 @@ def from_dict_method(func):
 
 def assert_item(dct, key, expected_value):
     """Asserts that ``dct[key] == expected_value``"""
-    actual_value = dct.pop(key, expected_value)
+    actual_value = dct.pop(key)
     if actual_value != expected_value:
         raise ValueError('bad value: {0} = {1}; should be {2}'.format(
             key, actual_value, expected_value))
