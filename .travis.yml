@@ -8,8 +8,8 @@ python:
   - "3.3"
 install:
   - python setup.py develop
-  - '[ "$USE_LXML" = "yes" ] && sudo apt-get install python-lxml; :'
-  - '[ "$USE_PIL" = "yes" ] && sudo apt-get install python-imaging; :'
+  - '[ "$USE_LXML" = "yes" ] && pip install --use-mirrors lxml; :'
+  - '[ "$USE_PIL" = "yes" ] && pip install --use-mirrors pillow; :'
   - pip install pytest-cov --use-mirrors
   - pip install coveralls --use-mirrors
 env:
