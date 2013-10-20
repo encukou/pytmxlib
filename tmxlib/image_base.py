@@ -97,7 +97,6 @@ class Image(ImageBase, fileio.ReadWriteBase):
         self._data = data
         self.source = source
         self._size = size
-        self.serializer = fileio.serializer_getdefault()
 
     @property
     def size(self):
@@ -120,8 +119,8 @@ class Image(ImageBase, fileio.ReadWriteBase):
                 base_path = self.base_path
             except AttributeError:
                 base_path = None
-            self._data = self.serializer.load_file(self.source,
-                    base_path=base_path)
+            serializer = fileio.serializer_getdefault(object=self)
+            self._data = serializer.load_file(self.source, base_path=base_path)
             return self._data
 
     def load_image(self):
