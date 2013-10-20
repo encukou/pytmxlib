@@ -25,6 +25,28 @@
          "width":8,
          "x":0,
          "y":0
+        }, 
+        {
+         "height":8,
+         "image":"perspective_walls.png",
+         "name":"Semi-transparent",
+         "opacity":0.379999995231628,
+         "type":"imagelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "height":8,
+         "image":"colorcorners.png",
+         "name":"Hidden",
+         "opacity":1,
+         "type":"imagelayer",
+         "visible":false,
+         "width":8,
+         "x":0,
+         "y":0
         }],
  "orientation":"orthogonal",
  "properties":

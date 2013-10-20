@@ -14,4 +14,10 @@
    <property name="a" value="b"/>
   </properties>
  </imagelayer>
+ <imagelayer name="Semi-transparent" width="8" height="8" opacity="0.38">
+  <image source="perspective_walls.png"/>
+ </imagelayer>
+ <imagelayer name="Hidden" width="8" height="8" visible="0">
+  <image source="colorcorners.png"/>
+ </imagelayer>
 </map>
