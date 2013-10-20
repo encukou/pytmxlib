@@ -52,56 +52,40 @@ class Property(property):
     pass
 
 
-def tuple_mixin(name, full_property_name, subprop_names, doc=None):
-    """Create a class that provides "unpacked" attributes for a tuple attr.
+def unpacked_properties(full_prop_name, count=2):
+    """Return properties that "unpack" a tuple property
 
-    Example:
-        ``tuple_mixin('PosMixin', 'pos', ['x', 'y'])``
-        has two settable properties ``x`` and ``y``, such that
-        ``self.pos == (self.x, self.y)``.
-        The original property, ``pos`` in this case, must be provided
-        by subclasses.
+    For example, if a class defines::
+
+        x, y = unpacked_properties('pos')
+
+    then ``obj.x`` will return the same as ``obj.pos[0]``, and setting
+    ``obj.x`` will update ``obj.pos`` to (new x, old y).
     """
-    if doc is None:
-        doc = '\n'.join(['Provides {names} properties.',
-            '',
-            'Subclasses will need a `{full}` property, a {n}-tuple of values.',
-            '',
-            'Note: setting one of the provided properties will set {full} '
-                'to a new tuple.'
-        ]).format(
-            names=', '.join('`{0}`'.format(n) for n in subprop_names),
-            n=len(subprop_names),
-            full=full_property_name,
-        )
-    def make_property(i, name):
+    def get_prop(index):
         def getter(self):
-            return getattr(self, full_property_name)[i]
+            return getattr(self, full_prop_name)[index]
+
         def setter(self, value):
-            templist = list(getattr(self, full_property_name))
-            templist[i] = value
-            setattr(self, full_property_name, tuple(templist))
+            old = getattr(self, full_prop_name)
+            new = tuple(value if i == index else v for i, v in enumerate(old))
+            setattr(self, full_prop_name, new)
+
+        doc_template = 'Getter/setter for self.{0}[{1}]'
         return property(
-            getter, setter, doc='self.{0}[{1}]'.format(full_property_name, i))
-    props = dict((name, make_property(i, name))
-        for i, name in enumerate(subprop_names))
-    props['__doc__'] = doc
-    return type(name, (object,), props)
-
-TileSizeMixin = tuple_mixin(
-    'TileSizeMixin', 'tile_size', ['tile_width', 'tile_height'])
-
-PixelSizeMixin = tuple_mixin(
-    'PixelSizeMixin', 'pixel_size', ['pixel_width', 'pixel_height'])
-
-PixelPosMixin = tuple_mixin(
-    'PixelPosMixin', 'pixel_pos', ['pixel_x', 'pixel_y'])
-
-PosMixin = tuple_mixin('PosMixin', 'pos', ['x', 'y'])
+            getter, setter, doc=doc_template.format(full_prop_name, index))
+    return [get_prop(i) for i in range(count)]
 
 
-class SizeMixin(tuple_mixin('SizeMixin', 'size', ['width', 'height'])):
+class SizeMixin(object):
+    width, height = unpacked_properties('size')
+
     def _wrap_coords(self, x, y):
+        """Normalize coordinates for indexing/slicing
+
+        Positive values are unchanged, negative ones wrap around using
+        ``self.width`` & ``self.height``
+        """
         if x < 0:
             x += self.width
         if y < 0:
@@ -119,12 +103,13 @@ class LayerElementMixin(object):
         return self.layer.map
 
 
-class TileMixin(SizeMixin, PixelSizeMixin, PixelPosMixin, PosMixin,
-                    LayerElementMixin):
+class TileMixin(SizeMixin, LayerElementMixin):
     """Provides `size` based on `pixel_size` and the map
-
-    See the superclasses.
     """
+    tile_width, tile_height = unpacked_properties('tile_size')
+    pixel_width, pixel_height = unpacked_properties('pixel_size')
+    pixel_x, pixel_y = unpacked_properties('pixel_pos')
+    x, y = unpacked_properties('pos')
 
     @property
     def size(self):

@@ -73,7 +73,7 @@ class TilesetList(helpers.NamedElementList):
                 tile.gid = gid_map[tile.gid]
 
 
-class TilesetTile(helpers.PixelSizeMixin):
+class TilesetTile(object):
     """Reference to a tile within a tileset
 
     init arguents, which become attributes:
@@ -117,6 +117,8 @@ class TilesetTile(helpers.PixelSizeMixin):
             The probability that this tile will be chosen among others with the
             same terrain information. May be None.
     """
+    pixel_width, pixel_height = helpers.unpacked_properties('pixel_size')
+
     def __init__(self, tileset, number):
         self.tileset = tileset
         self.number = number
@@ -200,10 +202,7 @@ class TilesetTile(helpers.PixelSizeMixin):
         return tuple(result)
 
 
-TileOffsetMixin = helpers.tuple_mixin(
-    'TileOffsetMixin', 'tile_offset', ['tile_offset_x', 'tile_offset_y'])
-
-class Tileset(fileio.ReadWriteBase, TileOffsetMixin):
+class Tileset(fileio.ReadWriteBase):
     """Base class for a tileset: bank of tiles a map can use.
 
     There are two kinds of tilesets: external and internal.
@@ -274,6 +273,8 @@ class Tileset(fileio.ReadWriteBase, TileOffsetMixin):
     # will only work if all the tilesets are loaded with the same Serializer.)
     column_count = None
     _rw_obj_type = 'tileset'
+
+    tile_offset_x, tile_offset_y = helpers.unpacked_properties('tile_offset')
 
     def __init__(self, name, tile_size, source=None):
         self.name = name

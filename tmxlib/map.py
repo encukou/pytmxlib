@@ -5,8 +5,7 @@ from __future__ import division
 from tmxlib import helpers, fileio, tileset, layer
 
 
-class Map(fileio.ReadWriteBase,
-          helpers.SizeMixin, helpers.TileSizeMixin, helpers.PixelSizeMixin):
+class Map(fileio.ReadWriteBase, helpers.SizeMixin):
     """A tile map, tmxlib's core class
 
     init arguments, which become attributes:
@@ -66,6 +65,9 @@ class Map(fileio.ReadWriteBase,
 
     """
     _rw_obj_type = 'map'
+
+    tile_width, tile_height = helpers.unpacked_properties('tile_size')
+    pixel_width, pixel_height = helpers.unpacked_properties('pixel_size')
 
     # XXX: Fully implement, test, and document base_path:
     #   This should be used for saving, so that relative paths work as

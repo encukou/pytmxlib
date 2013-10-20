@@ -37,22 +37,30 @@ Dict conversion helpers
 .. autofunction:: tmxlib.helpers.from_dict_method
 .. autofunction:: tmxlib.helpers.assert_item
 
-Mixin classes for tuple properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Helpers for tuple properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: tmxlib.helpers.tuple_mixin
-.. autoclass:: tmxlib.helpers.PosMixin
+.. autofunction:: tmxlib.helpers.unpacked_properties
 .. autoclass:: tmxlib.helpers.SizeMixin
-.. autoclass:: tmxlib.helpers.PixelPosMixin
-.. autoclass:: tmxlib.helpers.PixelSizeMixin
-.. autoclass:: tmxlib.helpers.TileSizeMixin
+
+    .. autoattribute:: width
+    .. autoattribute:: height
+    .. automethod:: _wrap_coords
 
 Other mixins
 ~~~~~~~~~~~~
 
 .. autoclass:: tmxlib.helpers.LayerElementMixin
 .. autoclass:: tmxlib.helpers.TileMixin
-    :show-inheritance:
+
+    .. autoattribute:: width
+    .. autoattribute:: height
+    .. autoattribute:: tile_width
+    .. autoattribute:: tile_height
+    .. autoattribute:: pixel_x
+    .. autoattribute:: pixel_y
+    .. autoattribute:: x
+    .. autoattribute:: y
 
 Helpers
 ~~~~~~~
