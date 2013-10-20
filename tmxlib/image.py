@@ -18,11 +18,8 @@ try:
 except ImportError:  # pragma: no cover
     pass
 
-try:
-    from tmxlib import image_png
-    image_classes.append(image_png.PngImage)
-except ImportError:  # pragma: no cover
-    pass
+from tmxlib import image_png
+image_classes.append(image_png.PngImage)
 
 preferred_image_class = image_classes[0]
 
