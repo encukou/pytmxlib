@@ -175,8 +175,10 @@ def test_region_pixel(colorcorners_image, x, y):
     region = colorcorners_image[x:x + 1, y:y + 1]
     assert region.size == (region.width, region.height) == (1, 1)
     assert region[0, 0] == expected
+
     assert colorcorners_image[x:, y:][0, 0] == expected
     assert colorcorners_image[:, :][x, y] == expected
+
     region = colorcorners_image[:, :]
     region.x = x
     region.y = y
@@ -201,10 +203,20 @@ def test_region_image_set_deprecated(colorcorners_image, recwarn):
 
 
 def test_region_hierarchy(colorcorners_image):
-    region1 = colorcorners_image[1:, 1:]
-    region2 = region1[1:, 1:]
-    region3 = region2[1:, 1:]
+    region1 = colorcorners_image[1:900, 1:]
+    region2 = region1[1:, 1:900]
+    region3 = region2[1:900, 1:900]
     assert region1.parent is colorcorners_image
-    assert region2.parent is region1
-    assert region3.parent is region2
+    assert region2.parent is colorcorners_image
+    assert region3.parent is colorcorners_image
     assert region3[0, 0] == colorcorners_image[3, 3]
+
+    assert colorcorners_image.top_left == (0, 0)
+    assert region1.top_left == (1, 1)
+    assert region2.top_left == (2, 2)
+    assert region3.top_left == (3, 3)
+
+    assert colorcorners_image.size == (16, 16)
+    assert region1.size == (15, 15)
+    assert region2.size == (14, 14)
+    assert region3.size == (13, 13)

@@ -10,6 +10,15 @@ import warnings
 from tmxlib import helpers, fileio
 
 
+def _clamp(value, minimum, maximum):
+    if value < minimum:
+        return minimum
+    elif value > maximum:
+        return maximum
+    else:
+        return value
+
+
 class ImageBase(helpers.SizeMixin):
     """Image base class
 
@@ -20,6 +29,8 @@ class ImageBase(helpers.SizeMixin):
     Pixels are represented as (r, g, b, a) float tuples, with components in the
     range of 0 to 1.
     """
+    x, y = helpers.unpacked_properties('top_left')
+
     def __getitem__(self, pos):
         """Get a pixel or region
 
@@ -29,7 +40,7 @@ class ImageBase(helpers.SizeMixin):
         :param pos: pair of integers, (x, y)
         :return: pixel at (x, y) as a (r, g, b, a) float tuple
 
-        With a pair of slices, returns a sub-image linked to the original:
+        With a pair of slices, returns a sub-image:
 
         :param pos: pair of slices, (left:right, top:bottom)
         :return: a :class:`~tmxlib.image_base.ImageRegion`
@@ -52,6 +63,10 @@ class ImageBase(helpers.SizeMixin):
             right, bottom = self._wrap_coords(
                 self.width if right is None else right,
                 self.height if bottom is None else bottom)
+            left = _clamp(left, 0, self.width)
+            right = _clamp(right, left, self.width)
+            top = _clamp(top, 0, self.height)
+            bottom = _clamp(bottom, top, self.height)
             return ImageRegion(self, (left, top), (right - left, bottom - top))
 
 
@@ -89,8 +104,11 @@ class Image(ImageBase, fileio.ReadWriteBase):
     :meth:`tmxlib.image_base.ImageBase.__getitem__`
     """
     # XXX: Make `trans` actually work
-    # XXX: Make modifying and saving images work
+
     _rw_obj_type = 'image'
+
+    # Implement ImageRegion API
+    top_left = 0, 0
 
     def __init__(self, data=None, trans=None, size=None, source=None):
         self.trans = trans
@@ -162,6 +180,22 @@ class ImageRegion(ImageBase):
         self.top_left = top_left
         self.size = size
 
+        if self.x < 0 or self.y < 0:
+            raise ValueError('Image region coordinates may not be negative')
+
+        if (self.x + self.width > parent.width or
+                self.y + self.height > parent.height):
+            raise ValueError('Image region extends outside parent image')
+
+        try:
+            image = self.parent.parent
+        except AttributeError:
+            return
+        else:
+            self.x += self.parent.x
+            self.y += self.parent.y
+            self.parent = self.parent.parent
+
     @property
     def image(self):
         warnings.warn("ImageRegion.image is deprecated; use parent instead",
@@ -172,22 +206,6 @@ class ImageRegion(ImageBase):
         warnings.warn("ImageRegion.image is deprecated; use parent instead",
                       category=DeprecationWarning)
         self.parent = value
-
-    @property
-    def x(self):
-        return self.top_left[0]
-
-    @x.setter
-    def x(self, value):
-        self.top_left = value, self.top_left[1]
-
-    @property
-    def y(self):
-        return self.top_left[1]
-
-    @y.setter
-    def y(self, value):
-        self.top_left = self.top_left[0], value
 
     @property
     def trans(self):
