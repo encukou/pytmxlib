@@ -5,11 +5,11 @@ import warnings
 from StringIO import StringIO
 
 import pytest
-import PIL.Image
 
 import tmxlib
 import tmxlib.image_base
 from tmxlib_test import get_test_filename, file_contents, assert_color_tuple_eq
+
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
@@ -45,6 +45,16 @@ def colorcorners_image(colorcorners_image_raw, colorcorners_image_type):
         return colorcorners_image_raw
     else:
         return colorcorners_image_raw[:, :]
+
+
+def pil_image_open(*args, **kwargs):
+    """Call PIL.Image.open if PIL is available, otherwise skip test"""
+    try:
+        import PIL.Image
+    except ImportError:
+        raise pytest.skip('PIL not installed, cannot compare images')
+    else:
+        return PIL.Image.open(*args, **kwargs)
 
 
 def test_map_get_pixel():
@@ -242,7 +252,8 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
 
 
 def test_repr_png(colorcorners_image):
-    a = PIL.Image.open(get_test_filename('colorcorners.png'))
-    b = PIL.Image.open(StringIO(colorcorners_image._repr_png_()))
+    data = colorcorners_image._repr_png_()
+    a = pil_image_open(get_test_filename('colorcorners.png'))
+    b = pil_image_open(StringIO(data))
     assert b.format == 'PNG'
     assert a.convert('RGBA').tobytes() == b.convert('RGBA').tobytes()
