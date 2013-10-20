@@ -37,3 +37,10 @@ class PngImage(tmxlib.image_base.Image):
     def get_pixel(self, x, y):
         x, y = self._wrap_coords(x, y)
         return tuple(v / 255 for v in self.image_data[y][x * 4:(x + 1) * 4])
+
+    def _repr_png_(self):
+        """Hook for IPython Notebook
+
+        See: http://ipython.org/ipython-doc/stable/config/integrating.html
+        """
+        return self.data

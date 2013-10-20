@@ -2,8 +2,10 @@ from __future__ import division
 
 import os
 import warnings
+from StringIO import StringIO
 
 import pytest
+import PIL.Image
 
 import tmxlib
 import tmxlib.image_base
@@ -220,3 +222,10 @@ def test_region_hierarchy(colorcorners_image):
     assert region1.size == (15, 15)
     assert region2.size == (14, 14)
     assert region3.size == (13, 13)
+
+
+def test_repr_png(colorcorners_image):
+    a = PIL.Image.open(get_test_filename('colorcorners.png'))
+    b = PIL.Image.open(StringIO(colorcorners_image._repr_png_()))
+    assert b.format == 'PNG'
+    assert a.convert('RGBA').tobytes() == b.convert('RGBA').tobytes()

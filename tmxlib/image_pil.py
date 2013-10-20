@@ -42,3 +42,12 @@ class PilImage(tmxlib.image_base.Image):
     def get_pixel(self, x, y):
         x, y = self._wrap_coords(x, y)
         return tuple(v / 255 for v in self.pil_image.getpixel((x, y)))
+
+    def _repr_png_(self):
+        """Hook for IPython Notebook
+
+        See: http://ipython.org/ipython-doc/stable/config/integrating.html
+        """
+        buf = StringIO.StringIO()
+        self.pil_image.save(buf, "PNG")
+        return buf.getvalue()
