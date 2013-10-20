@@ -27,6 +27,10 @@ class Canvas(PilImage):
     Some operations, such as taking an ImageRegion, will work on an immutable
     copy of the canvas.
 
+    :param commands:
+        An iterable of drawing commands to apply on the canvas right after
+        creation
+
     init arguments that become attributes:
 
         .. attribute:: size
@@ -37,9 +41,12 @@ class Canvas(PilImage):
     size = 0, 0
     pil_image = None
 
-    def __init__(self, size=(0, 0)):
+    def __init__(self, size=(0, 0), commands=()):
         self.size = size
         self.pil_image = Image.new('RGBA', size)
+
+        for command in commands:
+            command.draw(self)
 
     def to_image(self):
         """Take an immutable copy of this Canvas

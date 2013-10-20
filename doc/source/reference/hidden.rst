@@ -133,3 +133,9 @@ class :class:`tmxlib.mapobject.EllipseObject`
 
         .. automethod:: tmxlib.mapobject.EllipseObject.to_dict
         .. automethod:: tmxlib.mapobject.EllipseObject.from_dict
+
+class :class:`tmxlib.draw.DrawImageCommand`
+
+    :class:`DrawCommand` methods
+
+        .. automethod:: tmxlib.draw.DrawImageCommand.draw

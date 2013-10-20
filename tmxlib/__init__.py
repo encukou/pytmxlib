@@ -13,6 +13,7 @@ from tmxlib.layer import ImageLayer, ObjectLayer, TileLayer
 from tmxlib.mapobject import (PolygonObject, PolylineObject, RectangleObject,
                               EllipseObject)
 from tmxlib import image
+from tmxlib import draw
 
 
 __version__ = '0.2.0'

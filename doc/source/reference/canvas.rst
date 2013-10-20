@@ -1,6 +1,6 @@
 
-The tmxlib.canvas module
-========================
+The tmxlib.canvas and draw modules
+==================================
 
 .. automodule:: tmxlib.canvas
 
@@ -29,3 +29,12 @@ The tmxlib.canvas module
                 on PIL; their ``pil_image`` attribute might only give a copy of
                 the data.
                 If PIL is not installed, the attribute won't be present at all.
+
+.. automodule:: tmxlib.draw
+
+.. autoclass:: tmxlib.draw.DrawCommand
+
+    .. automethod:: draw
+
+
+.. autoclass:: tmxlib.draw.DrawImageCommand

@@ -46,18 +46,29 @@ def colorcorners_image(colorcorners_image_raw, colorcorners_image_type):
     if colorcorners_image_type == 'region':
         return colorcorners_image_raw[:, :]
     if colorcorners_image_type == 'canvas':
-        canvas = canvas_class()((16, 16))
+        canvas = canvas_mod().Canvas((16, 16))
         canvas.draw_image(colorcorners_image_raw)
         return canvas
 
 
 @pytest.fixture
-def canvas_class():
+def canvas_mod():
+    """Return the canvas module, or skip test if unavailable"""
     try:
-        from tmxlib.canvas import Canvas
+        from tmxlib import canvas
     except ImportError:
         raise pytest.skip('Canvas not available')
-    return Canvas
+    return canvas
+
+
+@pytest.fixture
+def commands_4cc(colorcorners_image):
+    return [
+        tmxlib.draw.DrawImageCommand(colorcorners_image),
+        tmxlib.draw.DrawImageCommand(colorcorners_image, (16, 0)),
+        tmxlib.draw.DrawImageCommand(colorcorners_image, (0, 16)),
+        tmxlib.draw.DrawImageCommand(colorcorners_image, (16, 16)),
+    ]
 
 
 def pil_image_open(*args, **kwargs):
@@ -265,23 +276,35 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
     assert region3.size == (13, 13)
 
 
-def test_repr_png(colorcorners_image):
-    data = colorcorners_image._repr_png_()
-    a = pil_image_open(get_test_filename('colorcorners.png'))
+def assert_png_images_equal(image, filename):
+    data = image._repr_png_()
+    a = pil_image_open(get_test_filename(filename))
     b = pil_image_open(StringIO(data))
     assert b.format == 'PNG'
     assert a.convert('RGBA').tobytes() == b.convert('RGBA').tobytes()
 
 
-def test_canvas(colorcorners_image, canvas_class):
-    canvas = canvas_class((32, 32))
+def test_repr_png(colorcorners_image):
+    assert_png_images_equal(colorcorners_image, 'colorcorners.png')
+
+
+def test_canvas_draw_image(colorcorners_image, canvas_mod):
+    canvas = canvas_mod.Canvas((32, 32))
     canvas.draw_image(colorcorners_image)
     canvas.draw_image(colorcorners_image, (16, 0))
     canvas.draw_image(colorcorners_image, (0, 16))
     canvas.draw_image(colorcorners_image, (16, 16))
 
-    data = canvas._repr_png_()
-    a = pil_image_open(get_test_filename('colorcorners-x4.png'))
-    b = pil_image_open(StringIO(data))
-    assert b.format == 'PNG'
-    assert a.convert('RGBA').tobytes() == b.convert('RGBA').tobytes()
+    assert_png_images_equal(canvas, 'colorcorners-x4.png')
+
+
+def test_canvas_draw_image_command(canvas_mod, commands_4cc):
+    canvas = canvas_mod.Canvas((32, 32))
+    for command in commands_4cc:
+        command.draw(canvas)
+    assert_png_images_equal(canvas, 'colorcorners-x4.png')
+
+
+def test_canvas_init_commands(canvas_mod, commands_4cc):
+    canvas = canvas_mod.Canvas((32, 32), commands=commands_4cc)
+    assert_png_images_equal(canvas, 'colorcorners-x4.png')
