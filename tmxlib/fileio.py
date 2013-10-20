@@ -18,7 +18,7 @@ import six
 try:
     from lxml import etree
     have_lxml = True
-except ImportError:
+except ImportError:  # pragma: no cover
     from xml.etree import ElementTree as etree
     have_lxml = False
     warnings.warn(ImportWarning('lxml is recommended'))
@@ -130,7 +130,7 @@ class TMXSerializer(object):
     def load(self, cls, obj_type, string, base_path=None):
         if have_lxml:
             tree = etree.XML(string, etree.XMLParser(remove_comments=True))
-        else:
+        else:  # pragma: no cover
             tree = etree.XML(string)
             def strip_comments(elem):
                 for subelem in elem:
@@ -155,7 +155,7 @@ class TMXSerializer(object):
         extra_kwargs = {}
         if have_lxml:
             extra_kwargs = dict(pretty_print=True, xml_declaration=True)
-        else:
+        else:  # pragma: no cover
             extra_kwargs = dict()
         return etree.tostring(self.to_element(obj, obj_type, base_path),
                 encoding='UTF-8', **extra_kwargs)
@@ -484,7 +484,7 @@ class TMXSerializer(object):
             bytes_io = io.BytesIO()
             if sys.version_info >= (2, 7):
                 kwargs = dict(mtime=getattr(layer, 'mtime', None))
-            else:
+            else:  # pragma: no cover
                 kwargs = dict()
             gzfile = gzip.GzipFile(fileobj=bytes_io, mode='wb', **kwargs)
             gzfile.write(data)
@@ -501,7 +501,7 @@ class TMXSerializer(object):
         else:
             raise ValueError('Bad encoding: %s', encoding)
         data_elem = etree.Element('data', attrib=extra_attrib)
-        if six.PY3:
+        if six.PY3:  # pragma: no cover
             # etree only deals with (unicode) strings
             data = data.decode('ascii')
         data_elem.text = data
