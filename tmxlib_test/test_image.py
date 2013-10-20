@@ -11,14 +11,18 @@ from tmxlib_test import get_test_filename, file_contents, assert_color_tuple_eq
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
+
 if os.environ.get('PYTMXLIB_TEST_SKIP_IMAGE'):  # pragma: no cover
     @pytest.fixture
     def image_class(request):
         raise pytest.skip('Not testing images')
 else:
-    @pytest.fixture(params=tmxlib.image.image_classes)
+    image_class_names = [c.__name__ for c in tmxlib.image.image_classes]
+    image_classes = dict((c.__name__, c) for c in tmxlib.image.image_classes)
+
+    @pytest.fixture(params=image_class_names)
     def image_class(request):
-        return request.param
+        return image_classes[request.param]
 
 
 @pytest.fixture
