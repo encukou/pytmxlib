@@ -222,3 +222,7 @@ class ImageRegion(ImageBase):
         if not (0 <= y < self.height):
             raise ValueError('y coordinate out of bounds')
         return self.parent.get_pixel(x + self.x, y + self.y)
+
+    def _repr_png_(self):
+        crop_box = self.x, self.y, self.x + self.width, self.y + self.height
+        return self.parent._repr_png_(crop_box)

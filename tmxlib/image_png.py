@@ -2,6 +2,7 @@
 from __future__ import division
 
 from array import array
+from StringIO import StringIO
 
 import png
 
@@ -38,9 +39,15 @@ class PngImage(tmxlib.image_base.Image):
         x, y = self._wrap_coords(x, y)
         return tuple(v / 255 for v in self.image_data[y][x * 4:(x + 1) * 4])
 
-    def _repr_png_(self):
+    def _repr_png_(self, _crop_box=None):
         """Hook for IPython Notebook
 
         See: http://ipython.org/ipython-doc/stable/config/integrating.html
         """
+        if _crop_box:
+            left, up, right, low = _crop_box
+            data = [l[left * 4:right * 4] for l in self.image_data[up:low]]
+            out = StringIO()
+            png.from_array(data, 'RGBA').save(out)
+            return out.getvalue()
         return self.data

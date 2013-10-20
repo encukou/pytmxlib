@@ -43,11 +43,15 @@ class PilImage(tmxlib.image_base.Image):
         x, y = self._wrap_coords(x, y)
         return tuple(v / 255 for v in self.pil_image.getpixel((x, y)))
 
-    def _repr_png_(self):
+    def _repr_png_(self, _crop_box=None):
         """Hook for IPython Notebook
 
         See: http://ipython.org/ipython-doc/stable/config/integrating.html
         """
+        if _crop_box:
+            image = self.pil_image.crop(_crop_box)
+        else:
+            image = self.pil_image
         buf = StringIO.StringIO()
-        self.pil_image.save(buf, "PNG")
+        image.save(buf, "PNG")
         return buf.getvalue()
