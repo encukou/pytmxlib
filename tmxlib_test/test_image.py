@@ -282,16 +282,24 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
     assert region3.size == (13, 13)
 
 
-def assert_png_images_equal(image, filename):
+def assert_png_repr_equal(image, filename):
     data = image._repr_png_()
     a = pil_image_open(get_test_filename(filename))
     b = pil_image_open(StringIO(data))
     assert b.format == 'PNG'
-    assert a.convert('RGBA').tobytes() == b.convert('RGBA').tobytes()
+    abytes = a.convert('RGBA').tobytes()
+    bbytes = b.convert('RGBA').tobytes()
+    if abytes != bbytes:
+        from tmxlib_test.image_to_term import image_to_term256
+        print "Expected: ({im.size[0]}x{im.size[1]})".format(im=a)
+        print image_to_term256(a)
+        print "Got: ({im.size[0]}x{im.size[1]})".format(im=b)
+        print image_to_term256(b)
+    assert abytes == bbytes
 
 
 def test_repr_png(colorcorners_image):
-    assert_png_images_equal(colorcorners_image, 'colorcorners.png')
+    assert_png_repr_equal(colorcorners_image, 'colorcorners.png')
 
 
 def test_canvas_draw_image(colorcorners_image, canvas_mod):
@@ -301,7 +309,7 @@ def test_canvas_draw_image(colorcorners_image, canvas_mod):
     canvas.draw_image(colorcorners_image, (0, 16))
     canvas.draw_image(colorcorners_image, (16, 16))
 
-    assert_png_images_equal(canvas, 'colorcorners-x4.png')
+    assert_png_repr_equal(canvas, 'colorcorners-x4.png')
 
 
 def test_canvas_draw_overlap(image_class, canvas_mod):
@@ -309,16 +317,31 @@ def test_canvas_draw_overlap(image_class, canvas_mod):
     canvas.draw_image(load_image(image_class, 'scribble.png'))
     canvas.draw_image(load_image(image_class, 'colorcorners.png'), (8, 8))
 
-    assert_png_images_equal(canvas, 'colorcorners-mid.png')
+    assert_png_repr_equal(canvas, 'colorcorners-mid.png')
 
 
 def test_canvas_draw_image_command(canvas_mod, commands_4cc):
     canvas = canvas_mod.Canvas((32, 32))
     for command in commands_4cc:
         command.draw(canvas)
-    assert_png_images_equal(canvas, 'colorcorners-x4.png')
+    assert_png_repr_equal(canvas, 'colorcorners-x4.png')
 
 
 def test_canvas_init_commands(canvas_mod, commands_4cc):
     canvas = canvas_mod.Canvas((32, 32), commands=commands_4cc)
-    assert_png_images_equal(canvas, 'colorcorners-x4.png')
+    assert_png_repr_equal(canvas, 'colorcorners-x4.png')
+
+
+def test_render_layer(canvas_mod):
+    commands = []
+    desert = tmxlib.Map.open(get_test_filename('desert.tmx'))
+    for layer in desert.layers:
+        commands.extend(layer.generate_draw_commands())
+
+    canvas = canvas_mod.Canvas(desert.pixel_size, commands=commands)
+    assert_png_repr_equal(canvas, 'desert.rendered.png')
+
+
+def test_layer_repr_png(canvas_mod):
+    desert = tmxlib.Map.open(get_test_filename('desert.tmx'))
+    assert_png_repr_equal(desert.layers[0], 'desert.rendered.png')

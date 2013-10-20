@@ -4,7 +4,7 @@ from __future__ import division
 
 import array
 
-from tmxlib import helpers, tileset, tile, mapobject, image, fileio
+from tmxlib import helpers, tileset, tile, mapobject, image, fileio, draw
 
 
 class LayerList(helpers.NamedElementList):
@@ -241,6 +241,20 @@ class TileLayer(Layer):
             )
         self.properties.update(dct.pop('properties', {}))
         return self
+
+    def generate_draw_commands(self):
+        for tile in self.all_tiles():
+            if tile:
+                yield draw.DrawImageCommand(
+                    image=tile.image,
+                    pos=(tile.pixel_x, tile.pixel_y - tile.pixel_height),
+                )
+
+    def _repr_png_(self):
+        from tmxlib.canvas import Canvas
+        canvas = Canvas(self.map.pixel_size,
+                        commands=self.generate_draw_commands())
+        return canvas._repr_png_()
 
 
 class ImageLayer(Layer):
