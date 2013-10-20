@@ -8,7 +8,7 @@ This module requires PIL_ (or Pillow_) to be installed.
 
 from __future__ import division
 
-from StringIO import StringIO
+from six import BytesIO
 
 try:
     from PIL import Image
@@ -72,7 +72,7 @@ class Canvas(PilImage):
         try:
             pil_image = parent.pil_image
         except AttributeError:
-            input = StringIO(parent._repr_png_())
+            input = BytesIO(parent._repr_png_())
             pil_image = Image.open(input)
         if crop:
             pil_image = pil_image.crop((image.x, image.y,

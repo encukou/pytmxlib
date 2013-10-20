@@ -1,7 +1,7 @@
 
 from __future__ import division
 
-import StringIO
+from six import BytesIO
 
 from PIL import Image
 
@@ -22,7 +22,7 @@ class PilImage(tmxlib.image_base.Image):
             self._pil_image
             return self.size
         except AttributeError:
-            self._pil_image = Image.open(StringIO.StringIO(self.data))
+            self._pil_image = Image.open(BytesIO(self.data))
             self._pil_image = self._pil_image.convert('RGBA')
             w, h = self._pil_image.size
             if self._size:
@@ -52,6 +52,6 @@ class PilImage(tmxlib.image_base.Image):
             image = self.pil_image.crop(_crop_box)
         else:
             image = self.pil_image
-        buf = StringIO.StringIO()
+        buf = BytesIO()
         image.save(buf, "PNG")
         return buf.getvalue()

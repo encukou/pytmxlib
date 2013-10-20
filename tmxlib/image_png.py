@@ -1,8 +1,7 @@
 
 from __future__ import division
 
-from array import array
-from StringIO import StringIO
+from six import BytesIO
 
 import png
 
@@ -47,7 +46,7 @@ class PngImage(tmxlib.image_base.Image):
         if _crop_box:
             left, up, right, low = _crop_box
             data = [l[left * 4:right * 4] for l in self.image_data[up:low]]
-            out = StringIO()
+            out = BytesIO()
             png.from_array(data, 'RGBA').save(out)
             return out.getvalue()
         return self.data

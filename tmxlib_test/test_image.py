@@ -1,8 +1,8 @@
-from __future__ import division
+from __future__ import division, print_function
 
 import os
 import warnings
-from StringIO import StringIO
+from six import BytesIO
 
 import pytest
 
@@ -285,16 +285,16 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
 def assert_png_repr_equal(image, filename):
     data = image._repr_png_()
     a = pil_image_open(get_test_filename(filename))
-    b = pil_image_open(StringIO(data))
+    b = pil_image_open(BytesIO(data))
     assert b.format == 'PNG'
     abytes = a.convert('RGBA').tobytes()
     bbytes = b.convert('RGBA').tobytes()
     if abytes != bbytes:
         from tmxlib_test.image_to_term import image_to_term256
-        print "Expected: ({im.size[0]}x{im.size[1]})".format(im=a)
-        print image_to_term256(a)
-        print "Got: ({im.size[0]}x{im.size[1]})".format(im=b)
-        print image_to_term256(b)
+        print("Expected: ({im.size[0]}x{im.size[1]})".format(im=a))
+        print(image_to_term256(a))
+        print("Got: ({im.size[0]}x{im.size[1]})".format(im=b))
+        print(image_to_term256(b))
     assert abytes == bbytes
 
 
