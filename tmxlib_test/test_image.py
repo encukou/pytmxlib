@@ -28,10 +28,23 @@ else:
 
 
 @pytest.fixture
-def colorcorners_image(image_class):
+def colorcorners_image_raw(image_class):
     filename = get_test_filename('colorcorners.png')
     data = file_contents(filename)
     return image_class(data=data, source=filename)
+
+
+@pytest.fixture(params=('image', 'region'))
+def colorcorners_image_type(request):
+    return request.param
+
+
+@pytest.fixture
+def colorcorners_image(colorcorners_image_raw, colorcorners_image_type):
+    if colorcorners_image_type == 'image':
+        return colorcorners_image_raw
+    else:
+        return colorcorners_image_raw[:, :]
 
 
 def test_map_get_pixel():
@@ -113,9 +126,9 @@ def test_get_pixel(colorcorners_image, expected_pixel):
     assert colorcorners_image.get_pixel(*coords) == color
 
 
-def test_load_image(colorcorners_image):
-    assert colorcorners_image.load_image() == (16, 16)
-    assert colorcorners_image.load_image() == (16, 16)
+def test_load_image(colorcorners_image_raw):
+    assert colorcorners_image_raw.load_image() == (16, 16)
+    assert colorcorners_image_raw.load_image() == (16, 16)
 
 
 @pytest.fixture(params=[(1, 0, 0), (0, 1, 0), (0, 0, 1)])
@@ -204,13 +217,17 @@ def test_region_image_set_deprecated(colorcorners_image, recwarn):
     assert region.parent == None
 
 
-def test_region_hierarchy(colorcorners_image):
+def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
+    if colorcorners_image_type == 'region':
+        parent = colorcorners_image.parent
+    else:
+        parent = colorcorners_image
     region1 = colorcorners_image[1:900, 1:]
     region2 = region1[1:, 1:900]
     region3 = region2[1:900, 1:900]
-    assert region1.parent is colorcorners_image
-    assert region2.parent is colorcorners_image
-    assert region3.parent is colorcorners_image
+    assert region1.parent is parent
+    assert region2.parent is parent
+    assert region3.parent is parent
     assert region3[0, 0] == colorcorners_image[3, 3]
 
     assert colorcorners_image.top_left == (0, 0)
