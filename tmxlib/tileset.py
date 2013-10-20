@@ -100,7 +100,8 @@ class TilesetTile(object):
         .. attribute:: image
 
             Image this tile uses. Most often this will be a
-            :class:`region <ImageRegion>` of the tileset's image.
+            :class:`region <~tmxlib.image_base.ImageRegion>` of the tileset's
+            image.
 
         .. attribute:: terrain_indices
 
@@ -465,7 +466,8 @@ class ImageTileset(Tileset):
         y, x = divmod(number, self.column_count)
         left = self.margin + x * (self.tile_width + self.spacing)
         top = self.margin + y * (self.tile_height + self.spacing)
-        return image.ImageRegion(self.image, (left, top), self.tile_size)
+        return self.image[left:left + self.tile_width,
+                          top:top + self.tile_height]
 
     def to_dict(self, **kwargs):
         """Export to a dict compatible with Tiled's JSON plugin"""
