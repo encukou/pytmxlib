@@ -1,9 +1,9 @@
-tmxlib
-======
-
 [![Build Status](https://secure.travis-ci.org/encukou/pytmxlib.png?branch=master)](http://travis-ci.org/encukou/pytmxlib)
 [![Coverage Status](https://coveralls.io/repos/encukou/pytmxlib/badge.png?branch=tests)](https://coveralls.io/r/encukou/pytmxlib?branch=tests)
 [![PyPI](https://pypip.in/v/tmxlib/badge.png)](https://crate.io/package/tmxlib)
+
+tmxlib
+======
 
 A MIT-licensed Python library for handling TMX tile maps, such as those made by
 the Tiled editor.
