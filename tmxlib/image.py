@@ -2,7 +2,7 @@
 ----------------
 
 The :func:`~tmxlib.image.open` function provides a high-level interface to
-opening images, regardless
+opening images.
 
 """
 

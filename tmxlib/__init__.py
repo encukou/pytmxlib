@@ -1,6 +1,6 @@
 """Library for handling "TMX" tile maps, such as those made by the Tiled editor
 
-For the Tiled map editor http://www.mapeditor.org/
+For the Tiled map editor see http://www.mapeditor.org/
 """
 
 from __future__ import division
