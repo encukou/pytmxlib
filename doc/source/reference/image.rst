@@ -45,9 +45,6 @@ Image
 
         .. automethod:: load_image
 
-    .. note::
-        It's currently not possible to save modified images.
-
 ImageRegion
 -----------
 

@@ -10,6 +10,7 @@ Legend:
 
     + Image slicing now creates ImageRegions
     + Images are now displayed graphically in IPython Notebook
+    + Added a mutable image class, the Canvas
 
     - Renamed ImageRegion.image to .parent; the former is a deprecated alias
 

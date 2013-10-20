@@ -2,7 +2,7 @@
 ----------------
 
 The :func:`~tmxlib.image.open` function provides a high-level interface to
-opening images.
+reading images.
 
 """
 
@@ -10,7 +10,6 @@ from __future__ import division
 
 _builtin_open = open
 
-from tmxlib.image_base import Image, ImageRegion
 
 image_classes = []
 try:

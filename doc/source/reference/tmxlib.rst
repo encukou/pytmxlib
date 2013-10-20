@@ -36,5 +36,6 @@ See submodule documentation for more details:
     mapobject
     terrain
     image
+    canvas
     helpers
     hidden

@@ -69,6 +69,14 @@ class ImageBase(helpers.SizeMixin):
             bottom = _clamp(bottom, top, self.height)
             return ImageRegion(self, (left, top), (right - left, bottom - top))
 
+    def _parent_info(self):
+        """Return (x offset, y offset, immutable image)
+
+        Used to make sure the parents of ImageRegion is always an Image,
+        not another region or a canvas.
+        """
+        return 0, 0, self
+
 
 class Image(ImageBase, fileio.ReadWriteBase):
     """An image. Conceptually, an 2D array of pixels.
@@ -176,7 +184,6 @@ class ImageRegion(ImageBase):
             Will also available as ``width`` and ``height`` attributes.
     """
     def __init__(self, parent, top_left, size):
-        self.parent = parent
         self.top_left = top_left
         self.size = size
 
@@ -187,14 +194,9 @@ class ImageRegion(ImageBase):
                 self.y + self.height > parent.height):
             raise ValueError('Image region extends outside parent image')
 
-        try:
-            image = self.parent.parent
-        except AttributeError:
-            return
-        else:
-            self.x += self.parent.x
-            self.y += self.parent.y
-            self.parent = self.parent.parent
+        px, py, self.parent = parent._parent_info()
+        self.x += px
+        self.y += py
 
     @property
     def image(self):
@@ -226,3 +228,6 @@ class ImageRegion(ImageBase):
     def _repr_png_(self):
         crop_box = self.x, self.y, self.x + self.width, self.y + self.height
         return self.parent._repr_png_(crop_box)
+
+    def _parent_info(self):
+        return self.x, self.y, self.parent
