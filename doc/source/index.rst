@@ -53,7 +53,7 @@ Tests
 To run tests, ``pip install pytest-cov``, and run ``py.test``.
 
 Tests can be run using tox_, to ensure cross-Python compatibility. Make sure
-you have all supported Pythons (2.6, 2.7, 3.1, 3.2) installed, and run ``tox``.
+you have all supported Pythons (2.6, 2.7, 3.3) installed, and run ``tox``.
 
 Nowadays we use Travis CI and Coveralls to run tests after each commit:
 |ci-status| |coveralls-badge|
