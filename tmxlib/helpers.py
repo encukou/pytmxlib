@@ -6,6 +6,7 @@ import functools
 import collections
 import contextlib
 import six
+import itertools
 
 
 class UsedTilesetError(ValueError):
@@ -44,6 +45,14 @@ def assert_item(dct, key, expected_value):
     if actual_value != expected_value:
         raise ValueError('bad value: {0} = {1}; should be {2}'.format(
             key, actual_value, expected_value))
+
+
+def grouper(iterable, n, fillvalue=None):
+    # http://docs.python.org/2/library/itertools.html#recipes
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 
 class Property(property):

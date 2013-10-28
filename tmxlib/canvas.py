@@ -9,9 +9,11 @@ This module requires PIL_ (or Pillow_) to be installed.
 from __future__ import division
 
 from six import BytesIO
+import contextlib
 
 try:
     from PIL import Image
+    from PIL import ImageDraw
 except ImportError:  # pragma: no cover
     raise ImportError('The PIL library (Pillow on PyPI) is needed for Canvas')
 
@@ -37,13 +39,24 @@ class Canvas(PilImage):
 
             The size of this Canvas.
             Will also available as ``width`` and ``height`` attributes.
+
+        .. attribute:: color
+
+            The initial color the canvas will have
     """
     size = 0, 0
     pil_image = None
 
-    def __init__(self, size=(0, 0), commands=()):
+    def __init__(self, size=(0, 0), commands=(),
+                 color=(0, 0, 0, 0)):
         self.size = size
-        self.pil_image = Image.new('RGBA', size, color=(0, 0, 0, 0))
+        color = tuple(color)
+        if len(color) == 3:
+            color += (0,)
+        elif len(color) != 4:
+            raise ValueError('invalid color: {0}'.format(color))
+        self.pil_image = Image.new('RGBA', size,
+                                   color=tuple(int(v * 256) for v in color))
 
         for command in commands:
             command.draw(self)
@@ -66,6 +79,32 @@ class Canvas(PilImage):
 
     def _parent_info(self):
         return 0, 0, self.to_image()
+
+    @contextlib.contextmanager
+    def _opacity_layer(self, opacity):
+        """Context manager that yields an image to draw on
+
+        After drawing, the drawed-upon image will be composed onto the
+        Canvas.
+        """
+        if opacity == 1:
+            yield self.pil_image
+        else:
+            # Get a fresh image
+            t_image = Image.new('RGBA',
+                                (self.width, self.height),
+                                color=(0, 0, 0, 0))
+            # Let caller draw into it
+            yield t_image
+            # Reduce its alpha
+            bands = t_image.split()
+            alpha_channel = bands[3]
+            alpha_channel = alpha_channel.point(
+                lambda x: int(x * opacity))
+            t_image = Image.merge('RGBA', bands[:3] + (alpha_channel, ))
+            # Finally, blit it to the canvas
+            self.pil_image = Image.alpha_composite(self.pil_image,
+                                                   t_image)
 
     def draw_image(self, image, pos=(0, 0), opacity=1):
         """Paste the given image at the given position
@@ -91,23 +130,31 @@ class Canvas(PilImage):
                                         image.y + image.height))
 
         if opacity == 1:
-            alpha_channel = pil_image
-            self.pil_image.paste(pil_image, (x, y), mask=alpha_channel)
+            self.pil_image.paste(pil_image, (x, y), mask=pil_image)
         else:
-            # Create temporary image the same size as the canvas
-            bigger_image = Image.new('RGBA',
-                                     (self.width, self.height),
-                                     color=(0, 0, 0, 0))
-            # Blit into it
-            bigger_image.paste(pil_image, (x, y))
-            # Reduce its alpha
-            bands = bigger_image.split()
-            alpha_channel = bands[3]
-            alpha_channel = alpha_channel.point(
-                lambda x: int(x * opacity))
-            bigger_image = Image.merge('RGBA', bands[:3] + (alpha_channel, ))
-            # Finally, blit it to the canvas
-            self.pil_image = Image.alpha_composite(
-                self.pil_image,
-                bigger_image)
-            # Thanks, PIL, for making this so easy!
+            with self._opacity_layer(opacity) as ol:
+                ol.paste(pil_image, (x, y))
+
+    def draw_rectangle(self, pos, size, color, width=1, opacity=1):
+        """Draw a rectangle
+        """
+        assert width == 1, 'width != not supported yet'
+        x, y = pos
+        w, h = size
+        color = tuple(int(v * 255) for v in color)
+        with self._opacity_layer(opacity) as ol:
+            draw = ImageDraw.Draw(ol)
+            draw.rectangle((x, y, x + w, y + h),
+                           outline=color)
+
+    def fill_rectangle(self, pos, size, color, width=1, opacity=1):
+        """Draw a rectangle
+        """
+        assert width == 1, 'width != not supported yet'
+        x, y = pos
+        w, h = size
+        color = tuple(int(v * 255) for v in color)
+        with self._opacity_layer(opacity) as ol:
+            draw = ImageDraw.Draw(ol)
+            draw.rectangle((x, y, x + w, y + h),
+                           fill=color)

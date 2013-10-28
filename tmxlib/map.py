@@ -2,6 +2,8 @@
 
 from __future__ import division
 
+import itertools
+
 from tmxlib import helpers, fileio, tileset, layer
 
 
@@ -176,6 +178,20 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
         large_gid = self.end_gid
         for tile in self.all_tiles():
             assert tile.gid < large_gid
+
+    def generate_draw_commands(self):
+        return itertools.chain.from_iterable(
+            layer.generate_draw_commands() for layer in self.layers)
+
+    def render(self):
+        from tmxlib.canvas import Canvas
+        canvas = Canvas(self.pixel_size,
+                        #color=self.background_color,
+                        commands=self.generate_draw_commands())
+        return canvas
+
+    def _repr_png_(self):
+        return self.render()._repr_png_()
 
     def to_dict(self):
         """Export to a dict compatible with Tiled's JSON plugin

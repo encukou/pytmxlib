@@ -10,17 +10,7 @@ from array import array
 
 import tmxlib
 import tmxlib.image_base
-
-
-def _grouper(iterable, n):
-    "Collect data into fixed-length chunks, ignoring extras at the end"
-    # grouper('ABCDEFG', 3) --> ABC DEF
-    args = [iter(iterable)] * n
-    if six.PY3:
-        izip = zip
-    else:
-        izip = itertools.izip
-    return izip(*args)
+from tmxlib.helpers import grouper
 
 
 class PngImage(tmxlib.image_base.Image):
@@ -55,7 +45,7 @@ class PngImage(tmxlib.image_base.Image):
                         'B',
                         itertools.chain.from_iterable(
                             v[:3] + (0,) if tuple(v[:3]) == xtrans else v
-                            for v in _grouper(line, 4))))
+                            for v in grouper(line, 4))))
                 self._image_data = new_data
             else:
                 self._image_data = data

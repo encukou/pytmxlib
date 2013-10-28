@@ -348,6 +348,11 @@ class ObjectLayer(Layer, helpers.NamedElementList):
             raise ValueError('Incompatible object')
         return item
 
+    def generate_draw_commands(self):
+        for obj in self:
+            for cmd in obj.generate_draw_commands():
+                yield cmd
+
     def __nonzero__(self):
         return bool(len(self))
 

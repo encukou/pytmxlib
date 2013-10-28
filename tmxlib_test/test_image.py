@@ -10,7 +10,9 @@ import pytest
 import tmxlib
 import tmxlib.image_base
 from tmxlib.compatibility import ord_
+from tmxlib.helpers import grouper
 from tmxlib_test import get_test_filename, file_contents, assert_color_tuple_eq
+from tmxlib_test.test_tmx_roundtrips import filename, rendered_filename
 
 
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
@@ -294,11 +296,20 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
     assert region3.size == (13, 13)
 
 
-def assert_png_repr_equal(image, filename, epsilon=0):
+def assert_png_repr_equal(image, filename, epsilon=0, crop_first=None):
     data = image._repr_png_()
     a = pil_image_open(get_test_filename(filename))
     b = pil_image_open(BytesIO(data))
     assert b.format == 'PNG'
+    if crop_first:
+        left, top, width, height = crop_first
+        ac = a.crop((left, top, left + width, top + height))
+        bc = b.crop((left, top, left + width, top + height))
+        assert_pil_images_equal(ac, bc, epsilon=epsilon)
+    assert_pil_images_equal(a, b, epsilon=epsilon)
+
+
+def assert_pil_images_equal(a, b, epsilon=0):
     abytes = a.convert('RGBA').tobytes()
     bbytes = b.convert('RGBA').tobytes()
     if abytes != bbytes:
@@ -317,18 +328,25 @@ def assert_png_repr_equal(image, filename, epsilon=0):
         assert len(abytes) == len(bbytes), 'unequal image size'
 
         max_pixel_delta = 0
+        zero_alphas = 0
         try:
             Counter = collections.Counter
         except AttributeError:  # pragma: no cover -- Python 2.6
             counters = None
         else:
             counters = [Counter() for i in range(4)]
-        for i, (ba, bb) in enumerate(zip(abytes, bbytes)):
-            pixel_delta = ord_(ba) - ord_(bb)
-            max_pixel_delta = max(abs(pixel_delta), max_pixel_delta)
-            if counters:
-                counters[i % 4][pixel_delta] += 1
+        for bands in grouper(zip(abytes, bbytes), 4):
+            alpha_a, alpha_b = bands[-1]
+            if alpha_a == alpha_b == b'\0':
+                zero_alphas += 1
+                continue
+            for band_index, (ba, bb) in enumerate(bands):
+                pixel_delta = ord_(ba) - ord_(bb)
+                max_pixel_delta = max(abs(pixel_delta), max_pixel_delta)
+                if counters:
+                    counters[band_index][pixel_delta] += 1
 
+        print('Ignored pixels (zero alpha):', zero_alphas)
         if counters:
             print("Pixel deltas:")
             for band_index, counter in enumerate(counters):
@@ -423,3 +441,15 @@ def test_render_layer(canvas_mod):
 def test_layer_repr_png(canvas_mod):
     desert = tmxlib.Map.open(get_test_filename('desert.tmx'))
     assert_png_repr_equal(desert.layers[0], 'desert.rendered.png')
+
+
+def test_map_repr_png(filename, rendered_filename):
+    map = tmxlib.Map.open(get_test_filename(filename))
+    for obj in map.all_objects():
+        if not obj.value:
+            raise pytest.skip('Plain objects not renderable yet')  # TODO
+    for layer in map.layers:
+        if layer.type == 'image':
+            raise pytest.skip('Image layers not renderable yet')  # TODO
+    assert_png_repr_equal(map, rendered_filename, epsilon=1,
+                          crop_first=[425, 228, 80, 80])

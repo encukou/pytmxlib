@@ -4,7 +4,7 @@
 from __future__ import division
 
 
-from tmxlib import helpers, tile
+from tmxlib import helpers, tile, draw
 
 
 NOT_GIVEN = object()
@@ -294,6 +294,17 @@ class RectangleObject(tile.TileLikeObject, SizedObject):
                 raise TypeError("Cannot modify size of tile objects")
         else:
             self._size = value
+
+    def generate_draw_commands(self):
+        if self.value:
+            yield draw.DrawImageCommand(
+                image=self.image,
+                pos=(self.pixel_x, self.pixel_y - self.pixel_height),
+                opacity=self.layer.opacity,
+            )
+        else:
+            # TODO: Rectangle objects
+            pass
 
     @helpers.from_dict_method
     def from_dict(cls, dct, layer):

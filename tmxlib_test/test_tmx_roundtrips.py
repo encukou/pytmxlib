@@ -26,7 +26,7 @@ test_map_infos = {
     'objects.tmx': {},
 
     # NOTE: the image for this map's tileset is intentionally missing
-    'isometric_grass_and_water.tmx': {},
+    'isometric_grass_and_water.tmx': {'rendered_filename': None},
 }
 
 
@@ -43,6 +43,15 @@ def has_gzip(filename):
 @pytest.fixture
 def out_filename(filename):
     return test_map_infos[filename].get('out_filename', filename)
+
+
+@pytest.fixture
+def rendered_filename(filename):
+    default = os.path.splitext(filename)[0] + '.rendered.png'
+    r_filename = test_map_infos[filename].get('rendered_filename', default)
+    if r_filename is None:
+        raise pytest.skip('rendered image not available')
+    return r_filename
 
 
 def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
