@@ -3,6 +3,7 @@ from __future__ import division
 
 import itertools
 
+import six
 from six import BytesIO
 import png
 from array import array
@@ -15,7 +16,11 @@ def _grouper(iterable, n):
     "Collect data into fixed-length chunks, ignoring extras at the end"
     # grouper('ABCDEFG', 3) --> ABC DEF
     args = [iter(iterable)] * n
-    return itertools.izip(*args)
+    if six.PY3:
+        izip = zip
+    else:
+        izip = itertools.izip
+    return izip(*args)
 
 
 class PngImage(tmxlib.image_base.Image):

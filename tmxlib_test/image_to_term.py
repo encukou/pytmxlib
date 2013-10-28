@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, unicode_literals
 
 
 def term256color(r, g, b, a):
@@ -34,10 +34,10 @@ def image_to_term256(pil_image):
     for y in range(height // 2):
         try:
             for x in range(width):
-                result.append(u'\033[48;5;%dm\033[38;5;%dm' % (
+                result.append('\033[48;5;%dm\033[38;5;%dm' % (
                     term256color(*im.getpixel((x, y * 2))),
                     term256color(*im.getpixel((x, y * 2 + 1)))))
-                result.append(u'\N{LOWER HALF BLOCK}')
+                result.append('\N{LOWER HALF BLOCK}')
         finally:
             result.append('\033[0m\n')
     return ''.join(result)
