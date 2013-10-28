@@ -363,6 +363,33 @@ def test_canvas_draw_image(colorcorners_image, canvas_mod):
     assert_png_repr_equal(canvas, 'colorcorners-x4.png')
 
 
+def test_canvas_draw_image_alpha(image_class, colorcorners_image, canvas_mod):
+    canvas = canvas_mod.Canvas((32, 32))
+    scribble = load_image(image_class, 'scribble.png')
+    canvas.draw_image(scribble, opacity=0.5)
+    canvas.draw_image(colorcorners_image, pos=(8, 8), opacity=0.5)
+
+    assert_png_repr_equal(canvas, 'colorcorners-mid-alpha.png', epsilon=1)
+
+    canvas.draw_image(scribble, opacity=0)
+    assert_png_repr_equal(canvas, 'colorcorners-mid-alpha.png', epsilon=1)
+
+
+def test_canvas_command_img_alpha(image_class, colorcorners_image, canvas_mod):
+    canvas = canvas_mod.Canvas((32, 32))
+    scribble = load_image(image_class, 'scribble.png')
+    for command in (
+            tmxlib.draw.DrawImageCommand(scribble, opacity=0.5),
+            tmxlib.draw.DrawImageCommand(colorcorners_image, pos=(8, 8),
+                                         opacity=0.5)):
+        command.draw(canvas)
+
+    assert_png_repr_equal(canvas, 'colorcorners-mid-alpha.png', epsilon=1)
+
+    tmxlib.draw.DrawImageCommand(scribble, opacity=0).draw(canvas)
+    assert_png_repr_equal(canvas, 'colorcorners-mid-alpha.png', epsilon=1)
+
+
 def test_canvas_draw_overlap(image_class, canvas_mod):
     canvas = canvas_mod.Canvas((32, 32))
     canvas.draw_image(load_image(image_class, 'scribble.png'))

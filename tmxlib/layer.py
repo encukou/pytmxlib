@@ -248,6 +248,7 @@ class TileLayer(Layer):
                 yield draw.DrawImageCommand(
                     image=tile.image,
                     pos=(tile.pixel_x, tile.pixel_y - tile.pixel_height),
+                    opacity=self.opacity,
                 )
 
     def _repr_png_(self):

@@ -35,9 +35,11 @@ class DrawImageCommand(DrawCommand):
     """
     x, y = helpers.unpacked_properties('pos')
 
-    def __init__(self, image, pos=(0, 0)):
+    def __init__(self, image, pos=(0, 0), opacity=1):
         self.image = image
         self.pos = pos
+        self.opacity = opacity
 
     def draw(self, canvas):
-        canvas.draw_image(self.image, self.pos)
+        canvas.draw_image(self.image, self.pos,
+                          opacity=self.opacity)

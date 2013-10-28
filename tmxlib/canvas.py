@@ -43,7 +43,7 @@ class Canvas(PilImage):
 
     def __init__(self, size=(0, 0), commands=()):
         self.size = size
-        self.pil_image = Image.new('RGBA', size)
+        self.pil_image = Image.new('RGBA', size, color=(0, 0, 0, 0))
 
         for command in commands:
             command.draw(self)
@@ -67,9 +67,11 @@ class Canvas(PilImage):
     def _parent_info(self):
         return 0, 0, self.to_image()
 
-    def draw_image(self, image, pos=(0, 0)):
+    def draw_image(self, image, pos=(0, 0), opacity=1):
         """Paste the given image at the given position
         """
+        if not opacity:
+            return
         x, y = pos
 
         try:
@@ -82,10 +84,30 @@ class Canvas(PilImage):
             pil_image = parent.pil_image
         except AttributeError:
             input = BytesIO(parent._repr_png_())
-            pil_image = Image.open(input)
+            pil_image = Image.open(input).convert('RGBA')
         if crop:
             pil_image = pil_image.crop((image.x, image.y,
                                         image.x + image.width,
                                         image.y + image.height))
 
-        self.pil_image.paste(pil_image, (x, y))
+        if opacity == 1:
+            alpha_channel = pil_image
+            self.pil_image.paste(pil_image, (x, y), mask=alpha_channel)
+        else:
+            # Create temporary image the same size as the canvas
+            bigger_image = Image.new('RGBA',
+                                     (self.width, self.height),
+                                     color=(0, 0, 0, 0))
+            # Blit into it
+            bigger_image.paste(pil_image, (x, y))
+            # Reduce its alpha
+            bands = bigger_image.split()
+            alpha_channel = bands[3]
+            alpha_channel = alpha_channel.point(
+                lambda x: int(x * opacity))
+            bigger_image = Image.merge('RGBA', bands[:3] + (alpha_channel, ))
+            # Finally, blit it to the canvas
+            self.pil_image = Image.alpha_composite(
+                self.pil_image,
+                bigger_image)
+            # Thanks, PIL, for making this so easy!
