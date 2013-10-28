@@ -13,7 +13,6 @@ install:
   - pip install coveralls --use-mirrors
 env:
   - USE_LXML=no  USE_PIL=no  PYTMXLIB_TEST_SKIP_IMAGE=yes
-  - USE_LXML=yes USE_PIL=no  PYTMXLIB_TEST_SKIP_IMAGE=yes
   - USE_LXML=yes USE_PIL=yes PYTMXLIB_TEST_COVERALLS=yes
 script:
   - py.test -v
