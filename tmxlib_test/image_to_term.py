@@ -10,9 +10,10 @@ def term256color(r, g, b, a):
             return 5
         else:
             return round(v)
-    r = f(r / a * 6)
-    g = f(g / a * 6)
-    b = f(b / a * 6)
+    term = a / 256 / 256 * 6
+    r = f(r * term)
+    g = f(g * term)
+    b = f(b * term)
     return int(16 + r * 36 + g * 6 + b)
 
 
