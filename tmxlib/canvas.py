@@ -55,6 +55,15 @@ class Canvas(PilImage):
         """
         return PilImage(data=self._repr_png_())
 
+    @property
+    def trans(self):
+        return None
+
+    @trans.setter
+    def trans(self, new_trans):
+        if new_trans is not None:
+            raise ValueError('Canvas does not support trans')
+
     def _parent_info(self):
         return 0, 0, self.to_image()
 

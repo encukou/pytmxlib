@@ -19,16 +19,17 @@ class PilImage(tmxlib.image_base.Image):
         """Load the image from self.data, and set self.size
         """
         try:
-            self._pil_image
+            self._pil_image_original
             return self.size
         except AttributeError:
-            self._pil_image = Image.open(BytesIO(self.data))
-            self._pil_image = self._pil_image.convert('RGBA')
-            w, h = self._pil_image.size
+            pil_image = Image.open(BytesIO(self.data))
+            pil_image = pil_image.convert('RGBA')
+            w, h = pil_image.size
             if self._size:
                 assert (w, h) == self._size
             else:
                 self._size = w, h
+            self._pil_image_original = pil_image
             return w, h
 
     @property
@@ -37,7 +38,33 @@ class PilImage(tmxlib.image_base.Image):
             return self._pil_image
         except AttributeError:
             self.load_image()
+            pil_image = self._pil_image_original
+            if self.trans:
+                pil_image = pil_image.copy()
+                datas = pil_image.getdata()
+                new_data = []
+                xtrans = tuple(int(n * 255) for n in self.trans)
+                for item in datas:
+                    itpl = tuple(item)
+                    if itpl[:3] == xtrans:
+                        new_data.append(itpl[:3] + (0,))
+                    else:
+                        new_data.append(item)
+                pil_image.putdata(new_data)
+            self._pil_image = pil_image
             return self._pil_image
+
+    @property
+    def trans(self):
+        return self._trans
+
+    @trans.setter
+    def trans(self, new_trans):
+        self._trans = new_trans
+        try:
+            del self._pil_image
+        except AttributeError:
+            pass
 
     def get_pixel(self, x, y):
         x, y = self._wrap_coords(x, y)

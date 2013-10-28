@@ -30,8 +30,14 @@ def open(filename, trans=None, size=None):
 
     :param filename: Name of the file to load the image from
     :param trans:
-        Optional color that should be rendered as transparent
-        (this is not implemented yet)
+        Optional color that should be loaded as transparent
+
+        .. note::
+
+            Currently, loading images that use color-key transparency
+            is very inefficient.
+            If possible, use the alpha channel instead.
+
     :param size:
         Optional (width, height) tuple.
         If specified, the file will not be read from disk when the image size

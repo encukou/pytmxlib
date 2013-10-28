@@ -106,7 +106,13 @@ class Image(ImageBase, fileio.ReadWriteBase):
 
         .. attribute:: trans
 
-            A color key used for transparency (currently not implemented)
+            A color key used for transparency
+
+            .. note::
+
+                Currently, loading images that use color-key transparency
+                is very inefficient.
+                If possible, use the alpha channel instead.
 
     Images support indexing (``img[x, y]``); see
     :meth:`tmxlib.image_base.ImageBase.__getitem__`
@@ -119,10 +125,10 @@ class Image(ImageBase, fileio.ReadWriteBase):
     top_left = 0, 0
 
     def __init__(self, data=None, trans=None, size=None, source=None):
-        self.trans = trans
         self._data = data
         self.source = source
         self._size = size
+        self.trans = trans
 
     @property
     def size(self):
