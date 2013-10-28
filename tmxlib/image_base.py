@@ -106,7 +106,13 @@ class Image(ImageBase, fileio.ReadWriteBase):
 
         .. attribute:: trans
 
-            A color key used for transparency (currently not implemented)
+            A color key used for transparency
+
+            .. note::
+
+                Currently, loading images that use color-key transparency
+                is very inefficient.
+                If possible, use the alpha channel instead.
 
     Images support indexing (``img[x, y]``); see
     :meth:`tmxlib.image_base.ImageBase.__getitem__`
