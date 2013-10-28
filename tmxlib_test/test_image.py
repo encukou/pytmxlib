@@ -3,11 +3,13 @@ from __future__ import division, print_function
 import os
 import warnings
 from six import BytesIO
+import collections
 
 import pytest
 
 import tmxlib
 import tmxlib.image_base
+from tmxlib.compatibility import ord_
 from tmxlib_test import get_test_filename, file_contents, assert_color_tuple_eq
 
 
@@ -292,7 +294,7 @@ def test_region_hierarchy(colorcorners_image, colorcorners_image_type):
     assert region3.size == (13, 13)
 
 
-def assert_png_repr_equal(image, filename):
+def assert_png_repr_equal(image, filename, epsilon=0):
     data = image._repr_png_()
     a = pil_image_open(get_test_filename(filename))
     b = pil_image_open(BytesIO(data))
@@ -301,11 +303,41 @@ def assert_png_repr_equal(image, filename):
     bbytes = b.convert('RGBA').tobytes()
     if abytes != bbytes:
         from tmxlib_test.image_to_term import image_to_term256
+        from PIL import ImageChops, ImageOps
         print("Expected: ({im.size[0]}x{im.size[1]})".format(im=a))
         print(image_to_term256(a))
         print("Got: ({im.size[0]}x{im.size[1]})".format(im=b))
         print(image_to_term256(b))
-    assert abytes == bbytes
+
+        diff = ImageChops.difference(a, b).convert('RGB')
+        diff = ImageOps.autocontrast(diff)
+        print('Difference:')
+        print(image_to_term256(diff))
+
+        assert len(abytes) == len(bbytes), 'unequal image size'
+
+        max_pixel_delta = 0
+        try:
+            Counter = collections.Counter
+        except AttributeError:  # pragma: no cover -- Python 2.6
+            counters = None
+        else:
+            counters = [Counter() for i in range(4)]
+        for i, (ba, bb) in enumerate(zip(abytes, bbytes)):
+            pixel_delta = ord_(ba) - ord_(bb)
+            max_pixel_delta = max(abs(pixel_delta), max_pixel_delta)
+            if counters:
+                counters[i % 4][pixel_delta] += 1
+
+        if counters:
+            print("Pixel deltas:")
+            for band_index, counter in enumerate(counters):
+                print('  {0}:'.format('RGBA'[band_index]))
+                for delta, count in sorted(counter.items()):
+                    print('   {0:4}: {1}x'.format(delta, count))
+
+        print('Max |pixel delta|:', max_pixel_delta)
+        assert max_pixel_delta <= epsilon
 
 
 def test_repr_png(colorcorners_image):
