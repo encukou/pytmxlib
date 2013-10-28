@@ -175,7 +175,7 @@ def basic_color(request):
     return request.param
 
 
-def test_trans(image_class, basic_color):
+def test_trans_property(image_class, basic_color):
     filename = get_test_filename('colorcorners.png')
     image = image_class(source=filename, trans=basic_color)
     assert image.trans == basic_color
@@ -310,6 +310,15 @@ def assert_png_repr_equal(image, filename):
 
 def test_repr_png(colorcorners_image):
     assert_png_repr_equal(colorcorners_image, 'colorcorners.png')
+
+
+def test_trans_image(image_class):
+    image = load_image(image_class, 'colorcorners-mid.png')
+    assert_png_repr_equal(image, 'colorcorners-mid.png')
+    image.trans = 1, 0, 0
+    assert_png_repr_equal(image, 'colorcorners-mid-nored.png')
+    image.trans = 1, 1, 0
+    assert_png_repr_equal(image, 'colorcorners-mid-noyellow.png')
 
 
 def test_canvas_draw_image(colorcorners_image, canvas_mod):

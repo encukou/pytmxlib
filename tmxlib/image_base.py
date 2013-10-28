@@ -119,10 +119,10 @@ class Image(ImageBase, fileio.ReadWriteBase):
     top_left = 0, 0
 
     def __init__(self, data=None, trans=None, size=None, source=None):
-        self.trans = trans
         self._data = data
         self.source = source
         self._size = size
+        self.trans = trans
 
     @property
     def size(self):
