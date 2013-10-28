@@ -182,6 +182,16 @@ def test_trans(image_class, basic_color):
     assert image[:5, :5].trans == basic_color
 
 
+def test_no_canvas_trans(canvas_mod):
+    with pytest.raises((ValueError, TypeError)):
+        canvas_mod.Canvas(trans=(1, 0, 1))
+    canvas = canvas_mod.Canvas()
+    assert canvas.trans is None
+    with pytest.raises(ValueError):
+        canvas.trans = 1, 0, 1
+    assert canvas.trans is None
+
+
 class _KeyMaker(object):
     def __getitem__(self, key):
         return key
