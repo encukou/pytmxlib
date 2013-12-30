@@ -5,8 +5,9 @@ from __future__ import division
 import functools
 import collections
 import contextlib
+
 import six
-import itertools
+from six.moves import zip_longest
 
 
 class UsedTilesetError(ValueError):
@@ -52,7 +53,7 @@ def grouper(iterable, n, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
     args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
+    return zip_longest(fillvalue=fillvalue, *args)
 
 
 class Property(property):
