@@ -181,7 +181,8 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
 
     def generate_draw_commands(self):
         return itertools.chain.from_iterable(
-            layer.generate_draw_commands() for layer in self.layers)
+            layer.generate_draw_commands()
+            for layer in self.layers if layer.visible)
 
     def render(self):
         from tmxlib.canvas import Canvas
