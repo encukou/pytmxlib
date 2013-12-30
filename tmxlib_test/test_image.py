@@ -448,8 +448,5 @@ def test_map_repr_png(filename, rendered_filename):
     for obj in map.all_objects():
         if not obj.value:
             raise pytest.skip('Plain objects not renderable yet')  # TODO
-    for layer in map.layers:
-        if layer.type == 'image':
-            raise pytest.skip('Image layers not renderable yet')  # TODO
-    assert_png_repr_equal(map, rendered_filename, epsilon=1,
+    assert_png_repr_equal(map, rendered_filename, epsilon=2,
                           crop_first=[425, 228, 80, 80])

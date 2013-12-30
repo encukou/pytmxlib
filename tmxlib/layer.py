@@ -290,6 +290,13 @@ class ImageLayer(Layer):
             ))
         return d
 
+    def generate_draw_commands(self):
+        yield draw.DrawImageCommand(
+            image=self.image,
+            pos=(0, 0),
+            opacity=self.opacity,
+        )
+
     @helpers.from_dict_method
     def from_dict(cls, dct, map):
         """Import from a dict compatible with Tiled's JSON plugin"""
