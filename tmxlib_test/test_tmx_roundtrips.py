@@ -26,7 +26,7 @@ test_map_infos = {
     'objects.tmx': {},
 
     # NOTE: the image for this map's tileset is intentionally missing
-    'isometric_grass_and_water.tmx': {'rendered_filename': None},
+    'isometric_grass_and_water.tmx': {'loadable': False},
 }
 
 
@@ -46,12 +46,15 @@ def out_filename(filename):
 
 
 @pytest.fixture
+def map_loadable(filename):
+    return test_map_infos[filename].get('loadable', True)
+
+
+@pytest.fixture
 def rendered_filename(filename):
-    default = os.path.splitext(filename)[0] + '.rendered.png'
-    r_filename = test_map_infos[filename].get('rendered_filename', default)
-    if r_filename is None:
+    if not map_loadable(filename):
         raise pytest.skip('rendered image not available')
-    return r_filename
+    return os.path.splitext(filename)[0] + '.rendered.png'
 
 
 def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
@@ -142,7 +145,7 @@ def test_dict_export(filename):
     assert_json_safe_almost_equal(result, dct)
 
 
-def test_dict_import(filename, has_gzip, out_filename):
+def test_dict_import(filename, has_gzip, out_filename, map_loadable):
     dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
     map = tmxlib.Map.from_dict(dct, base_path=base_path)
 
@@ -166,12 +169,12 @@ def test_dict_import(filename, has_gzip, out_filename):
     for layer, xml_layer in zip(map.layers, xml_map.layers):
         layer.compression = getattr(xml_layer, 'compression', None)
         layer.mtime = 0
-        if layer.type == 'image':
+        if map_loadable and layer.type == 'image':
             layer.image.load_image()
     for tileset, xml_tileset in zip(map.tilesets, xml_map.tilesets):
         tileset.source = xml_tileset.source
-        #if tileset.image:
-        #    tileset.image.load_image()
+        if map_loadable and tileset.image:
+            tileset.image.load_image()
 
     dumped = map.dump()
     assert_xml_compare(xml, dumped)

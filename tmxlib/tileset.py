@@ -391,7 +391,7 @@ class Tileset(fileio.ReadWriteBase):
         return d
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct, base_path=None):
         """Import from a dict compatible with Tiled's JSON plugin"""
         raise NotImplementedError(
             'Tileset.from_dict must be implemented in subclasses')
@@ -486,7 +486,7 @@ class ImageTileset(Tileset):
         return d
 
     @helpers.from_dict_method
-    def from_dict(cls, dct):
+    def from_dict(cls, dct, base_path=None):
         """Import from a dict compatible with Tiled's JSON plugin"""
         dct.pop('firstgid', None)
         html_trans = dct.pop('transparentcolor', None)
@@ -505,6 +505,9 @@ class ImageTileset(Tileset):
                 margin=dct.pop('margin', 0),
                 spacing=dct.pop('spacing', 0),
             )
+        if base_path:
+            self.image.base_path = base_path
+            self.base_path = base_path
         self.properties.update(dct.pop('properties', {}))
         for number, properties in dct.pop('tileproperties', {}).items():
             self[int(number)].properties.update(properties)
