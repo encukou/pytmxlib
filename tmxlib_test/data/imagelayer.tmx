@@ -9,15 +9,15 @@
   </data>
  </layer>
  <imagelayer name="Image Layer" width="8" height="8">
-  <image source="sewer_tileset.png"/>
+  <image source="sewer_tileset.png" width="192" height="217"/>
   <properties>
    <property name="a" value="b"/>
   </properties>
  </imagelayer>
  <imagelayer name="Semi-transparent" width="8" height="8" opacity="0.38">
-  <image source="perspective_walls.png"/>
+  <image source="perspective_walls.png" height="256" width="256"/>
  </imagelayer>
  <imagelayer name="Hidden" width="8" height="8" visible="0">
-  <image source="colorcorners.png"/>
+  <image source="colorcorners.png" height="16" width="16"/>
  </imagelayer>
 </map>

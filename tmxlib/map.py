@@ -216,10 +216,13 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
         return d
 
     @helpers.from_dict_method
-    def from_dict(cls, dct):
+    def from_dict(cls, dct, base_path=None):
         """Import from a dict compatible with Tiled's JSON plugin
 
         Use e.g. a JSON or YAML library to read such a dict from a file.
+
+        :param dct: Dictionary with data
+        :param base_path: Base path of the file, for loading linked resources
         """
         if dct.pop('version', 1) != 1:
             raise ValueError('tmxlib only supports Tiled JSON version 1')
@@ -228,6 +231,8 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
                 tile_size=(dct.pop('tilewidth'), dct.pop('tileheight')),
                 orientation=dct.pop('orientation', 'orthogonal'),
             )
+        if base_path:
+            self.base_path = base_path
         background_color = dct.pop('backgroundcolor', None)
         if background_color:
             self.background_color = fileio.from_hexcolor(background_color)

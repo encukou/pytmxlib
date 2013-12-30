@@ -305,6 +305,9 @@ class ImageLayer(Layer):
                 opacity=dct.pop('opacity', 1),
                 image=image.open(dct.pop('image')),
             )
+        if getattr(map, 'base_path', None):
+            self.image.base_path = map.base_path
+            self.base_path = map.base_path
         self.properties.update(dct.pop('properties', {}))
         return self
 

@@ -144,7 +144,7 @@ def test_dict_export(filename):
 
 def test_dict_import(filename, has_gzip, out_filename):
     dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
-    map = tmxlib.Map.from_dict(dct)
+    map = tmxlib.Map.from_dict(dct, base_path=base_path)
 
     # Check JSON roundtrip
 
@@ -162,11 +162,16 @@ def test_dict_import(filename, has_gzip, out_filename):
     xml = file_contents(get_test_filename(out_filename))
 
     # Have to copy presentation attrs, since those aren't in the JSON
+    # Also, load images
     for layer, xml_layer in zip(map.layers, xml_map.layers):
         layer.compression = getattr(xml_layer, 'compression', None)
         layer.mtime = 0
+        if layer.type == 'image':
+            layer.image.load_image()
     for tileset, xml_tileset in zip(map.tilesets, xml_map.tilesets):
         tileset.source = xml_tileset.source
+        #if tileset.image:
+        #    tileset.image.load_image()
 
     dumped = map.dump()
     assert_xml_compare(xml, dumped)

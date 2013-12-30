@@ -377,6 +377,7 @@ class TMXSerializer(object):
         image = cls(
                 source=elem.attrib.pop('source'),
                 **kwargs)
+        image.base_path = base_path
         assert not elem.attrib, (
             'Unexpected image attributes: %s' % elem.attrib)
         return image
