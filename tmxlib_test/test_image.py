@@ -443,7 +443,7 @@ def test_layer_repr_png(canvas_mod):
     assert_png_repr_equal(desert.layers[0], 'desert.rendered.png')
 
 
-def test_map_repr_png(filename, rendered_filename):
+def test_map_repr_png(canvas_mod, filename, rendered_filename):
     map = tmxlib.Map.open(get_test_filename(filename))
     for obj in map.all_objects():
         if not obj.value:
