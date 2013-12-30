@@ -677,7 +677,6 @@ class TMXSerializer(object):
             parent.append(element)
 
 def from_hexcolor(string):
-    orig_string = string
     if string.startswith('#'):
         string = string[1:]
     if len(string) == 3:
