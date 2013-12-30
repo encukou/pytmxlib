@@ -24,6 +24,7 @@ test_map_infos = {
     'equivcheck.tmx': {},
     'imagelayer.tmx': {},
     'objects.tmx': {},
+    'perspective_walls_individual.tmx': {},
 
     # NOTE: the image for this map's tileset is intentionally missing
     'isometric_grass_and_water.tmx': {'loadable': False},
@@ -83,7 +84,7 @@ def assert_json_safe_almost_equal(a, b, epsilon=0.00001):
         assert isinstance(b, dict)
         keys = sorted(a.keys())
         try:
-            keys == sorted(b.keys())
+            assert keys == sorted(b.keys())
         except:
             print('in dict keys')
             raise
@@ -173,7 +174,7 @@ def test_dict_import(filename, has_gzip, out_filename, map_loadable):
             layer.image.load_image()
     for tileset, xml_tileset in zip(map.tilesets, xml_map.tilesets):
         tileset.source = xml_tileset.source
-        if map_loadable and tileset.image:
+        if map_loadable and tileset.type == 'image' and tileset.image:
             tileset.image.load_image()
 
     dumped = map.dump()

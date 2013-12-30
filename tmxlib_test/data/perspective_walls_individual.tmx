@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="32" height="32" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" source="perspective_walls_individual.tsx"/>
+ <layer name="Items" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt0LENACAMA7A+gMT/1/YCxEZbYU/ZEiUCAO5W9YAC+5Bf+7W7M78AMFECGT0AXg==
+  </data>
+ </layer>
+ <layer name="Walls" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztlOsKgCAMhWdl2YV6/7fNSGkoZaiZP84HB2+Ds40hEQAAgJqQWuuN+gL+W+TbgTRrSp7Wo2N3dq/o6sWoJRwNLE5E5hGqkdMw2XPrnHP689mYya+/Z3G8H7n8Q71RZo3xfevxNU/zVyK3lP7nYKFzvoj8/2cq4P93/fyPcZUy1wAAUAs7ugQCtA==
+  </data>
+ </layer>
+ <layer name="Walls level 2" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztzgEJAAAIA7CD/Tsb4yJbgiUA8MO0AwAAhy0rhAAE
+  </data>
+ </layer>
+ <layer name="Walls level 3" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztzjENAAAIA7Al+PeMgz0cPK2CJgBwN98BAACqBS0QAAQ=
+  </data>
+ </layer>
+</map>

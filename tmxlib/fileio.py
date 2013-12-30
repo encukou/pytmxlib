@@ -95,7 +95,6 @@ class TMXSerializer(object):
     def __init__(self):
         import tmxlib
         self.map_class = tmxlib.Map
-        self.tileset_class = tmxlib.ImageTileset
         self.tile_layer_class = tmxlib.TileLayer
         self.object_layer_class = tmxlib.ObjectLayer
         self.image_layer_class = tmxlib.ImageLayer
@@ -106,6 +105,13 @@ class TMXSerializer(object):
         self.image_class = tmxlib.image.preferred_image_class
 
         self._shared_objects = WeakValueDictionary()
+
+    def tileset_class(self, *args, **kwargs):
+        import tmxlib
+        if 'image' in kwargs:
+            return tmxlib.ImageTileset(*args, **kwargs)
+        else:
+            return tmxlib.IndividualTileTileset(*args, **kwargs)
 
     def load_file(self, filename, base_path=None):
         if base_path:
@@ -190,7 +196,7 @@ class TMXSerializer(object):
                 map.properties.update(self.read_properties(elem))
             elif elem.tag == 'tileset':
                 tileset = self.tileset_from_element(
-                        self.tileset_class, elem, base_path=base_path)
+                    self.tileset_class, elem, base_path=base_path)
                 map.tilesets.append(tileset)
                 assert tileset.first_gid(map) == tileset._read_first_gid
             elif elem.tag == 'layer':
@@ -246,13 +252,16 @@ class TMXSerializer(object):
             tileset._read_first_gid = first_gid
             tileset.source = source
             return tileset
+        kwargs = {}
+        if any(e.tag == 'image' for e in elem):
+            kwargs['margin'] = int(elem.attrib.pop('margin', 0))
+            kwargs['spacing'] = int(elem.attrib.pop('spacing', 0))
+            kwargs['image'] = None
         tileset = cls(
                 name=elem.attrib.pop('name'),
                 tile_size=(int(elem.attrib.pop('tilewidth')),
                     int(elem.attrib.pop('tileheight'))),
-                margin=int(elem.attrib.pop('margin', 0)),
-                spacing=int(elem.attrib.pop('spacing', 0)),
-                image=None,
+                **kwargs
             )
         tileset._read_first_gid = int(elem.attrib.pop('firstgid', 0))
         assert not elem.attrib, (
@@ -292,6 +301,11 @@ class TMXSerializer(object):
                         props = tileset.tile_attributes[id].setdefault(
                             'properties' ,{})
                         props.update(self.read_properties(subsubelem))
+                    elif subsubelem.tag == 'image':
+                        assert id == len(tileset), (id, len(tileset))
+                        image = self.image_from_element(
+                            self.image_class, subsubelem, base_path=base_path)
+                        props = tileset.append_image(image)
                     else:
                         raise ValueError('Unknown tag %s' % subsubelem.tag)
             elif subelem.tag == 'properties':
@@ -301,7 +315,8 @@ class TMXSerializer(object):
                     int(subelem.attrib['x']), int(subelem.attrib['y']))
             else:
                 raise ValueError('Unknown tag %s' % subelem.tag)
-        assert tileset.image
+        if tileset.type == 'image' and not tileset.image:
+            raise ValueError('No image for tileset %s' % tileset.name)
         return tileset
 
     def tileset_to_element(self, tileset, base_path, first_gid=None):
@@ -313,18 +328,18 @@ class TMXSerializer(object):
                 attrib['firstgid'] = str(first_gid)
             return etree.Element('tileset', attrib=attrib)
         else:
-            attrib = dict(
-                    name=tileset.name,
-                    tileheight=str(tileset.tile_height),
-                    tilewidth=str(tileset.tile_width),
-                )
+            attrib = dict(name=tileset.name)
+            if tileset.type == 'image':
+                attrib['tileheight'] = str(tileset.tile_height)
+                attrib['tilewidth'] = str(tileset.tile_width)
             if first_gid:
                 attrib['firstgid'] = str(first_gid)
             element = etree.Element('tileset', attrib=attrib)
-            if tileset.spacing:
-                element.attrib['spacing'] = str(tileset.spacing)
-            if tileset.margin:
-                element.attrib['margin'] = str(tileset.margin)
+            if tileset.type == 'image':
+                if tileset.spacing:
+                    element.attrib['spacing'] = str(tileset.spacing)
+                if tileset.margin:
+                    element.attrib['margin'] = str(tileset.margin)
             if any(tileset.tile_offset):
                 offset_elem = etree.Element('tileoffset',
                         attrib={'x': str(tileset.tile_offset_x),

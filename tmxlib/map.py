@@ -238,7 +238,7 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
             self.background_color = fileio.from_hexcolor(background_color)
         self.properties = dct.pop('properties')
         self.tilesets = [
-                tileset.ImageTileset.from_dict(d, base_path)
+                tileset.Tileset.from_dict(d, base_path)
                 for d in dct.pop('tilesets')]
         self.layers = [
                 layer.Layer.from_dict(d, self) for d in dct.pop('layers')]
