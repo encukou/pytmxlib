@@ -183,6 +183,9 @@ class TMXSerializer(object):
                 base_path=base_path,
                 background_color=background_color,
             )
+        render_order = root.attrib.pop('renderorder', None)
+        if render_order:
+            args['render_order'] = render_order
         assert not root.attrib, 'Unexpected map attributes: %s' % root.attrib
         map = cls(**args)
         for elem in root:
@@ -218,6 +221,8 @@ class TMXSerializer(object):
         if map.background_color:
             elem.attrib['backgroundcolor'] = '#{0}'.format(
                 to_hexcolor(map.background_color))
+        if map.render_order:
+            elem.attrib['renderorder'] = map.render_order
         self.append_properties(elem, map.properties)
         for tileset in map.tilesets:
             elem.append(self.tileset_to_element(tileset,
