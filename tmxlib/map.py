@@ -76,7 +76,8 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
     #   correctly as they can.
     #   And it's not just here...
     def __init__(self, size, tile_size, orientation='orthogonal',
-            background_color=None, base_path=None):
+            background_color=None, base_path=None,
+            render_order=None):
         self.orientation = orientation
         self.size = size
         self.tile_size = tile_size
@@ -85,6 +86,7 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
         self.background_color = background_color
         self.properties = {}
         self.base_path = base_path
+        self.render_order = render_order
 
     @property
     def pixel_size(self):
