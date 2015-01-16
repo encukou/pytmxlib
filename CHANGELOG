@@ -7,6 +7,7 @@ Legend:
 
 0.2.1 [unreleased]
     + Add support for renderorder attribute from Tiled 0.10
+    + Add support for hexmap attributes from Tiled 0.11
 
 0.2 [2013-10-19]
     ** Pixel measurements have been moved to pixel_size, pixel_width,

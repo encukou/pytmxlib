@@ -182,10 +182,16 @@ class TMXSerializer(object):
                 orientation=root.attrib.pop('orientation'),
                 base_path=base_path,
                 background_color=background_color,
+                stagger_index=root.attrib.pop('staggerindex', None),
+                stagger_axis=root.attrib.pop('staggeraxis', None),
             )
         render_order = root.attrib.pop('renderorder', None)
+        nextobjectid = root.attrib.pop('nextobjectid', None)
         if render_order:
             args['render_order'] = render_order
+        hex_side_length = root.attrib.pop('hexsidelength', None)
+        if hex_side_length:
+            args['hex_side_length'] = int(hex_side_length)
         assert not root.attrib, 'Unexpected map attributes: %s' % root.attrib
         map = cls(**args)
         for elem in root:
@@ -223,6 +229,13 @@ class TMXSerializer(object):
                 to_hexcolor(map.background_color))
         if map.render_order:
             elem.attrib['renderorder'] = map.render_order
+
+        if map.stagger_index:
+            elem.attrib['staggerindex'] = map.stagger_index
+        if map.stagger_axis:
+            elem.attrib['staggeraxis'] = map.stagger_axis
+        if map.hex_side_length is not None:
+            elem.attrib['hexsidelength'] = str(map.hex_side_length)
         self.append_properties(elem, map.properties)
         for tileset in map.tilesets:
             elem.append(self.tileset_to_element(tileset,

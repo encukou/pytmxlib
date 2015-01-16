@@ -28,6 +28,18 @@ class Map(fileio.ReadWriteBase,
 
             The background color for the map, as a triple of floats (0..1)
 
+        .. attribute:: stagger_axis
+
+            Stagger axis for hexagonal maps ('x' or 'y', or None)
+
+        .. attribute:: stagger_index
+
+            Stagger index for hexagonal maps ('odd' or 'even', or None)
+
+        .. attribute:: hex_side_length
+
+            Side length for hexagonal maps (int, or None)
+
     Other attributes:
 
         .. attribute:: tilesets
@@ -73,7 +85,8 @@ class Map(fileio.ReadWriteBase,
     #   And it's not just here...
     def __init__(self, size, tile_size, orientation='orthogonal',
             background_color=None, base_path=None,
-            render_order=None):
+            render_order=None, stagger_index=None, hex_side_length=None,
+            stagger_axis=None):
         self.orientation = orientation
         self.size = size
         self.tile_size = tile_size
@@ -83,6 +96,9 @@ class Map(fileio.ReadWriteBase,
         self.properties = {}
         self.base_path = base_path
         self.render_order = render_order
+        self.stagger_index = stagger_index
+        self.hex_side_length = hex_side_length
+        self.stagger_axis = stagger_axis
 
     @property
     def pixel_size(self):
