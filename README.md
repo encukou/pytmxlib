@@ -1,6 +1,6 @@
 [![Build Status](https://secure.travis-ci.org/encukou/pytmxlib.png?branch=master)](http://travis-ci.org/encukou/pytmxlib)
 [![Coverage Status](https://coveralls.io/repos/encukou/pytmxlib/badge.png?branch=tests)](https://coveralls.io/r/encukou/pytmxlib?branch=tests)
-[![PyPI](https://pypip.in/v/tmxlib/badge.png)](https://crate.io/package/tmxlib)
+[![PyPI](https://img.shields.io/pypi/v/tmxlib.svg)](https://pypi.org/project/tmxlib/)
 
 tmxlib
 ======
