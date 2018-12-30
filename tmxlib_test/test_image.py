@@ -63,6 +63,8 @@ def colorcorners_image(image_class, colorcorners_image_type, canvas_mod):
 @pytest.fixture
 def canvas_mod():
     """Return the canvas module, or skip test if unavailable"""
+    if os.environ.get('PYTMXLIB_TEST_SKIP_IMAGE'):  # pragma: no cover
+        raise pytest.skip('Not testing images')
     try:
         from tmxlib import canvas
     except ImportError:
