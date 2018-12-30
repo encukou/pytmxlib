@@ -12,6 +12,7 @@ test_requirements = [
     'pytest-pep8',
     'numpy',
     'pillow',
+    'formencode',
 ]
 
 test_requirements = [

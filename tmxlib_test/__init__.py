@@ -3,7 +3,7 @@ import os
 import pytest
 
 import tmxlib
-from tmxlib_test.compatibility.formencode_doctest_xml_compare import xml_compare
+from formencode.doctest_xml_compare import xml_compare
 from tmxlib.fileio import etree
 
 
