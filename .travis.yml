@@ -4,6 +4,8 @@ language: python
 python:
   - "3.6"
   - "3.7"
+dist: xenial
+sudo: required
 install:
   - python setup.py develop
   - '[ "$USE_LXML" = "yes" ] && pip install lxml; :'
