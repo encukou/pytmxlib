@@ -13,6 +13,7 @@ import functools
 from weakref import WeakValueDictionary
 import sys
 import warnings
+import csv
 
 import six
 try:
@@ -89,6 +90,22 @@ def load_method(func):
             pass
         return obj
     return loader
+
+
+def int_or_none(value):
+    if value is None:
+        return None
+    return int(value)
+
+
+def int_or_float(value):
+    if isinstance(value, str):
+        if '.' in value:
+            return float(value)
+        return int(value)
+    if isinstance(value, int):
+        return value
+    return float(value)
 
 
 class TMXSerializer(object):
@@ -188,6 +205,13 @@ class TMXSerializer(object):
                 orientation=root.attrib.pop('orientation'),
                 base_path=base_path,
                 background_color=background_color,
+                infinite=root.attrib.pop('infinite', None),
+                staggeraxis=root.attrib.pop('staggeraxis', None),
+                staggerindex=root.attrib.pop('staggerindex', None),
+                hexsidelength=root.attrib.pop('hexsidelength', None),
+                nextobjectid=int_or_none(root.attrib.pop('nextobjectid', None)),
+                nextlayerid=int_or_none(root.attrib.pop('nextlayerid', None)),
+                tiledversion=root.attrib.pop('tiledversion', None),
             )
         render_order = root.attrib.pop('renderorder', None)
         if render_order:
@@ -262,6 +286,9 @@ class TMXSerializer(object):
             kwargs['margin'] = int(elem.attrib.pop('margin', 0))
             kwargs['spacing'] = int(elem.attrib.pop('spacing', 0))
             kwargs['image'] = None
+        columns = elem.attrib.pop('columns', None)
+        if columns:
+            kwargs['columns'] = int(columns)
         tileset = cls(
                 name=elem.attrib.pop('name'),
                 tile_size=(int(elem.attrib.pop('tilewidth')),
@@ -269,6 +296,7 @@ class TMXSerializer(object):
                 **kwargs
             )
         tileset._read_first_gid = int(elem.attrib.pop('firstgid', 0))
+        elem.attrib.pop('tilecount', None)
         assert not elem.attrib, (
                 'Unexpected tileset attributes: %s' % elem.attrib)
         for subelem in elem:
@@ -318,6 +346,12 @@ class TMXSerializer(object):
             elif subelem.tag == 'tileoffset':
                 tileset.tile_offset = (
                     int(subelem.attrib['x']), int(subelem.attrib['y']))
+            elif subelem.tag == 'wangsets':
+                # XXX: Not implemented
+                pass
+            elif subelem.tag == 'grid':
+                # XXX: Not implemented
+                pass
             else:
                 raise ValueError('Unknown tag %s' % subelem.tag)
         if tileset.type == 'image' and not tileset.image:
@@ -417,9 +451,12 @@ class TMXSerializer(object):
 
     @load_method
     def tile_layer_from_element(self, cls, elem, map):
-        layer = cls(map, elem.attrib.pop('name'),
-                opacity=float(elem.attrib.pop('opacity', 1)),
-                visible=bool(int(elem.attrib.pop('visible', 1))))
+        layer = cls(
+            map, elem.attrib.pop('name'),
+            opacity=float(elem.attrib.pop('opacity', 1)),
+            visible=bool(int(elem.attrib.pop('visible', 1))),
+            id=int_or_none(elem.attrib.pop('id', None)),
+        )
         layer_size = (int(elem.attrib.pop('width')),
                 int(elem.attrib.pop('height')))
         assert layer_size == map.size
@@ -436,6 +473,9 @@ class TMXSerializer(object):
                 if encoding == 'base64':
                     data = base64.b64decode(data)
                     layer.encoding = 'base64'
+                elif encoding == 'csv':
+                    # Handled below
+                    pass
                 else:
                     raise ValueError('Bad encoding %s' % encoding)
                 compression = subelem.attrib.pop('compression', None)
@@ -453,13 +493,20 @@ class TMXSerializer(object):
                                 'Bad compression %s' % compression)
                 else:
                     layer.compression = None
-                layer.data = array.array('L', [(
-                            ord_(a) +
-                            (ord_(b) << 8) +
-                            (ord_(c) << 16) +
-                            (ord_(d) << 24)) for
-                        a, b, c, d in
-                        zip(*(data[x::4] for x in range(4)))])
+                if encoding == 'csv':
+                    result = []
+                    for line in csv.reader(data.decode().splitlines()):
+                        result.append(int(i) for i in line)
+                    layer.data = result
+                    layer.encoding = 'csv'
+                else:
+                    layer.data = array.array('L', [(
+                                ord_(a) +
+                                (ord_(b) << 8) +
+                                (ord_(c) << 16) +
+                                (ord_(d) << 24)) for
+                            a, b, c, d in
+                            zip(*(data[x::4] for x in range(4)))])
                 data_set = True
             else:
                 raise ValueError('Unknown tag %s' % subelem.tag)
@@ -534,13 +581,17 @@ class TMXSerializer(object):
         color = elem.attrib.pop('color', None)
         if color:
             color = from_hexcolor(color)
-        layer = cls(map, elem.attrib.pop('name'),
-                opacity=float(elem.attrib.pop('opacity', 1)),
-                visible=bool(int(elem.attrib.pop('visible', 1))),
-                color=color)
-        layer_size = (int(elem.attrib.pop('width')),
-                int(elem.attrib.pop('height')))
-        assert layer_size == map.size
+        layer = cls(
+            map, elem.attrib.pop('name'),
+            opacity=float(elem.attrib.pop('opacity', 1)),
+            visible=bool(int(elem.attrib.pop('visible', 1))),
+            color=color,
+            id=int_or_none(elem.attrib.pop('id', None))
+        )
+        if 'width' in elem.attrib:
+            layer_size = (int(elem.attrib.pop('width')),
+                    int(elem.attrib.pop('height')))
+            assert layer_size == map.size
         assert not elem.attrib, (
             'Unexpected object layer attributes: %s' % elem.attrib)
         for subelem in elem:
@@ -550,8 +601,8 @@ class TMXSerializer(object):
                 kwargs = dict(
                         layer=layer,
                     )
-                x = int(subelem.attrib.pop('x'))
-                y = int(subelem.attrib.pop('y'))
+                x = int_or_float(subelem.attrib.pop('x'))
+                y = int_or_float(subelem.attrib.pop('y'))
 
                 def put(attr_type, attr_name, arg_name):
                     attr = subelem.attrib.pop(attr_name, None)
@@ -568,6 +619,8 @@ class TMXSerializer(object):
                 if not kwargs.get('value'):
                     y += height
                 kwargs['pixel_pos'] = x, y
+                if 'id' in subelem.attrib:
+                    kwargs['id'] = int(subelem.attrib.pop('id'))
                 assert not subelem.attrib, (
                     'Unexpected object attributes: %s' % subelem.attrib)
                 properties = {}
@@ -636,9 +689,12 @@ class TMXSerializer(object):
 
     @load_method
     def image_layer_from_element(self, cls, elem, map, base_path):
-        layer = cls(map, elem.attrib.pop('name'),
-                opacity=float(elem.attrib.pop('opacity', 1)),
-                visible=bool(int(elem.attrib.pop('visible', 1))))
+        layer = cls(
+            map, elem.attrib.pop('name'),
+            opacity=float(elem.attrib.pop('opacity', 1)),
+            visible=bool(int(elem.attrib.pop('visible', 1))),
+            id=int_or_none(elem.attrib.pop('id', None)),
+        )
         layer_size = (int(elem.attrib.pop('width')),
                 int(elem.attrib.pop('height')))
         assert layer_size == map.size
@@ -680,6 +736,7 @@ class TMXSerializer(object):
         for prop in elem:
             assert prop.tag == 'property'
             name = prop.attrib.pop('name')
+            prop_type = prop.attrib.pop('type', 'string')
             value = prop.attrib.pop('value')
             properties[name] = value
             assert not prop.attrib, (

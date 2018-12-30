@@ -29,6 +29,18 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
 
             The background color for the map, as a triple of floats (0..1)
 
+    Other init arguments, which tmxlib stores as attributes and saves back,
+    but doesn't currently otherwise process:
+
+        .. attribute:: infinite
+        .. attribute:: staggeraxis
+        .. attribute:: staggerindex
+        .. attribute:: infinite
+        .. attribute:: nextobjectid
+        .. attribute:: nextlayerid
+        .. attribute:: tiledversion
+        .. attribute:: hexsidelength
+
     Other attributes:
 
         .. attribute:: tilesets
@@ -75,9 +87,15 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
     #   This should be used for saving, so that relative paths work as
     #   correctly as they can.
     #   And it's not just here...
-    def __init__(self, size, tile_size, orientation='orthogonal',
-            background_color=None, base_path=None,
-            render_order=None):
+    def __init__(
+        self, size, tile_size, orientation='orthogonal',
+        *,
+        background_color=None, base_path=None,
+        render_order=None,
+        # XXX: Properly process these:
+        infinite=None, staggeraxis=None, staggerindex=None, nextobjectid=None,
+        nextlayerid=None, tiledversion=None, hexsidelength=None,
+    ):
         self.orientation = orientation
         self.size = size
         self.tile_size = tile_size
@@ -87,6 +105,13 @@ class Map(fileio.ReadWriteBase, helpers.SizeMixin):
         self.properties = {}
         self.base_path = base_path
         self.render_order = render_order
+        self.infinite = infinite
+        self.staggeraxis = staggeraxis
+        self.staggerindex = staggerindex
+        self.nextobjectid = nextobjectid
+        self.nextlayerid = nextlayerid
+        self.tiledversion = tiledversion
+        self.hexsidelength = hexsidelength
 
     @property
     def pixel_size(self):

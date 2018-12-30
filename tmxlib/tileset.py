@@ -16,7 +16,7 @@ class TilesetList(helpers.NamedElementList):
     Whenever the list is changed, GIDs of tiles in the associated map are
     renumbered to match the new set of tilesets.
     """
-    def __init__(self, map, lst=None):
+    def __init__(self, map, *, lst=None):
         self.map = map
         self._being_modified = False
         super(TilesetList, self).__init__(lst)
@@ -479,6 +479,13 @@ class ImageTileset(Tileset):
 
             Space between adjacent tiles, in pixels.
 
+    Other init arguments:
+
+        .. param:: columns
+
+            Ignored, but allowed for compatibility with
+            :class:`IndividualTileTileset`.
+
     Other attributes:
 
         .. attribute:: column_count
@@ -493,8 +500,11 @@ class ImageTileset(Tileset):
     type = 'image'
     tile_class = GridTilesetTile
 
-    def __init__(self, name, tile_size, image, margin=0, spacing=0,
-            source=None, base_path=None):
+    def __init__(
+        self, name, tile_size, image, *,
+        margin=0, spacing=0,
+        source=None, base_path=None, columns=None,
+    ):
         super(ImageTileset, self).__init__(name, tile_size)
         self.source = source
         self.image = image
@@ -587,12 +597,29 @@ class IndividualTileTileset(Tileset):
         .. attribute:: spacing
 
             Space between adjacent tiles, in pixels.
+
+        .. attribute:: columns
+
+            Number of columns in the tileset. If None, "5" is use dinternally.
+
+    Other attributes:
+
+        .. attribute:: column_count
+
+            Number of columns of tiles in the tileset (for display purposes)
+
+        .. attribute:: row_count
+
+            Number of rows of tiles in the tileset (for display purposes)
     """
     type = 'individual'
 
-    def __init__(self, name, tile_size):
+    def __init__(
+        self, name, tile_size, *, columns=None,
+    ):
         super(IndividualTileTileset, self).__init__(name, tile_size)
         self.images = []
+        self.columns = columns
 
     def __len__(self):
         return len(self.images)
@@ -627,3 +654,15 @@ class IndividualTileTileset(Tileset):
             )
         self._fill_from_dict(dct, base_path)
         return self
+
+    @property
+    def column_count(self):
+        if self.columns:
+            return self.columns
+        else:
+            return 5
+
+    @property
+    def row_count(self):
+        # XXX: Untested
+        return (len(self)-1) // self.column_count + 1

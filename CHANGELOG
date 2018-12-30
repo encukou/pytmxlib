@@ -9,6 +9,7 @@ Legend:
     ** Images no longer support pixel assignment or the set_pixel method.
     ** Python 2 is no longer supported.
     ** Supported Python versions are 3.6+. Tests run on 3.6 and 3.7.
+    ** Several arguments are now keyword-only.
 
     + Image slicing now creates ImageRegions
     + Images are now displayed graphically in IPython Notebook

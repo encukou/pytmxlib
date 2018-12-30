@@ -38,6 +38,10 @@ class Layer(object):
 
             Name of the layer
 
+        .. attribute:: id
+
+            Unique numeric ID of the layer.
+
         .. attribute:: visible
 
             A boolean setting whether the layer is visible at all. (Actual
@@ -66,13 +70,18 @@ class Layer(object):
     A Layer is false in a boolean context iff it is empty, that is, if all
     tiles of a tile layer are false, or if an object layer contains no objects.
     """
-    def __init__(self, map, name, visible=True, opacity=1):
+    # XXX: Implement `id` -- "Even if a layer is deleted, no layer ever gets
+    # the same ID."
+    def __init__(
+        self, map, name, *, visible=True, opacity=1, id=None,
+    ):
         super(Layer, self).__init__()
         self.map = map
         self.name = name
         self.visible = visible
         self.opacity = opacity
         self.properties = {}
+        self.id = None
 
     @property
     def index(self):
@@ -139,9 +148,11 @@ class TileLayer(Layer):
             layer, as one long list in row-major order.
             See :class:`TileLikeObject.value` for what the numbers will mean.
     """
-    def __init__(self, map, name, visible=True, opacity=1, data=None):
+    def __init__(
+        self, map, name, *, visible=True, opacity=1, data=None, id=None,
+    ):
         super(TileLayer, self).__init__(map=map, name=name,
-                visible=visible, opacity=opacity)
+                visible=visible, opacity=opacity, id=id)
         data_size = map.width * map.height
         if data is None:
             self.data = array.array('L', [0] * data_size)
@@ -271,9 +282,11 @@ class ImageLayer(Layer):
     """
     type = 'image'
 
-    def __init__(self, map, name, visible=True, opacity=1, image=None):
+    def __init__(
+        self, map, name, *, visible=True, opacity=1, image=None, id=None,
+    ):
         super(ImageLayer, self).__init__(map=map, name=name,
-                visible=visible, opacity=opacity)
+                visible=visible, opacity=opacity, id=id)
         self.image = image
 
     def __nonzero__(self):
@@ -335,9 +348,11 @@ class ObjectLayer(Layer, helpers.NamedElementList):
             The intended color of objects in this layer, as a triple of
             floats (0..1)
     """
-    def __init__(self, map, name, visible=True, opacity=1, color=None):
+    def __init__(
+        self, map, name, *, visible=True, opacity=1, color=None, id=None
+    ):
         super(ObjectLayer, self).__init__(map=map, name=name,
-                visible=visible, opacity=opacity)
+                visible=visible, opacity=opacity, id=id)
         self.type = 'objects'
         self.color = color
 
