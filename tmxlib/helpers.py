@@ -3,7 +3,7 @@
 from __future__ import division
 
 import functools
-import collections
+import collections.abc
 import contextlib
 
 import six
@@ -132,7 +132,7 @@ class TileMixin(SizeMixin, LayerElementMixin):
         self.pixel_size = value[0] * px_parent[0], value[1] * px_parent[1]
 
 
-class NamedElementList(collections.MutableSequence):
+class NamedElementList(collections.abc.MutableSequence):
     """A list that supports indexing by element name, as a convenience, etc
 
     ``lst[some_name]`` means the first `element` where
