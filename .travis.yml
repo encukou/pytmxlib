@@ -8,8 +8,7 @@ install:
   - python setup.py develop
   - '[ "$USE_LXML" = "yes" ] && pip install lxml; :'
   - '[ "$USE_PIL" = "yes" ] && pip install pillow; :'
-  - pip install pytest-cov
-  - pip install coveralls
+  - pip install pytest-cov coveralls formencode
 env:
   - USE_LXML=no  USE_PIL=no  PYTMXLIB_TEST_SKIP_IMAGE=yes
   - USE_LXML=yes USE_PIL=yes PYTMXLIB_TEST_COVERALLS=yes
