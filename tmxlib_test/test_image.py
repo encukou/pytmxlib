@@ -48,14 +48,14 @@ def colorcorners_image_type(request):
 
 
 @pytest.fixture
-def colorcorners_image(image_class, colorcorners_image_type):
+def colorcorners_image(image_class, colorcorners_image_type, canvas_mod):
     if colorcorners_image_type == 'image':
         return load_image(image_class, 'colorcorners.png')
     if colorcorners_image_type == 'region':
         return load_image(image_class, 'colorcorners-mid.png')[8:24, 8:24]
     if colorcorners_image_type == 'canvas':
         image = load_image(image_class, 'colorcorners.png')
-        canvas = canvas_mod().Canvas((16, 16))
+        canvas = canvas_mod.Canvas((16, 16))
         canvas.draw_image(image)
         return canvas
 

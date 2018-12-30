@@ -46,7 +46,6 @@ def out_filename(filename):
     return test_map_infos[filename].get('out_filename', filename)
 
 
-@pytest.fixture
 def map_loadable(filename):
     return test_map_infos[filename].get('loadable', True)
 
@@ -146,7 +145,7 @@ def test_dict_export(filename):
     assert_json_safe_almost_equal(result, dct)
 
 
-def test_dict_import(filename, has_gzip, out_filename, map_loadable):
+def test_dict_import(filename, has_gzip, out_filename):
     dct = json.load(open(get_test_filename(filename.replace('.tmx', '.json'))))
     map = tmxlib.Map.from_dict(dct, base_path=base_path)
 
@@ -170,11 +169,11 @@ def test_dict_import(filename, has_gzip, out_filename, map_loadable):
     for layer, xml_layer in zip(map.layers, xml_map.layers):
         layer.compression = getattr(xml_layer, 'compression', None)
         layer.mtime = 0
-        if map_loadable and layer.type == 'image':
+        if map_loadable(filename) and layer.type == 'image':
             layer.image.load_image()
     for tileset, xml_tileset in zip(map.tilesets, xml_map.tilesets):
         tileset.source = xml_tileset.source
-        if map_loadable and tileset.type == 'image' and tileset.image:
+        if map_loadable(filename) and tileset.type == 'image' and tileset.image:
             tileset.image.load_image()
 
     dumped = map.dump()

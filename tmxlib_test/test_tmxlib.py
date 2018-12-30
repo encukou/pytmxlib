@@ -20,9 +20,9 @@ def test_get_layer_by_index(desert):
     assert desert.layers[0].index == 0
 
 
-def test_bad_layer_by_name():
+def test_bad_layer_by_name(desert):
     with pytest.raises(KeyError):
-        desert().layers['(nonexisting)']
+        desert.layers['(nonexisting)']
 
 
 def test_layer_get(desert):
@@ -391,10 +391,9 @@ def test_multiple_tilesets():
     assert map.end_gid == 0
 
 
-def test_remove_used_tileset():
-    map = desert()
+def test_remove_used_tileset(desert):
     with pytest.raises(tmxlib.UsedTilesetError):
-        del map.tilesets[0]
+        del desert.tilesets[0]
 
 
 def test_objects():
@@ -586,16 +585,15 @@ def test_del_tileset():
     assert_xml_compare(xml, dumped)
 
 
-def test_layer_nonzero():
-    map = desert()
-    assert map.layers[0]
+def test_layer_nonzero(desert):
+    assert desert.layers[0]
 
-    layer = map.add_layer('Tile layer')
+    layer = desert.add_layer('Tile layer')
     assert not layer
     layer[0, 0] = 1
     assert layer
 
-    layer = map.add_object_layer('Object layer')
+    layer = desert.add_object_layer('Object layer')
     assert not layer
     layer.append(tmxlib.RectangleObject(layer, (0, 0), size=(3, 3)))
     assert layer
